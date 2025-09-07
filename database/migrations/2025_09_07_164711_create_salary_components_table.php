@@ -11,8 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('employees', function (Blueprint $table) {
+        Schema::connection('mysql_employees')->create('salary_components', function (Blueprint $table) {
             $table->id();
+            $table->string('component_name');
+            $table->boolean('component_type')->comment('1=deduction, 0=allowance');
+            $table->integer('permission_level');
             $table->timestamps();
         });
     }
@@ -22,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('employees');
+        Schema::connection('mysql_employees')->dropIfExists('salary_components');
     }
 };
