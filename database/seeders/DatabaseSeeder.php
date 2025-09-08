@@ -16,8 +16,12 @@ class DatabaseSeeder extends Seeder
         // User::factory(10)->create();
 
         User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+            'name' => 'Administrator',
+            'email' => 'admin@nexa-erp.localhost',
+            'email_verified_at' => now(),
+            'password' => bcrypt('admin'),
+            'created_at' => now(),
+            'updated_at' => now()
         ]);
     }
 }

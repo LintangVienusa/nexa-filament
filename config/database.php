@@ -62,7 +62,7 @@ return [
             ]) : [],
         ],
 
-        'mysql_employees' => [ // tambahan
+        'mysql_employees' => [
             'driver' =>'mysql',
             'host' => env('DB_HRMS_HOST', '127.0.0.1'),
             'port' => env('DB_HRMS_PORT', '3306'),

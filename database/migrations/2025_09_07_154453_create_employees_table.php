@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::connection('mysql_employees')->create('employees', function (Blueprint $table) {
+        Schema::connection('mysql_employees')->create('Employees', function (Blueprint $table) {
             $table->id('employee_id'); // Auto increment primary key
             $table->string('first_name', 50);
             $table->string('middle_name', 50)->nullable();
@@ -29,21 +29,21 @@ return new class extends Migration
             $table->boolean('marital_status')->comment('1=is_married, 0=not_married');
             $table->string('job_title', 25);
             $table->unsignedBigInteger('org_id');
-            $table->foreign('org_id')->references('id')->on('organizations')->onsDelete('cascade');
+            $table->foreign('org_id')->references('id')->on('Organizations')->onsDelete('cascade');
             $table->string('bank_account_name', 50);
             $table->string('bank_account_no', 30);
-            $table->string('created_by', 10);
+            $table->string('created_by', 10)->nullable();
             $table->dateTime('created_at');
-            $table->string('updated_by', 10);
+            $table->string('updated_by', 10)->nullable();
             $table->dateTime('updated_at');
         });
     }
 
     /**
-     * Reverse the migrations.  
+     * Reverse the migrations.
      */
     public function down(): void
     {
-        Schema::connection('mysql_employees')->dropIfExists('employees');
+        Schema::connection('mysql_employees')->dropIfExists('Employees');
     }
 };

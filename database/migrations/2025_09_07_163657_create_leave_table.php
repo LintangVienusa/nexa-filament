@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::connection('mysql_employees')->create('leaves', function (Blueprint $table) {
+        Schema::connection('mysql_employees')->create('Leaves', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('employee_id');
             $table->unsignedBigInteger('leave_type');
@@ -27,7 +27,7 @@ return new class extends Migration
             $table->dateTime('updated_at');
 
             $table->index('employee_id');
-            $table->foreign('employee_id')->references('employee_id')->on('employees')->onDelete('cascade');
+            $table->foreign('employee_id')->references('employee_id')->on('Employees')->onDelete('cascade');
         });
     }
 
@@ -36,7 +36,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        
-        Schema::connection('mysql_employees')->dropIfExists('leaves');
+
+        Schema::connection('mysql_employees')->dropIfExists('Leaves');
     }
 };

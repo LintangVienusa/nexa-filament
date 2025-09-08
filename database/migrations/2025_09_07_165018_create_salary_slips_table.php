@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::connection('mysql_employees')->create('salary_slips', function (Blueprint $table) {
+        Schema::connection('mysql_employees')->create('SalarySlips', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('employee_id');
             $table->unsignedBigInteger('payroll_id');
@@ -20,20 +20,20 @@ return new class extends Migration
 
             // FK ke employees
             $table->foreign('employee_id')
-                ->references('id')
-                ->on('employees')
+                ->references('employee_id')
+                ->on('Employees')
                 ->onDelete('cascade');
 
             // FK ke payrolls
             $table->foreign('payroll_id')
                 ->references('id')
-                ->on('payrolls')
+                ->on('Payrolls')
                 ->onDelete('cascade');
 
             // FK ke salary_components
             $table->foreign('salary_component_id')
                 ->references('id')
-                ->on('salary_components')
+                ->on('SalaryComponents')
                 ->onDelete('cascade');
         });
     }
@@ -43,6 +43,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::connection('mysql_employees')->dropIfExists('salary_slips');
+        Schema::connection('mysql_employees')->dropIfExists('SalarySlips');
     }
 };
