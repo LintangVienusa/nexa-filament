@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::connection('mysql_employees')->create('payrolls', function (Blueprint $table) {
+        Schema::connection('mysql_employees')->create('Payrolls', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('employee_id');
             $table->string('periode');
@@ -27,8 +27,8 @@ return new class extends Migration
 
             // FK ke employees
             $table->foreign('employee_id')
-                ->references('id')
-                ->on('employees')
+                ->references('employee_id')
+                ->on('Employees')
                 ->onDelete('cascade');
         });
     }
@@ -38,6 +38,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::connection('mysql_employees')->dropIfExists('payrolls');
+        Schema::connection('mysql_employees')->dropIfExists('Payrolls');
     }
 };

@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::connection('mysql_employees')->create('organizations', function (Blueprint $table) {
+        Schema::connection('mysql_employees')->create('Organizations', function (Blueprint $table) {
             $table->id('id'); // INT auto increment primary key
             $table->string('divisi_name', 200);
             $table->string('unit_name', 200);
@@ -25,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::connection('mysql_employees')->dropIfExists('organizations');
+        Schema::connection('mysql_employees')->dropIfExists('Organizations');
     }
 };
