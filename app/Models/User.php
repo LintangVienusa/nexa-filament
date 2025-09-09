@@ -19,6 +19,7 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'employee_id',
         'email',
         'password',
     ];
@@ -44,5 +45,24 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    protected $connection = 'mysql'; // DB nexa_filament
+    protected $table = 'users';
+
+    public function employee()
+    {
+        return $this->setConnection('mysql_employees')
+            ->belongsTo(Employee::class, 'employee_id', 'employee_id');
+    }
+
+    public function isManager(): bool
+    {
+        return $this->employee && strtolower($this->employee->job_title) === 'manager';
+    }
+
+    public function isStaff(): bool
+    {
+        return $this->employee && strtolower($this->employee->job_title) === 'staff';
     }
 }
