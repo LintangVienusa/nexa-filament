@@ -66,9 +66,11 @@ class EmployeeResource extends Resource
                         TextInput::make('job_title')
                             ->maxLength(100),
 
-                        TextInput::make('org_id')
-                            ->numeric()
-                            ->label('Organization ID'),
+                        Select::make('org_id')
+                            ->label('Organization')
+                            ->relationship('organization', 'divisi_name')
+                            ->searchable()
+                            ->required(),
                     ])->columns(2),
 
                 Section::make('Contact & Identification')
@@ -132,7 +134,10 @@ class EmployeeResource extends Resource
     {
         return $table
             ->columns([
-                //
+                Tables\Columns\TextColumn::make('employee_id'),
+                Tables\Columns\TextColumn::make('first_name'),
+                Tables\Columns\TextColumn::make('last_name'),
+                Tables\Columns\TextColumn::make('organization.divisi_name')->label('Organization'),
             ])
             ->filters([
                 //
