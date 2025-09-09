@@ -11,6 +11,8 @@ class Employee extends Model
 
     protected $connection = 'mysql_employees';
     protected $table = 'Employees';
+    protected $primaryKey = 'employee_id';
+    public $incrementing = false;
 
     protected $fillable = [
         'employee_id',
@@ -33,4 +35,9 @@ class Employee extends Model
         'bank_account_name',
         'bank_account_no'
     ];
+
+    public function organization(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Organization::class, 'org_id');
+    }
 }
