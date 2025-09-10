@@ -5,6 +5,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 
 class Leave extends Model
 {
@@ -13,8 +14,8 @@ class Leave extends Model
 
     public function user()
     {
-        return $this->setConnection('mysql')
-            ->hasOne(User::class, 'employee_id', 'employee_id');
+        return $this->setConnection('mysql_employees')
+            ->hasOne(Employee::class, 'email', 'email');
     }
 
     

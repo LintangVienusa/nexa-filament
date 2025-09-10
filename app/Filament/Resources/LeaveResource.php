@@ -13,6 +13,8 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Columns\BadgeColumn;
+use Illuminate\Support\Facades\Auth;
+
 
 class LeaveResource extends Resource
 {
@@ -20,24 +22,46 @@ class LeaveResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        // Jika user login adalah staff → hanya lihat cuti miliknya
+        if (Auth::check() && Auth::user()->isStaff()) {
+            $query->where('employee_id', Auth::user()->employee?->employee_id);
+        }
+
+        return $query;
+    }
+
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
                 Forms\Components\Hidden::make('employee_id')
-                    ->default(fn () => auth()->user()->employee_id)
+                    ->default(fn () => auth()->user()->employee?->employee_id)
                     ->visible(fn () => auth()->user()->isStaff()),
                 Forms\Components\Select::make('leave_type')
                     ->label('Leave Type')
-                    ->options([
-                        1 => 'Cuti Tahunan',
-                        2 => 'Cuti Besar',
-                        3 => 'Cuti Bersama',
-                        4 => 'Sakit',
-                        5 => 'Cuti Melahirkan/Keguguran',
-                        6 => 'Cuti Haid',
-                        7 => 'Cuti Karena Alasan Penting',
-                    ])
+                    ->options(function () {
+                         $options = [
+                                1 => 'Annual Leave',
+                                2 => 'Sick Leave',
+                                5 => 'Leave for Important Reasons',
+                                6 => 'Religious Leave',
+                         ];
+
+                         if (auth()->user()->employee?->gender === 'Female') {
+                            $options[3] = 'Maternity / Miscarriage Leave';
+                            $options[4] = 'Menstrual Leave';
+                        }
+
+                        if (auth()->user()->employee?->marital_status === 0) {
+                            $options[7] = 'Marriage Leave';
+                        }
+                        return $options;
+                    })
+
                     ->required()
                     ->searchable()
                     ->reactive()

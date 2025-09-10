@@ -53,9 +53,10 @@ class User extends Authenticatable
     public function employee()
     {
         return $this->setConnection('mysql_employees')
-            ->belongsTo(Employee::class, 'employee_id', 'employee_id');
+            ->belongsTo(Employee::class, 'email', 'email');
     }
 
+    
     public function isManager(): bool
     {
         return $this->employee && strtolower($this->employee->job_title) === 'manager';
