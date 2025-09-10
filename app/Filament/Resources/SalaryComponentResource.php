@@ -2,10 +2,13 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\OrganizationResource\Pages;
-use App\Filament\Resources\OrganizationResource\RelationManagers;
-use App\Models\Organization;
+use App\Filament\Resources\SalaryComponentResource\Pages;
+use App\Filament\Resources\SalaryComponentResource\RelationManagers;
+use App\Models\SalaryComponent;
 use Filament\Forms;
+use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -13,22 +16,27 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class OrganizationResource extends Resource
+class SalaryComponentResource extends Resource
 {
-    protected static ?string $model = Organization::class;
+    protected static ?string $model = SalaryComponent::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-building-office';
+    protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('divisi_name')
+                TextInput::make('component_name')
                     ->required()
                     ->maxLength(200),
-                Forms\Components\TextInput::make('unit_name')
-                    ->required()
-                    ->maxLength(200),
+                Select::make('component_type')
+                    ->options([
+                        '0' => 'Allowance',
+                        '1' => 'Deduction',
+                    ])
+                    ->required(),
+                Hidden::make('permission_level')
+                    ->default(1)
             ]);
     }
 
@@ -38,9 +46,10 @@ class OrganizationResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('id')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('divisi_name')
+                Tables\Columns\TextColumn::make('component_name')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('unit_name')
+                Tables\Columns\TextColumn::make('component_type')
+                    ->formatStateUsing(fn (string $state): string => $state === '0' ? 'Allowance' : 'Deduction')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -74,9 +83,9 @@ class OrganizationResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListOrganizations::route('/'),
-            'create' => Pages\CreateOrganization::route('/create'),
-            'edit' => Pages\EditOrganization::route('/{record}/edit'),
+            'index' => Pages\ListSalaryComponents::route('/'),
+            'create' => Pages\CreateSalaryComponent::route('/create'),
+            'edit' => Pages\EditSalaryComponent::route('/{record}/edit'),
         ];
     }
 }

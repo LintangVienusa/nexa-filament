@@ -20,7 +20,7 @@ class LeaveResource extends Resource
 {
     protected static ?string $model = Leave::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';
 
     public static function getEloquentQuery(): Builder
     {
@@ -130,7 +130,7 @@ class LeaveResource extends Resource
                     ->default(fn () => auth()->user()->isStaff() ? 0 : null)
                     ->hidden(fn () => auth()->user()->isStaff()) // sembunyikan input untuk staff
                     ->required()
-                    ->reactive(), 
+                    ->reactive(),
 
                 Forms\Components\Textarea::make('note_rejected')
                     ->label('Rejection Note')
