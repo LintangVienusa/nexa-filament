@@ -69,8 +69,8 @@ class LeaveResource extends Resource
 
                 Forms\Components\FileUpload::make('leave_evidence')
                     ->label('Evidence')
-                    ->required(fn ($get) => $get('leave_type') === '4') // wajib jika leave_type Sakit
-                    ->visible(fn ($get) => $get('leave_type') === '4') // opsional, supaya field muncul hanya kalau Sakit
+                    ->required(fn ($get) => $get('leave_type') === '2') // wajib jika leave_type Sakit
+                    ->visible(fn ($get) => $get('leave_type') === '2') // opsional, supaya field muncul hanya kalau Sakit
                     ->disk('public') // sesuaikan dengan disk
                     ->directory('leave-evidence') // folder penyimpanan
                     ->reactive(),
