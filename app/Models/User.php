@@ -48,7 +48,7 @@ class User extends Authenticatable
     }
 
     protected $connection = 'mysql'; // DB nexa_filament
-    protected $table = 'users';
+    protected $table = 'Users';
 
     public function employee()
     {
