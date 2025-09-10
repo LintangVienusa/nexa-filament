@@ -10,7 +10,7 @@ use Carbon\Carbon;
 class Leave extends Model
 {
     protected $connection = 'mysql_employees';
-    protected $table = 'leaves';
+    protected $table = 'Leaves';
 
     public function user()
     {
@@ -18,14 +18,14 @@ class Leave extends Model
             ->hasOne(Employee::class, 'email', 'email');
     }
 
-    
+
     public function employee()
     {
         return $this->belongsTo(Employee::class, 'employee_id', 'employee_id');
     }
 
 
-    
+
 
     protected $fillable = [
         'employee_id',
@@ -40,10 +40,10 @@ class Leave extends Model
         'leave_evidence',
         'created_at',
         'updated_at',
-        
+
     ];
 
-    
+
 
     protected $appends = ['full_name'];
 
@@ -58,7 +58,7 @@ class Leave extends Model
         'start_date' => 'datetime',
         'end_date' => 'datetime',
     ];
-    
+
     protected static function booted()
     {
         static::creating(function ($leave) {
@@ -73,7 +73,7 @@ class Leave extends Model
             }
         });
 
-       
+
 
         static::updating(function ($leave) {
             if ($leave->start_date && $leave->end_date) {
@@ -90,10 +90,10 @@ class Leave extends Model
         });
     }
 
-    
 
 
-    
 
-    
+
+
+
 }
