@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -13,15 +12,18 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        $admin = User::where('email', config('admin.email'))->first();
 
-        User::factory()->create([
-            'name' => 'Administrator',
-            'email' => 'admin@nexa-erp.localhost',
-            'email_verified_at' => now(),
-            'password' => bcrypt('admin'),
-            'created_at' => now(),
-            'updated_at' => now()
-        ]);
+        if (! $admin) {
+            User::factory()->create([
+                'name' => config('admin.name'),
+                'email' => config('admin.email'),
+                'email_verified_at' => now(),
+                'password' => bcrypt(config('admin.password')),
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+        }
+
     }
 }
