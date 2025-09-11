@@ -13,6 +13,8 @@ use Filament\Tables\Table;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Tables\Columns\BadgeColumn;
+use Illuminate\Support\Facades\Auth;
 
 class OvertimeResource extends Resource
 {
@@ -20,14 +22,28 @@ class OvertimeResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        // Jika user login adalah staff → hanya lihat cuti miliknya
+        if (Auth::check() && Auth::user()->isStaff()) {
+            $query->where('employee_id', Auth::user()->employee?->employee_id);
+        }
+
+        return $query;
+    }
+
     public static function form(Form $form): Form
     {
         return $form
         ->schema([
             Forms\Components\Hidden::make('attendance_id')
-                // ->default(fn () => request()->get('attendance_id') 
-                //     ?? auth()->user()->employee?->attendances()->latest()->first()?->id)
+                ->default(fn () => \App\Models\Overtime::getLatestAttendanceId())
                 ->required(),
+            Forms\Components\Hidden::make('employee_id')
+                    ->default(fn () => auth()->user()->employee?->employee_id)
+                    ->visible(fn () => auth()->user()->isStaff()),
 
             Forms\Components\TimePicker::make('start_time')
                 ->label('Start Time')
@@ -64,13 +80,20 @@ class OvertimeResource extends Resource
                 ->label('Working Hours')
                 ->numeric()
                 ->disabled()   
-                ->required(),  
+                ->required(), 
+                
+            Forms\Components\Textarea::make('description')
+                    ->required()
+                    ->columnSpanFull(),
 
             Forms\Components\Select::make('job_id')
                 ->label('Job')
-                ->relationship('job', 'title')
-                ->searchable()
-                ->required(),
+                ->relationship('job', 'job_name')
+                ->preload()
+                ->searchable(),
+            Forms\Components\Hidden::make('created_by')
+                    ->default(fn () => auth()->user()->employee?->employee_id)
+                    ->required(),
         ]);
     }
 
@@ -78,7 +101,30 @@ class OvertimeResource extends Resource
     {
         return $table
             ->columns([
-                //
+                Tables\Columns\TextColumn::make('full_name')
+                    ->label('Employee Name')
+                    ->sortable()
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('job.job_name')
+                    ->label('Job')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('description')
+                    ->label('Description')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('working_hours')
+                    ->label('Working Hours')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('start_time')
+                    ->time()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('end_time')
+                    ->time()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                
             ])
             ->filters([
                 //

@@ -2,8 +2,11 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB; 
 use Carbon\Carbon;
+use App\Models\Job;
 
 class Overtime extends Model
 {
@@ -23,13 +26,31 @@ class Overtime extends Model
         return $this->belongsTo(Employee::class, 'employee_id', 'employee_id');
     }
 
+   
+
+    
+
     protected $fillable = [
         'attendance_id',
+        'employee_id',
         'start_time',
         'end_time',
         'working_hours',
+        'description',
         'job_id',
+        'created_by',
+        'created_at',
+        'updated_at',
     ];
+
+     protected $appends = ['full_name'];
+
+    public function getFullNameAttribute()
+    {
+        return $this->employee ? trim("{$this->employee->first_name} {$this->employee->last_name}") : null;
+    }
+
+    
 
     // Relasi ke Attendance
     public function attendance()
@@ -38,10 +59,12 @@ class Overtime extends Model
     }
 
     // Relasi ke Job
-    public function jobs()
+    public function job()
     {
-        return $this->belongsTo(Jobs::class, 'job_id', 'id');
+        return $this->belongsTo(Job::class, 'job_id', 'id');
     }
+
+    
 
     
 
@@ -64,6 +87,23 @@ class Overtime extends Model
             }
         });
     }
+
+    public static function getLatestAttendanceId()
+    {
+        $employeeId = auth()->user()?->employee?->employee_id;
+
+        if (!$employeeId) {
+            return null;
+        }
+
+        return DB::connection('mysql_employees')
+            ->table('attendances')
+            ->where('employee_id', $employeeId)
+            ->latest('id')
+            ->value('id');
+    }
+
+
 
 
 }
