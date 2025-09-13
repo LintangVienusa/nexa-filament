@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::connection('mysql_employees')->create('Leaves', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('employee_id');
+            $table->string('employee_id');
             $table->unsignedBigInteger('leave_type');
             $table->date('start_date');
             $table->date('end_date');
@@ -23,11 +23,9 @@ return new class extends Migration
             $table->string('approved_by', 10)->nullable();
             $table->text('note_rejected')->nullable();
             $table->string('leave_evidence', 50)->nullable();
-            $table->dateTime('created_at');
-            $table->dateTime('updated_at');
-
             $table->index('employee_id');
             $table->foreign('employee_id')->references('employee_id')->on('Employees')->onDelete('cascade');
+            $table->timestamps();
         });
     }
 

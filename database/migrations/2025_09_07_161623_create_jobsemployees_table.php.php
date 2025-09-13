@@ -12,10 +12,10 @@ return new class extends Migration
     public function up(): void
     {
          Schema::connection('mysql_employees')->create('Jobs', function (Blueprint $table) {
-            $table->id(); // id INT auto increment primary key
+            $table->id();
             $table->text('job_name');
-            $table->decimal('job_duration', 8, 2); // sesuai kebutuhan
-            $table->timestamps(); // optional created_at & updated_at
+            $table->decimal('job_duration', 8, 2);
+            $table->timestamps();
         });
     }
 

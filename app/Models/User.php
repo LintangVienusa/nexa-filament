@@ -47,8 +47,8 @@ class User extends Authenticatable
         ];
     }
 
-    protected $connection = 'mysql'; // DB nexa_filament
-    protected $table = 'Users';
+    protected $connection = 'mysql';
+    protected $table = 'users';
 
     public function employee()
     {
@@ -56,7 +56,7 @@ class User extends Authenticatable
             ->belongsTo(Employee::class, 'email', 'email');
     }
 
-    
+
     public function isManager(): bool
     {
         return $this->employee && strtolower($this->employee->job_title) === 'manager';

@@ -21,6 +21,8 @@ class LeaveResource extends Resource
     protected static ?string $model = Leave::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';
+    protected static ?string $navigationGroup = 'HR Management';
+    protected static ?string $navigationLabel = 'Leaves';
 
     public static function getEloquentQuery(): Builder
     {
@@ -67,7 +69,7 @@ class LeaveResource extends Resource
                     ->reactive()
                     ->preload(),
 
-                    
+
                 Forms\Components\FileUpload::make('leave_evidence')
                     ->label('Evidence')
                     ->required(fn ($get) => $get('leave_type') === '2') // wajib jika leave_type Sakit

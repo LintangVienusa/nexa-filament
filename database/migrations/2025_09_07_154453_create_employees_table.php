@@ -12,12 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::connection('mysql_employees')->create('Employees', function (Blueprint $table) {
-            $table->id('employee_id'); // Auto increment primary key
+            $table->string('employee_id', 20)->primary();
             $table->string('first_name', 50);
             $table->string('middle_name', 50)->nullable();
             $table->string('last_name', 50);
             $table->string('gender', 15);
-            $table->string('email')->unique();
+            $table->string('email', 100)->unique();
             $table->date('date_of_birth');
             $table->date('date_of_joining');
             $table->string('mobile_no', 15);
@@ -30,13 +30,15 @@ return new class extends Migration
             $table->boolean('marital_status')->comment('1=is_married, 0=not_married');
             $table->string('job_title', 25);
             $table->unsignedBigInteger('org_id');
-            $table->foreign('org_id')->references('id')->on('Organizations')->onsDelete('cascade');
+            $table->foreign('org_id')
+                ->references('id')
+                ->on('Organizations')
+                ->cascadeOnDelete();
             $table->string('bank_account_name', 50);
             $table->string('bank_account_no', 30);
             $table->string('created_by', 10)->nullable();
-            $table->dateTime('created_at');
             $table->string('updated_by', 10)->nullable();
-            $table->dateTime('updated_at');
+            $table->timestamps();
         });
     }
 

@@ -21,6 +21,8 @@ class SalaryComponentResource extends Resource
     protected static ?string $model = SalaryComponent::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';
+    protected static ?string $navigationGroup = 'HR Management';
+    protected static ?string $navigationLabel = 'Salary Components';
 
     public static function form(Form $form): Form
     {
