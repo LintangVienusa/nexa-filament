@@ -67,6 +67,7 @@ class LeaveResource extends Resource
                     ->reactive()
                     ->preload(),
 
+                    
                 Forms\Components\FileUpload::make('leave_evidence')
                     ->label('Evidence')
                     ->required(fn ($get) => $get('leave_type') === '2') // wajib jika leave_type Sakit
@@ -74,6 +75,13 @@ class LeaveResource extends Resource
                     ->disk('public') // sesuaikan dengan disk
                     ->directory('leave-evidence') // folder penyimpanan
                     ->reactive(),
+
+                Forms\Components\TextInput::make('annual_leave_balance')
+                        ->label('Remaining Annual Leave')
+                        ->default(fn () => Leave::getAnnualLeaveBalance(auth()->user()->employee?->employee_id))
+                        ->disabled() // tidak bisa di-edit
+                        ->dehydrated(false)
+                        ->visible(fn ($get) => $get('leave_type') == 1),
                 Forms\Components\DatePicker::make('start_date')
                     ->reactive()
                     ->afterStateUpdated(function ($set, $get) {

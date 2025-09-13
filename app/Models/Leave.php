@@ -90,6 +90,36 @@ class Leave extends Model
         });
     }
 
+    public static function getAnnualLeaveBalance($employeeId)
+    {
+        $employee = Employee::find($employeeId);
+
+        if (!$employee) {
+            return 0;
+        }
+
+        $dateJoin = Carbon::parse($employee->date_of_joining);
+        $now = Carbon::now();
+
+        // Belum 1 tahun kerja → tidak ada saldo
+        if ($dateJoin->diffInYears($now) < 1) {
+            return 0;
+        }
+
+        // Default quota
+        $quota = 12;
+
+        // Hitung cuti tahunan yang sudah diambil tahun ini
+        $used = self::where('employee_id', $employeeId)
+            ->where('leave_type', 1) // Annual Leave
+            ->where('status', 2)     // Approved
+            ->whereYear('start_date', $now->year)
+            ->sum('leave_duration');
+
+        return max($quota - $used, 0);
+    }
+
+    
 
 
 
