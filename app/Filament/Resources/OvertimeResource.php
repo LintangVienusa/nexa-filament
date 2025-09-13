@@ -20,7 +20,9 @@ class OvertimeResource extends Resource
 {
     protected static ?string $model = Overtime::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-clock';
+    protected static ?string $navigationGroup = 'HR Management';
+    protected static ?string $navigationLabel = 'Overtimes';
 
     public static function getEloquentQuery(): Builder
     {
@@ -79,9 +81,9 @@ class OvertimeResource extends Resource
             Forms\Components\TextInput::make('working_hours')
                 ->label('Working Hours')
                 ->numeric()
-                ->disabled()   
-                ->required(), 
-                
+                ->disabled()
+                ->required(),
+
             Forms\Components\Textarea::make('description')
                     ->required()
                     ->columnSpanFull(),
@@ -124,7 +126,7 @@ class OvertimeResource extends Resource
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                
+
             ])
             ->filters([
                 //

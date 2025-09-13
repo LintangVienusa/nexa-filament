@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::connection('mysql_employees')->create('Payrolls', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('employee_id');
+            $table->string('employee_id', 20);
             $table->string('periode');
             $table->boolean('status')->comment('1=closed, 0=open');
             $table->integer('number_of_employees');
@@ -25,7 +25,6 @@ return new class extends Migration
             $table->string('updated_by')->nullable();
             $table->timestamps();
 
-            // FK ke employees
             $table->foreign('employee_id')
                 ->references('employee_id')
                 ->on('Employees')
