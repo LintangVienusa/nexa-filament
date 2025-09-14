@@ -20,7 +20,7 @@ class PayrollResource extends Resource
     protected static ?string $model = Payroll::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
-    protected static ?string $navigationGroup = 'HR & Payroll';
+    protected static ?string $navigationGroup = 'HR Management';
     protected static ?string $navigationLabel = 'Payroll';
 
     public static function mutateFormDataBeforeCreate(array $data): array
