@@ -253,6 +253,7 @@ class PayrollResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('employee_id'),
                 Tables\Columns\TextColumn::make('periode')->sortable()->searchable(),
                 Tables\Columns\BooleanColumn::make('status')->label('Closed?'),
                 Tables\Columns\TextColumn::make('number_of_employees'),
