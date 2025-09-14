@@ -12,18 +12,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::connection('mysql_employees')->create('Timesheets', function (Blueprint $table) {
-            $table->id(); // id INT auto increment primary key
-            $table->unsignedBigInteger('attendance_id'); // foreign key ke tbAttandances
+            $table->id();
+            $table->unsignedBigInteger('attendance_id');
             $table->decimal('working_hours', 8, 2);
-            $table->unsignedBigInteger('job_id'); // foreign key ke tbJobs
+            $table->unsignedBigInteger('job_id');
 
-            // Foreign key ke tbAttandances
             $table->foreign('attendance_id')
                   ->references('id')
                   ->on('Attendances')
                   ->onDelete('cascade');
 
-            // Foreign key ke tbJobs
             $table->foreign('job_id')
                   ->references('id')
                   ->on('Jobs')

@@ -22,7 +22,9 @@ class EmployeeResource extends Resource
 {
     protected static ?string $model = Employee::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-users';
+    protected static ?string $navigationIcon = 'heroicon-o-user-group';
+    protected static ?string $navigationGroup = 'HR Management';
+    protected static ?string $navigationLabel = 'Employees';
 
     public static function form(Form $form): Form
     {
@@ -75,6 +77,12 @@ class EmployeeResource extends Resource
 
                 Section::make('Contact & Identification')
                     ->schema([
+                        TextInput::make('email')
+                            ->email()
+                            ->required()
+                            ->unique(ignoreRecord: true)
+                            ->maxLength(100),
+
                         TextInput::make('mobile_no')
                             ->label('Mobile Number')
                             ->tel(),

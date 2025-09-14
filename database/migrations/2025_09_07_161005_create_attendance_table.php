@@ -12,35 +12,33 @@ return new class extends Migration
     public function up(): void
     {
         Schema::connection('mysql_employees')->create('Attendances', function (Blueprint $table) {
-            $table->id(); // id INT auto increment primary key
-            $table->unsignedBigInteger('employee_id'); // foreign key ke tbEmployees
+            $table->id();
+            $table->string('employee_id', 20);
             $table->date('attendance_date');
-            $table->dateTime('check_in_time');
-            $table->dateTime('check_out_time');
-            $table->decimal('working_hours', 8, 2);
-            $table->string('check_in_evidence', 50);
-            $table->string('check_out_evidence', 50);
-            $table->float('check_in_latitude');
-            $table->float('check_in_longitude');
-            $table->float('check_out_latitude');
-            $table->float('check_out_longitude');
-            $table->string('created_by', 10);
-            $table->dateTime('created_at');
-            $table->string('updated_by', 10);
-            $table->dateTime('updated_at');
+            $table->dateTime('check_in_time')->nullable();
+            $table->dateTime('check_out_time')->nullable();
+            $table->decimal('working_hours', 5, 2)->nullable();
+            $table->string('check_in_evidence', 255)->nullable();
+            $table->string('check_out_evidence', 255)->nullable();
+            $table->decimal('check_in_latitude', 10, 8)->nullable();
+            $table->decimal('check_in_longitude', 11, 8)->nullable();
+            $table->decimal('check_out_latitude', 10, 8)->nullable();
+            $table->decimal('check_out_longitude', 11, 8)->nullable();
+            $table->string('created_by', 50)->nullable();
+            $table->string('updated_by', 50)->nullable();
+            $table->timestamps();
 
-            // Foreign key ke tbEmployees
             $table->foreign('employee_id')
-                  ->references('employee_id')
-                  ->on('Employees')
-                  ->onDelete('cascade');
+                ->references('employee_id')
+                ->on('Employees')
+                ->onDelete('cascade');
         });
     }
 
     /**
-     * Reverse the migrations. 
+     * Reverse the migrations.
      */
-    public function down(): void  
+    public function down(): void
     {
          Schema::connection('mysql_employees')->dropIfExists('Attendances');
     }
