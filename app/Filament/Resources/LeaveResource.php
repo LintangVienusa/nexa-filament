@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\LeaveResource\Pages;
 use App\Filament\Resources\LeaveResource\RelationManagers;
 use App\Models\Leave;
+use App\Traits\HasOwnRecordPolicy;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -14,12 +15,16 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Columns\BadgeColumn;
 use Illuminate\Support\Facades\Auth;
+use Spatie\Permission\Traits\HasPermissions;
 
 
 class LeaveResource extends Resource
 {
-    protected static ?string $model = Leave::class;
+    use HasPermissions,  HasOwnRecordPolicy;
 
+    protected static ?string $model = Leave::class;
+    protected static ?string $permissionPrefix = 'employees';
+    protected static string $ownerColumn = 'email';
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';
     protected static ?string $navigationGroup = 'HR Management';
     protected static ?string $navigationLabel = 'Leaves';
@@ -72,16 +77,16 @@ class LeaveResource extends Resource
 
                 Forms\Components\FileUpload::make('leave_evidence')
                     ->label('Evidence')
-                    ->required(fn ($get) => $get('leave_type') === '2') // wajib jika leave_type Sakit
-                    ->visible(fn ($get) => $get('leave_type') === '2') // opsional, supaya field muncul hanya kalau Sakit
-                    ->disk('public') // sesuaikan dengan disk
-                    ->directory('leave-evidence') // folder penyimpanan
+                    ->required(fn ($get) => $get('leave_type') === '2')
+                    ->visible(fn ($get) => $get('leave_type') === '2')
+                    ->disk('public')
+                    ->directory('leave-evidence')
                     ->reactive(),
 
                 Forms\Components\TextInput::make('annual_leave_balance')
                         ->label('Remaining Annual Leave')
                         ->default(fn () => Leave::getAnnualLeaveBalance(auth()->user()->employee?->employee_id))
-                        ->disabled() // tidak bisa di-edit
+                        ->disabled()
                         ->dehydrated(false)
                         ->visible(fn ($get) => $get('leave_type') == 1),
                 Forms\Components\DatePicker::make('start_date')
@@ -105,7 +110,7 @@ class LeaveResource extends Resource
                 Forms\Components\TextInput::make('leave_duration')
                     ->label('Duration (days)')
                     ->disabled()
-                    ->dehydrated(true) // biar tetap tersimpan ke DB
+                    ->dehydrated(true)
                     ->afterStateUpdated(function ($set, $get) {
                         if ($get('start_date') && $get('end_date')) {
                             $days = \Carbon\Carbon::parse($get('start_date'))
@@ -138,7 +143,7 @@ class LeaveResource extends Resource
                         return [];
                     })
                     ->default(fn () => auth()->user()->isStaff() ? 0 : null)
-                    ->hidden(fn () => auth()->user()->isStaff()) // sembunyikan input untuk staff
+                    ->hidden(fn () => auth()->user()->isStaff())
                     ->required()
                     ->reactive(),
 
@@ -147,8 +152,6 @@ class LeaveResource extends Resource
                     ->visible(fn (callable $get) => $get('status') == 3)
                     ->required(fn (callable $get) => $get('status') == 3)
                     ->columnSpanFull(),
-                // Forms\Components\TextInput::make('leave_evidence')
-                //     ->maxLength(50),
             ]);
     }
 
@@ -173,7 +176,7 @@ class LeaveResource extends Resource
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('status')
-                    ->badge() // tampilkan sebagai badge
+                    ->badge()
                     ->formatStateUsing(fn ($state) => match ($state) {
                         0 => 'Submit',
                         1 => 'Pending',

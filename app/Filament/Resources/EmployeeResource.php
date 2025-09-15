@@ -5,7 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\EmployeeResource\Pages;
 use App\Filament\Resources\EmployeeResource\RelationManagers;
 use App\Models\Employee;
-use Filament\Forms;
+use App\Traits\HasOwnRecordPolicy;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
@@ -15,13 +15,15 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Spatie\Permission\Traits\HasPermissions;
 
 class EmployeeResource extends Resource
 {
-    protected static ?string $model = Employee::class;
+    use HasPermissions, HasOwnRecordPolicy;
 
+    protected static ?string $model = Employee::class;
+    protected static ?string $permissionPrefix = 'employees';
+    protected static string $ownerColumn = 'email';
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
     protected static ?string $navigationGroup = 'HR Management';
     protected static ?string $navigationLabel = 'Employees';
