@@ -19,7 +19,6 @@ return new class extends Migration
             $table->integer('number_of_employees');
             $table->date('start_date');
             $table->date('cutoff_date');
-            $table->decimal('basic_salary', 15, 2)->default(0);
             $table->decimal('allowances', 15, 2)->default(0);
             $table->decimal('deductions', 15, 2)->default(0);
             $table->decimal('overtime_pay', 15, 2)->default(0);

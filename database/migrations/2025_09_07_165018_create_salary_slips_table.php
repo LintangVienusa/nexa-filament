@@ -14,8 +14,9 @@ return new class extends Migration
         Schema::connection('mysql_employees')->create('SalarySlips', function (Blueprint $table) {
             $table->id();
             $table->string('employee_id', 20);
-            $table->unsignedBigInteger('payroll_id');
+            $table->BigInteger('payroll_id');
             $table->unsignedBigInteger('salary_component_id');
+            $table->integer('amount');
             $table->timestamps();
 
             $table->foreign('employee_id')
@@ -23,10 +24,6 @@ return new class extends Migration
                 ->on('Employees')
                 ->onDelete('cascade');
 
-            $table->foreign('payroll_id')
-                ->references('id')
-                ->on('Payrolls')
-                ->onDelete('cascade');
 
             $table->foreign('salary_component_id')
                 ->references('id')
