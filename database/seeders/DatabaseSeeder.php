@@ -13,7 +13,6 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $admin = User::where('email', config('admin.email'))->first();
-
         if (! $admin) {
             User::factory()->create([
                 'name' => config('admin.name'),
@@ -24,6 +23,26 @@ class DatabaseSeeder extends Seeder
                 'updated_at' => now()
             ]);
         }
+        $admin->assignRole('admin');
 
+        $manager = User::factory()->create([
+            'name' => 'Manager User',
+            'email' => 'manager@nexa-erp.localhost',
+            'email_verified_at' => now(),
+            'password' => bcrypt('password123'),
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+        $manager->assignRole('manager');
+
+        $employee = User::factory()->create([
+            'name' => 'Employee User',
+            'email' => 'employee@nexa-erp.localhost',
+            'email_verified_at' => now(),
+            'password' => bcrypt('password123'),
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+        $employee->assignRole('employee');
     }
 }

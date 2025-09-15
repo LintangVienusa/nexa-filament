@@ -5,7 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\AttendanceResource\Pages;
 use App\Filament\Resources\AttendanceResource\RelationManagers;
 use App\Models\Attendance;
-use Filament\Forms;
+use App\Traits\HasOwnRecordPolicy;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
@@ -19,11 +19,14 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Spatie\Permission\Traits\HasPermissions;
 
 class AttendanceResource extends Resource
 {
+    use HasPermissions, HasOwnRecordPolicy;
     protected static ?string $model = Attendance::class;
-
+    protected static ?string $permissionPrefix = 'employees';
+    protected static string $ownerColumn = 'email';
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-check';
     protected static ?string $navigationGroup = 'HR Management';
     protected static ?string $navigationLabel = 'Attendances';
