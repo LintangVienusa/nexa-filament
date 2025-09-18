@@ -56,7 +56,7 @@ class SalarySlipResource extends Resource
                                     )
                                     ->searchable()
                                     ->reactive()
-                                    ->disabled(fn ($record) => $record !== null)
+                                    ->disabled(fn (?SalarySlip $record) => $record !== null)
                                     ->required(),
 
                                 Forms\Components\TextInput::make('employee_id')
@@ -94,7 +94,7 @@ class SalarySlipResource extends Resource
                                         return $periods;
                                     })
                                 ->default(fn () => Carbon::now()->format('F Y'))
-                                ->disabled(fn ($record) => $record !== null)
+                                ->disabled(fn (?SalarySlip $record) => $record !== null)
                                 ->reactive()
                                 ->afterStateUpdated(function ($state, callable $set) {
                                     $date = Carbon::createFromFormat('F Y', $state);
@@ -136,7 +136,8 @@ class SalarySlipResource extends Resource
                 Section::make('Salary Components')
                     ->schema([
                         Repeater::make('components')
-                            ->createItemButtonLabel('Add Component') // ✅ Pindahkan ke sini
+                        // ->visible(fn ($record) => $record !== null)
+                            // ->createItemButtonLabel('Add Component') // ✅ Pindahkan ke sini
                             ->schema([
                                 Select::make('salary_component_id')
                                     ->label('Salary Component')
@@ -268,19 +269,22 @@ class SalarySlipResource extends Resource
                 $name = $c->SalaryComponent->component_name ?? '-';
                 $id = $c->id?? '-';
                 $amount = 'Rp ' . number_format($c->amount, 0, '.', ',');
+                if ($id) {
+                    $editUrl = SalarySlipResource::getUrl('edit', ['record' => $id]);
+                    $editButton = '<a href="'.$editUrl.'" class="text-gray-700 hover:text-blue-600 inline-flex items-center justify-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 11l6-6m-3 3l3 3m0 0l3-3m-3 3V21H3V3h12v6z"/>
+                                        </svg>
+                                    </a>';
 
-                $editUrl = SalarySlipResource::getUrl('edit', ['record' => $id]);
-                $editButton = '<a href="'.$editUrl.'" class="text-gray-700 hover:text-blue-600 inline-flex items-center justify-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 11l6-6m-3 3l3 3m0 0l3-3m-3 3V21H3V3h12v6z"/>
-                                    </svg>
-                                </a>';
-
-                $html .= "<tr class='hover:bg-gray-50 transition'>
-                            <td class='px-4 py-2 text-sm border-none {$colorClass}'>{$name}</td>
-                            <td class='px-4 py-2 text-sm border-none text-right'>{$amount}</td>
-                            <td class='px-4 py-2 text-sm border-none text-center'>{$editButton}</td>
-                        </tr>";
+                    $html .= "<tr class='hover:bg-gray-50 transition'>
+                                <td class='px-4 py-2 text-sm border-none {$colorClass}'>{$name}</td>
+                                <td class='px-4 py-2 text-sm border-none text-right'>{$amount}</td>
+                                <td class='px-4 py-2 text-sm border-none text-center'>{$editButton}</td>
+                            </tr>";
+                }else{
+                    $editButton = '';
+                }
             }
 
             $totalFormatted = 'Rp' . number_format($total, 0, '.', ',');

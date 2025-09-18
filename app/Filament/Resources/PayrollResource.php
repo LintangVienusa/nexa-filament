@@ -150,6 +150,7 @@ class PayrollResource extends Resource
                                         $set('salary_slips_created', $number === '' ? 0 : number_format((int)$number, 0, '.', ','));
                                     })
                                     ->dehydrateStateUsing(fn($state) => preg_replace('/,/', '', $state))
+                                    ->disabled()
                                     ->required(),
 
                                 Forms\Components\TextInput::make('salary_slips_approved')

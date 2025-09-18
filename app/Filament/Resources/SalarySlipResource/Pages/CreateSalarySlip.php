@@ -11,6 +11,12 @@ class CreateSalarySlip extends CreateRecord
 {
     protected static string $resource = SalarySlipResource::class;
 
+    protected function getRedirectUrl(): string
+    {
+        // Setelah create, langsung kembali ke halaman index (table)
+        return $this->getResource()::getUrl('index');
+    }
+
     protected function handleRecordCreation(array $data): SalarySlip
     {
         foreach ($data['components'] as $component) {
