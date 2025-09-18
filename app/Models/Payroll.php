@@ -18,12 +18,6 @@ class Payroll extends Model
         'number_of_employees',
         'start_date',
         'cutoff_date',
-        'basic_salary',
-        'allowances',
-        'deductions',
-        'overtime_pay',
-        'bonus',
-        'gross_salary',
         'salary_slip_number',
         'salary_slips_created',
         'salary_slips_approved',
@@ -77,7 +71,7 @@ class Payroll extends Model
             }
 
             $calc = self::recalculate($payroll->toArray());
-            $payroll->gross_salary = $calc['gross_salary'];
+            // $payroll->gross_salary = $calc['gross_salary'];
             $payroll->salary_slips_created   = $calc['salary_slips_created'];
         });
     }
@@ -135,7 +129,7 @@ class Payroll extends Model
         $net = $gross - $deduct;
 
         return [
-            'gross_salary' => $gross,
+            // 'gross_salary' => $gross,
             'salary_slips_created'   => $net,
         ];
     

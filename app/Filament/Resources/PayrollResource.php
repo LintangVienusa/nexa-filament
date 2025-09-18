@@ -54,19 +54,7 @@ class PayrollResource extends Resource
                                     ->searchable()
                                     ->reactive()
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
-                                        $employee = \App\Models\Employee::find($state);
-
-                                        if ($employee) {
-                                            $set('employee_code', $employee->employee_id);
-
-                                            if (strtolower($employee->job_title) === 'staff') {
-                                                $set('basic_salary', 5000000);
-                                            } elseif (strtolower($employee->job_title) === 'manager') {
-                                                $set('basic_salary', 6000000);
-                                            } else {
-                                                $set('basic_salary', 0);
-                                            }
-                                        }
+                                        
 
                                         if ($state) {
                                             $start = \Carbon\Carbon::parse($get('start_date'));
@@ -130,120 +118,27 @@ class PayrollResource extends Resource
                         Forms\Components\Grid::make(2)
                             ->schema([
 
-                                Forms\Components\TextInput::make('basic_salary')
-                                    ->label('Basic Salary')
-                                    ->numeric()
-                                    ->default(0)
-                                    ->prefix('Rp')
-                                    ->reactive()
-                                    ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {
-                                        $calc = \App\Models\Payroll::recalculate([
-                                            'basic_salary'   => $state,
-                                            'allowances'     => $get('allowances'),
-                                            'overtime_pay'   => $get('overtime_pay'),
-                                            'bonus'          => $get('bonus'),
-                                            'deductions'     => $get('deductions'),
-                                        ]);
-
-                                        $set('gross_salary', $calc['gross_salary']);
-                                        $set('salary_slips_created', $calc['salary_slips_created']);
-                                    })
-                                    ->required(),
-
-                                Forms\Components\TextInput::make('allowances')
-                                    ->numeric()
-                                    ->default(0)
-                                    ->prefix('Rp')
-                                    ->reactive()
-                                    ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {
-                                        $calc = \App\Models\Payroll::recalculate([
-                                            'basic_salary'   => $get('basic_salary'),
-                                            'allowances'     => $state,
-                                            'overtime_pay'   => $get('overtime_pay'),
-                                            'bonus'          => $get('bonus'),
-                                            'deductions'     => $get('deductions'),
-                                        ]);
-
-                                        $set('gross_salary', $calc['gross_salary']);
-                                        $set('salary_slips_created', $calc['salary_slips_created']);
-                                    }),
-
-                                Forms\Components\TextInput::make('overtime_pay')
-                                    ->numeric()
-                                    ->prefix('Rp')
-                                    ->reactive()
-                                    ->readOnly()
-                                    ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {
-                                        $calc = \App\Models\Payroll::recalculate([
-                                            'basic_salary'   => $get('basic_salary'),
-                                            'allowances'     => $get('allowances'),
-                                            'overtime_pay'   => $state,
-                                            'bonus'          => $get('bonus'),
-                                            'deductions'     => $get('deductions'),
-                                        ]);
-
-                                        $set('gross_salary', $calc['gross_salary']);
-                                        $set('salary_slips_created', $calc['salary_slips_created']);
-                                    }),
-
-                                Forms\Components\TextInput::make('bonus')
-                                    ->numeric()
-                                    ->default(0)
-                                    ->prefix('Rp')
-                                    ->reactive()
-                                    ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {
-                                        $calc = \App\Models\Payroll::recalculate([
-                                            'basic_salary'   => $get('basic_salary'),
-                                            'allowances'     => $get('allowances'),
-                                            'overtime_pay'   => $get('overtime_pay'),
-                                            'bonus'          => $state,
-                                            'deductions'     => $get('deductions'),
-                                        ]);
-
-                                        $set('gross_salary', $calc['gross_salary']);
-                                        $set('salary_slips_created', $calc['salary_slips_created']);
-                                    }),
-
-                                Forms\Components\TextInput::make('deductions')
-                                    ->numeric()
-                                    ->default(0)
-                                    ->prefix('Rp')
-                                    ->reactive()
-                                    ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {
-                                        $calc = \App\Models\Payroll::recalculate([
-                                            'basic_salary'   => $get('basic_salary'),
-                                            'allowances'     => $get('allowances'),
-                                            'overtime_pay'   => $get('overtime_pay'),
-                                            'bonus'          => $get('bonus'),
-                                            'deductions'     => $state,
-                                        ]);
-
-                                        $set('gross_salary', $calc['gross_salary']);
-                                        $set('salary_slips_created', $calc['salary_slips_created']);
-                                    }),
-
-                                Forms\Components\TextInput::make('gross_salary')
-                                    ->label('Gross Salary')
-                                    ->prefix('Rp')
-                                    ->disabled()
-                                    ->dehydrated(false),
-
                                 Forms\Components\TextInput::make('salary_slips_created')
                                     ->label('Net Salary')
                                     ->prefix('Rp')
                                     ->disabled()
                                     ->dehydrated(false),
 
+                                Forms\Components\TextInput::make('salary_slips_approved')
+                                    ->label('Salary Approved')
+                                    ->prefix('Rp')
+                                    ->disabled()
+                                    ->dehydrated(false),
+
+                                Forms\Components\Toggle::make('status')
+                                    ->label('Approved')
+                                    ->inline(false),
+
                             ]),
                     ]),
 
-                Forms\Components\TextInput::make('salary_slip_number')
-                    ->unique(ignoreRecord: true)
-                    ->required(),
 
-                Forms\Components\Toggle::make('status')
-                    ->label('Approved')
-                    ->inline(false),
+                
 
             
             ]);
