@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\DB;
 use App\Models\SalaryComponent;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
+
 
 class SalarySlip extends Model
 {
@@ -14,10 +17,16 @@ class SalarySlip extends Model
     protected $primaryKey = 'id';
 
      protected $fillable = [
+        'id',
         'employee_id',
+        'periode',
         'payroll_id',
         'salary_component_id',
         'amount',
+    ];
+
+    protected $casts = [
+        'components' => 'array', 
     ];
 
 
@@ -31,8 +40,14 @@ class SalarySlip extends Model
         return $this->belongsTo(Employee::class, 'employee_id', 'employee_id');
     }
 
+    public function payroll()
+    {
+        return $this->belongsTo(Payroll::class, 'payroll_id', 'id');
+    }
+
     protected static function booted()
     {
+        parent::boot();
         static::creating(function ($model) {
             $exists = static::where('employee_id', $model->employee_id)
                 ->where('salary_component_id', $model->salary_component_id)
@@ -44,6 +59,93 @@ class SalarySlip extends Model
                 ]);
             }
         });
+
+        static::creating(function ($salarySlip) {
+            
+            $periodeCarbon = $salarySlip->periode
+                        ? Carbon::createFromFormat('F Y', $salarySlip->periode)
+                        : Carbon::now();
+             $periodeString = $periodeCarbon->format('F Y');
+            $startDate = $periodeCarbon->copy()->startOfMonth()->format('Y-m-d');
+            $endDate = $periodeCarbon->copy()->endOfMonth()->format('Y-m-d');
+
+            $payroll = Payroll::where('employee_id', $salarySlip->employee_id)
+            ->where('periode', $periodeString)
+            ->first();
+
+            if ($payroll) {
+                
+                $salarySlip->payroll_id = $payroll->id;
+                // $payroll->salary_slips_created = ($payroll->salary_slips_created ?? 0) + ($salarySlip->amount ?? 0);
+                // $payroll->save();
+            }else{
+                    
+                $payroll = Payroll::create([
+                    'employee_id'           => $salarySlip->employee_id,
+                    'number_of_employees'   => '0',
+                    'periode'               => $periodeString ?? Carbon::now()->format('F Y'),
+                    'start_date'            => $startDate,
+                    'cut_off'               => $endDate,
+                    'status'                => 0,
+                    'salary_slips_created'  => $salarySlip->amount ?? 0,
+                    'created_by'            => Auth::user()->email,
+                ]);
+                $salarySlip->payroll_id = $payroll->id;
+                             
+            }
+            
+            
+            
+           
+            
+        });
+
+        static::created(function ($salarySlip) {
+            
+            $periodeCarbon = $salarySlip->periode
+                        ? Carbon::createFromFormat('F Y', $salarySlip->periode)
+                        : Carbon::now();
+             $periodeString = $periodeCarbon->format('F Y');
+
+           // Total Allowance
+            $ta = SalarySlip::where('employee_id', $salarySlip->employee_id)
+                ->where('periode', $periodeString)
+                ->whereHas('salaryComponent', function ($q) {
+                    $q->where('component_type', 0); // Allowance
+                })
+                ->sum('amount');
+
+            // Total Deduction
+            $td = SalarySlip::where('employee_id', $salarySlip->employee_id)
+                ->where('periode', $periodeString)
+                ->whereHas('salaryComponent', function ($q) {
+                    $q->where('component_type', 1); // Deduction
+                })
+                ->sum('amount');
+
+            $payroll = Payroll::where('employee_id', $salarySlip->employee_id)
+            ->where('periode', $periodeString)
+            ->first();
+            \Log::info('Sebelum update', [
+                'salary_slips_created' => $payroll->salary_slips_created,
+                'ta' => $ta,
+                'td' => $td,
+            ]);
+            if ($payroll) {
+                    $total = (int)$ta - (int)$td;
+                    DB::connection('mysql_employees')
+                        ->table('Payrolls')
+                        ->where('id', $payroll->id)
+                        ->update(['salary_slips_created' => $total, 'salary_slips_approved' => $total]);
+                    // $payroll->salary_slips_created = (int)$ta - (int)$td; // allowance - deduction
+                    // $payroll->save();
+
+                    $payroll->refresh();
+                    \Log::info('Updated payroll', $payroll->toArray());
+                }
+        });
+
+        
     }
 
      protected $appends = ['full_name'];

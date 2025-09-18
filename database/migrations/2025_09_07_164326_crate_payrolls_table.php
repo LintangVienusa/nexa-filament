@@ -16,15 +16,9 @@ return new class extends Migration
             $table->string('employee_id', 20);
             $table->string('periode');
             $table->boolean('status')->comment('2=paid, 1=approve, 0=draft')->default(0);
-            $table->integer('number_of_employees');
+            $table->integer('number_of_employees')->default(0);
             $table->date('start_date');
             $table->date('cutoff_date');
-            $table->decimal('allowances', 15, 2)->default(0);
-            $table->decimal('deductions', 15, 2)->default(0);
-            $table->decimal('overtime_pay', 15, 2)->default(0);
-            $table->decimal('bonus', 15, 2)->default(0);
-            $table->decimal('gross_salary', 15, 2)->default(0);
-            $table->integer('salary_slips_id')->default(0);
             $table->integer('salary_slips_created')->default(0);
             $table->integer('salary_slips_approved')->default(0);
             $table->string('created_by');

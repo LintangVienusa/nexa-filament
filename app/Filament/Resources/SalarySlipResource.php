@@ -24,8 +24,10 @@ use Filament\Tables\Columns\Layout\Stack;
 use Filament\Tables\Columns\Layout\Panel;
 use Filament\Tables\Columns\TextColumn\Badge;
 use Filament\Notifications\Notification;
+use Carbon\Carbon;
 use App\Models\SalaryComponent;
 use App\Models\Employee;
+use App\Models\Payroll;
 
 class SalarySlipResource extends Resource
 {
@@ -54,17 +56,88 @@ class SalarySlipResource extends Resource
                                     )
                                     ->searchable()
                                     ->reactive()
+                                    ->disabled(fn (?SalarySlip $record) => $record !== null)
                                     ->required(),
 
                                 Forms\Components\TextInput::make('employee_id')
                                     ->label('Employee ID')
                                     ->disabled()
-                                    ->dehydrated(false),
+                                    ->dehydrated(false)
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                        
+
+                                        if ($state) {
+                                            $start = \Carbon\Carbon::parse($get('start_date'));
+                                            $end = \Carbon\Carbon::parse($get('cutoff_date'));
+
+                                            $overtime = \App\Models\Payroll::calculateOvertime($state, $start, $end);
+                                            $set('overtime_pay', $overtime);
+                                        }
+                                    })
+                                    ->required(),
                             ]),
+                            
                     ]),
+
+               Section::make('Payroll Period')
+                    ->schema([
+                            Select::make('periode')
+                                ->label('Periode')
+                                ->options(function () {
+                                        // buat daftar periode 12 bulan terakhir
+                                        $periods = [];
+                                        for ($i = 0; $i < 12; $i++) {
+                                            $period = Carbon::now()->subMonths($i)->format('F Y');
+                                            $periods[$period] = $period;
+                                        }
+                                        return $periods;
+                                    })
+                                ->default(fn () => Carbon::now()->format('F Y'))
+                                ->disabled(fn (?SalarySlip $record) => $record !== null)
+                                ->reactive()
+                                ->afterStateUpdated(function ($state, callable $set) {
+                                    $date = Carbon::createFromFormat('F Y', $state);
+                                    $set('start_date', $date->copy()->startOfMonth()->toDateString());
+                                    $set('cut_off', $date->copy()->endOfMonth()->toDateString());
+                                })
+                                ->required()
+                                ->columnSpan(6),
+
+                            Forms\Components\DatePicker::make('start_date')
+                                ->label('Start Date')
+                                ->afterStateHydrated(function (callable $set, $record) {
+                                    if ($record?->periode) {
+                                        $periode = Carbon::createFromFormat('F Y', $record->periode);
+                                        $set('start_date', $periode->copy()->startOfMonth()->toDateString());
+                                    }
+                                })
+                                ->disabled()
+                                ->required()
+                                ->columnSpan(3),
+
+                            Forms\Components\DatePicker::make('cut_off')
+                                ->label('Cut Off Date')
+                                ->afterStateHydrated(function (callable $set, $record) {
+                                    if ($record?->periode) {
+                                        $periode = Carbon::createFromFormat('F Y', $record->periode);
+                                        $set('cut_off', $periode->copy()->endOfMonth()->toDateString());
+                                    }
+                                })
+                                ->disabled()
+                                ->required()
+                                ->columnSpan(3),
+                                
+                            
+                        ])
+                    
+                    ->columns(12),
+                
                 Section::make('Salary Components')
-                    // ->schema([
-                        // Repeater::make('components')
+                    ->schema([
+                        Repeater::make('components')
+                        // ->visible(fn ($record) => $record !== null)
+                            // ->createItemButtonLabel('Add Component') // ✅ Pindahkan ke sini
                             ->schema([
                                 Select::make('salary_component_id')
                                     ->label('Salary Component')
@@ -85,6 +158,7 @@ class SalarySlipResource extends Resource
                                         if (!$employeeId || !$state) return;
 
                                         $exists = SalarySlip::where('employee_id', $employeeId)
+                                            ->where('periode', $state)
                                             ->where('salary_component_id', $state)
                                             ->exists();
 
@@ -95,43 +169,31 @@ class SalarySlipResource extends Resource
                                                 ->danger()
                                                 ->send();
 
-                                                $set('salary_component_id', null);
+                                            $set('salary_component_id', null);
                                         }
                                     })
                                     ->required(),
 
-                                Select::make('salary_component_id')
-                                    ->label('Salary Component type')
-                                    ->options(function () {
-                                        return SalaryComponent::all()->mapWithKeys(fn($c) => [
-                                            $c->id => ($c->component_type == 0 ? 'Allowance' : 'Deduction'),
-                                        ]);
-                                    })
-                                    ->disabled()
-                                    ->required(),
+                                Select::make('salary_component_id') ->label('Salary Component type') ->options(function () { return SalaryComponent::all()->mapWithKeys(fn($c) => [ $c->id => ($c->component_type == 0 ? 'Allowance' : 'Deduction'), ]); }) ->disabled() ->required(),
 
                                 TextInput::make('amount')
                                     ->label('Amount')
                                     ->prefix('Rp')
                                     ->reactive()
-                                    ->formatStateUsing(function ($state) {
-                                        return $state ? number_format((int) $state, 0, '.', ',') : '';
-                                    })
+                                    ->formatStateUsing(fn($state) => $state ? number_format((int)$state, 0, '.', ',') : '')
                                     ->afterStateUpdated(function ($state, callable $set) {
                                         $number = preg_replace('/[^0-9]/', '', $state);
-                                        // $set('amount', $numeric === '' ? 0 : (int) $numeric);
-                                        $set('amount', $number === '' ? 0 : number_format((int) $number, 0, '.', ','));
+                                        $set('amount', $number === '' ? 0 : number_format((int)$number, 0, '.', ','));
                                     })
-                                    ->dehydrateStateUsing(function ($state) {
-                                        return preg_replace('/\,/', '', $state);
-                                    })
+                                    ->dehydrateStateUsing(fn($state) => preg_replace('/,/', '', $state))
                                     ->required(),
                             ])
                             ->columns(2),
-                    // ])
-                    // ->columns(1),
+                    ])
+                    ->columns(1)
             ]);
     }
+
 
     public static function table(Table $table): Table
     {
@@ -139,13 +201,18 @@ class SalarySlipResource extends Resource
             ->query(SalarySlip::uniqueEmployee())
             ->columns([
                  
-                TextColumn::make('employee_id')->label('Employee ID')->sortable()->searchable(),
-                TextColumn::make('full_name')
-                    ->label('Employee Name')
-                    ->sortable()
-                    ->searchable(),
+                Split::make([
+                    TextColumn::make('employee_id')
+                        ->label('Employee ID')
+                        ->sortable()
+                        ->searchable(),
 
-                // Panel collapsible — akan muncul sebagai kolom yang bisa di-expand
+                    TextColumn::make('full_name')
+                        ->label('Employee Name')
+                        ->sortable()
+                        ->searchable(),
+                ]),
+
                 Panel::make([
                     TextColumn::make('components')
                         ->label('Salary Components')
@@ -154,9 +221,10 @@ class SalarySlipResource extends Resource
                         })
                     ->html()
                 ])
-                ->collapsible() // <-- INI membuatnya bisa dibuka/tutup
-                ->collapsed(true) // default collapsed (opsional)
-                ->columnSpanFull(), // biar panel ambil seluruh baris (opsional)
+                ->collapsible() 
+                ->collapsed(true) 
+                ->columnSpanFull()
+                ->extraAttributes(['class' => '!max-w-none w-full']), 
             ])
             ->filters([
                 
@@ -187,39 +255,42 @@ class SalarySlipResource extends Resource
             }
 
             $total = $items->sum('amount');
-            $html = "<div class='mb-2'><strong class='block mb-1'>{$typeLabel}</strong>";
-            $html .= '<table class="w-full text-left border-collapse">';
+            $html = "<div class='mb-4'><strong class='block mb-2'>{$typeLabel}</strong>";
+            $html .= '<table class="w-full text-left border-collapse table-auto">';
             $html .= '<thead>
                         <tr>
-                            <th class="px-2 py-1 text-sm border-none">Component</th>
-                            <th class="px-2 py-1 text-sm border-none text-right">Amount</th>
-                            <th class="px-2 py-1 text-sm border-none text-center">Edit</th>
+                            <th class="px-4 py-2 text-sm border-none">Component</th>
+                            <th class="px-4 py-2 text-sm border-none text-right">Amount</th>
+                            <th class="px-4 py-2 text-sm border-none text-center"></th>
                         </tr>
                     </thead><tbody>';
 
             foreach ($items as $c) {
                 $name = $c->SalaryComponent->component_name ?? '-';
-                $id = $c->SalarySlips->id?? '-';
-                $amount = 'Rp' . number_format($c->amount, 0, '.', ',');
+                $id = $c->id?? '-';
+                $amount = 'Rp ' . number_format($c->amount, 0, '.', ',');
+                if ($id) {
+                    $editUrl = SalarySlipResource::getUrl('edit', ['record' => $id]);
+                    $editButton = '<a href="'.$editUrl.'" class="text-gray-700 hover:text-blue-600 inline-flex items-center justify-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 11l6-6m-3 3l3 3m0 0l3-3m-3 3V21H3V3h12v6z"/>
+                                        </svg>
+                                    </a>';
 
-                $editUrl = SalarySlipResource::getUrl('edit', ['record' => $id]);
-                $editButton = '<a href="'.$editUrl.'" class="text-gray-700 hover:text-blue-600 inline-flex items-center justify-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 11l6-6m-3 3l3 3m0 0l3-3m-3 3V21H3V3h12v6z"/>
-                                    </svg>
-                                </a>';
-
-                $html .= "<tr class='hover:bg-gray-50 transition'>
-                            <td class='px-2 py-1 text-sm border-none {$colorClass}'>{$name}</td>
-                            <td class='px-2 py-1 text-sm border-none text-right'>{$amount}</td>
-                            <td class='px-2 py-1 text-sm border-none text-center'>{$editButton}</td>
-                        </tr>";
+                    $html .= "<tr class='hover:bg-gray-50 transition'>
+                                <td class='px-4 py-2 text-sm border-none {$colorClass}'>{$name}</td>
+                                <td class='px-4 py-2 text-sm border-none text-right'>{$amount}</td>
+                                <td class='px-4 py-2 text-sm border-none text-center'>{$editButton}</td>
+                            </tr>";
+                }else{
+                    $editButton = '';
+                }
             }
 
             $totalFormatted = 'Rp' . number_format($total, 0, '.', ',');
             $html .= "<tr class='font-semibold {$colorClass}'>
-                        <td class='px-2 py-1 border-none'>Total</td>
-                        <td class='px-2 py-1 text-right border-none'>{$totalFormatted}</td>
+                        <td class='px-4 py-2 border-none'>Total</td>
+                        <td class='px-4 py-2 text-right border-none'>{$totalFormatted}</td>
                         <td class='border-none'></td>
                     </tr>";
 
@@ -228,8 +299,7 @@ class SalarySlipResource extends Resource
             return $html;
         };
 
-        // Flex container untuk side by side
-        $html = '<div class="flex w-full gap-8 justify-between">';
+        $html = '<div class="flex w-full max-w-none gap-8 justify-between">';
         $html .= '<div class="flex-1">' . $renderTable($allowances, 'Allowance', 'text-green-600') . '</div>';
         $html .= '<div class="flex-1">' . $renderTable($deductions, 'Deduction', 'text-red-600') . '</div>';
         $html .= '</div>';

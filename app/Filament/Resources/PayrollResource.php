@@ -12,12 +12,22 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Forms\Components\TextInput\Mask;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\Layout\Split;
+use Filament\Tables\Columns\Layout\Stack;
+use Filament\Tables\Columns\Layout\Panel;
+use Filament\Tables\Columns\TextColumn\Badge;
+use Filament\Tables\Columns\BooleanColumn;
 use Carbon\Carbon;
 use App\Models\Employee;
+use App\Models\SalarySlip;
 
 class PayrollResource extends Resource
 {
     protected static ?string $model = Payroll::class;
+    
+    protected static ?string $permissionPrefix = 'employees';
 
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
     protected static ?string $navigationGroup = 'HR Management';
@@ -54,19 +64,7 @@ class PayrollResource extends Resource
                                     ->searchable()
                                     ->reactive()
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
-                                        $employee = \App\Models\Employee::find($state);
-
-                                        if ($employee) {
-                                            $set('employee_code', $employee->employee_id);
-
-                                            if (strtolower($employee->job_title) === 'staff') {
-                                                $set('basic_salary', 5000000);
-                                            } elseif (strtolower($employee->job_title) === 'manager') {
-                                                $set('basic_salary', 6000000);
-                                            } else {
-                                                $set('basic_salary', 0);
-                                            }
-                                        }
+                                        
 
                                         if ($state) {
                                             $start = \Carbon\Carbon::parse($get('start_date'));
@@ -78,7 +76,7 @@ class PayrollResource extends Resource
                                     })
                                     ->required(),
 
-                                Forms\Components\TextInput::make('employee_code')
+                                Forms\Components\TextInput::make('employee_id')
                                     ->label('Employee ID')
                                     ->disabled()
                                     ->dehydrated(false),
@@ -102,7 +100,7 @@ class PayrollResource extends Resource
                                 ->reactive()
                                 ->afterStateUpdated(function ($state, callable $set) {
                                     $date = Carbon::createFromFormat('F Y', $state);
-                                    $set('start', $date->copy()->startOfMonth()->toDateString());
+                                    $set('start_date', $date->copy()->startOfMonth()->toDateString());
                                     $set('cut_off', $date->copy()->endOfMonth()->toDateString());
                                 })
                                 ->required()
@@ -111,12 +109,24 @@ class PayrollResource extends Resource
                             Forms\Components\DatePicker::make('start_date')
                                 ->label('Start Date')
                                 ->default(fn () => Carbon::now()->startOfMonth()->toDateString())
+                                ->afterStateHydrated(function (callable $set, $record) {
+                                    if ($record?->periode) {
+                                        $periode = Carbon::createFromFormat('F Y', $record->periode);
+                                        $set('start_date', $periode->copy()->startOfMonth()->toDateString());
+                                    }
+                                })
                                 ->required()
                                 ->columnSpan(3),
 
                             Forms\Components\DatePicker::make('cut_off')
                                 ->label('Cut Off Date')
                                 ->default(fn () => Carbon::now()->endOfMonth()->toDateString())
+                                 ->afterStateHydrated(function (callable $set, $record) {
+                                    if ($record?->periode) {
+                                        $periode = Carbon::createFromFormat('F Y', $record->periode);
+                                        $set('cut_off', $periode->copy()->endOfMonth()->toDateString());
+                                    }
+                                })
                                 ->required()
                                 ->columnSpan(3),
                             
@@ -130,120 +140,40 @@ class PayrollResource extends Resource
                         Forms\Components\Grid::make(2)
                             ->schema([
 
-                                Forms\Components\TextInput::make('basic_salary')
-                                    ->label('Basic Salary')
-                                    ->numeric()
-                                    ->default(0)
+                                Forms\Components\TextInput::make('salary_slips_created')
+                                    ->label('Salary Created')
                                     ->prefix('Rp')
                                     ->reactive()
-                                    ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {
-                                        $calc = \App\Models\Payroll::recalculate([
-                                            'basic_salary'   => $state,
-                                            'allowances'     => $get('allowances'),
-                                            'overtime_pay'   => $get('overtime_pay'),
-                                            'bonus'          => $get('bonus'),
-                                            'deductions'     => $get('deductions'),
-                                        ]);
-
-                                        $set('gross_salary', $calc['gross_salary']);
-                                        $set('salary_slips_created', $calc['salary_slips_created']);
+                                    ->formatStateUsing(fn($state) => $state ? number_format((int)$state, 0, '.', ',') : '')
+                                    ->afterStateUpdated(function ($state, callable $set) {
+                                        $number = preg_replace('/[^0-9]/', '', $state);
+                                        $set('salary_slips_created', $number === '' ? 0 : number_format((int)$number, 0, '.', ','));
                                     })
+                                    ->dehydrateStateUsing(fn($state) => preg_replace('/,/', '', $state))
+                                    ->disabled()
                                     ->required(),
 
-                                Forms\Components\TextInput::make('allowances')
-                                    ->numeric()
-                                    ->default(0)
+                                Forms\Components\TextInput::make('salary_slips_approved')
+                                    ->label('Salary Approved')
                                     ->prefix('Rp')
                                     ->reactive()
-                                    ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {
-                                        $calc = \App\Models\Payroll::recalculate([
-                                            'basic_salary'   => $get('basic_salary'),
-                                            'allowances'     => $state,
-                                            'overtime_pay'   => $get('overtime_pay'),
-                                            'bonus'          => $get('bonus'),
-                                            'deductions'     => $get('deductions'),
-                                        ]);
+                                    ->formatStateUsing(fn($state) => $state ? number_format((int)$state, 0, '.', ',') : '')
+                                    ->afterStateUpdated(function ($state, callable $set) {
+                                        $number = preg_replace('/[^0-9]/', '', $state);
+                                        $set('salary_slips_approved', $number === '' ? 0 : number_format((int)$number, 0, '.', ','));
+                                    })
+                                    ->dehydrateStateUsing(fn($state) => preg_replace('/,/', '', $state))
+                                    ->required(),
 
-                                        $set('gross_salary', $calc['gross_salary']);
-                                        $set('salary_slips_created', $calc['salary_slips_created']);
-                                    }),
-
-                                Forms\Components\TextInput::make('overtime_pay')
-                                    ->numeric()
-                                    ->prefix('Rp')
-                                    ->reactive()
-                                    ->readOnly()
-                                    ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {
-                                        $calc = \App\Models\Payroll::recalculate([
-                                            'basic_salary'   => $get('basic_salary'),
-                                            'allowances'     => $get('allowances'),
-                                            'overtime_pay'   => $state,
-                                            'bonus'          => $get('bonus'),
-                                            'deductions'     => $get('deductions'),
-                                        ]);
-
-                                        $set('gross_salary', $calc['gross_salary']);
-                                        $set('salary_slips_created', $calc['salary_slips_created']);
-                                    }),
-
-                                Forms\Components\TextInput::make('bonus')
-                                    ->numeric()
-                                    ->default(0)
-                                    ->prefix('Rp')
-                                    ->reactive()
-                                    ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {
-                                        $calc = \App\Models\Payroll::recalculate([
-                                            'basic_salary'   => $get('basic_salary'),
-                                            'allowances'     => $get('allowances'),
-                                            'overtime_pay'   => $get('overtime_pay'),
-                                            'bonus'          => $state,
-                                            'deductions'     => $get('deductions'),
-                                        ]);
-
-                                        $set('gross_salary', $calc['gross_salary']);
-                                        $set('salary_slips_created', $calc['salary_slips_created']);
-                                    }),
-
-                                Forms\Components\TextInput::make('deductions')
-                                    ->numeric()
-                                    ->default(0)
-                                    ->prefix('Rp')
-                                    ->reactive()
-                                    ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {
-                                        $calc = \App\Models\Payroll::recalculate([
-                                            'basic_salary'   => $get('basic_salary'),
-                                            'allowances'     => $get('allowances'),
-                                            'overtime_pay'   => $get('overtime_pay'),
-                                            'bonus'          => $get('bonus'),
-                                            'deductions'     => $state,
-                                        ]);
-
-                                        $set('gross_salary', $calc['gross_salary']);
-                                        $set('salary_slips_created', $calc['salary_slips_created']);
-                                    }),
-
-                                Forms\Components\TextInput::make('gross_salary')
-                                    ->label('Gross Salary')
-                                    ->prefix('Rp')
-                                    ->disabled()
-                                    ->dehydrated(false),
-
-                                Forms\Components\TextInput::make('salary_slips_created')
-                                    ->label('Net Salary')
-                                    ->prefix('Rp')
-                                    ->disabled()
-                                    ->dehydrated(false),
+                                Forms\Components\Toggle::make('status')
+                                    ->label('Approved')
+                                    ->inline(false),
 
                             ]),
                     ]),
 
-                Forms\Components\TextInput::make('salary_slip_number')
-                    ->unique(ignoreRecord: true)
-                    ->required(),
 
-                Forms\Components\Toggle::make('status')
-                    ->label('Approved')
-                    ->inline(false),
+                
 
             
             ]);
@@ -253,17 +183,31 @@ class PayrollResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('employee_id'),
-                Tables\Columns\TextColumn::make('periode')->sortable()->searchable(),
-                Tables\Columns\BooleanColumn::make('status')->label('Closed?'),
-                Tables\Columns\TextColumn::make('number_of_employees'),
-                Tables\Columns\TextColumn::make('start_date')->date(),
-                Tables\Columns\TextColumn::make('cutoff_date')->date(),
-                Tables\Columns\TextColumn::make('salary_slips_created'),
-                Tables\Columns\TextColumn::make('salary_slips_approved'),
-                Tables\Columns\TextColumn::make('created_by'),
-                Tables\Columns\TextColumn::make('updated_by'),
-                Tables\Columns\TextColumn::make('created_at')->dateTime(),
+                Split::make([
+                    TextColumn::make('employee_id'),
+                    TextColumn::make('periode')->sortable()->searchable(),
+                    BooleanColumn::make('status')->label('Status'),
+                    TextColumn::make('number_of_employees'),
+                    TextColumn::make('start_date')->date(),
+                    TextColumn::make('cutoff_date')->date(),
+                    TextColumn::make('salary_slips_created')
+                    ->formatStateUsing(fn($state) => $state ? number_format((int)$state, 0, '.', ',') : '')
+                                    ,
+                    TextColumn::make('salary_slips_approved')
+                    ->formatStateUsing(fn($state) => $state ? number_format((int)$state, 0, '.', ',') : '')
+                                    ,
+                    TextColumn::make('created_by'),
+                    TextColumn::make('updated_by'),
+                    TextColumn::make('created_at')->dateTime(),
+                ]),
+
+                Panel::make([
+                    TextColumn::make('salary_slips')
+                        ->label('Salary Slips')
+                        ->getStateUsing(fn ($record) => self::renderComponentsSideBySide($record->id))
+                        ->html(),
+                ])
+                ->collapsible(),
             ])
             ->filters([
                 //
@@ -276,6 +220,70 @@ class PayrollResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    protected static function renderComponentsSideBySide($payrollId): string
+    {
+        $components = SalarySlip::with('SalaryComponent')
+            ->where('payroll_id', $payrollId)
+            ->get();
+
+        $allowances = $components->where('SalaryComponent.component_type', 0);
+        $deductions = $components->where('SalaryComponent.component_type', 1);
+
+        $renderTable = function($items, $typeLabel, $colorClass) {
+            if ($items->isEmpty()) {
+                return "<div class='text-gray-500'>{$typeLabel}: None</div>";
+            }
+
+            $total = $items->sum('amount');
+            $html = "<div class='mb-4'><strong class='block mb-2'>{$typeLabel}</strong>";
+            $html .= '<table class="w-full text-left border-collapse table-auto">';
+            $html .= '<thead>
+                        <tr>
+                            <th class="px-4 py-2 text-sm border-none">Component</th>
+                            <th class="px-4 py-2 text-sm border-none text-right">Amount</th>
+                            <th class="px-4 py-2 text-sm border-none text-center"></th>
+                        </tr>
+                    </thead><tbody>';
+
+            foreach ($items as $c) {
+                $name = $c->SalaryComponent->component_name ?? '-';
+                $id = $c->id ?? '-';
+                $amount = 'Rp ' . number_format($c->amount, 0, '.', ',');
+
+                $editUrl = \App\Filament\Resources\SalarySlipResource::getUrl('edit', ['record' => $id]);
+                $editButton = '<a href="'.$editUrl.'" class="text-gray-700 hover:text-blue-600 inline-flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 11l6-6m-3 3l3 3m0 0l3-3m-3 3V21H3V3h12v6z"/>
+                                    </svg>
+                                </a>';
+
+                $html .= "<tr class='hover:bg-gray-50 transition'>
+                            <td class='px-4 py-2 text-sm border-none {$colorClass}'>{$name}</td>
+                            <td class='px-4 py-2 text-sm border-none text-right'>{$amount}</td>
+                            <td class='px-4 py-2 text-sm border-none text-center'>{$editButton}</td>
+                        </tr>";
+            }
+
+            $totalFormatted = 'Rp' . number_format($total, 0, '.', ',');
+            $html .= "<tr class='font-semibold {$colorClass}'>
+                        <td class='px-4 py-2 border-none'>Total</td>
+                        <td class='px-4 py-2 text-right border-none'>{$totalFormatted}</td>
+                        <td class='border-none'></td>
+                    </tr>";
+
+            $html .= '</tbody></table></div>';
+
+            return $html;
+        };
+
+        $html = '<div class="flex w-full max-w-none gap-8 justify-between">';
+        $html .= '<div class="flex-1">' . $renderTable($allowances, 'Allowance', 'text-green-600') . '</div>';
+        $html .= '<div class="flex-1">' . $renderTable($deductions, 'Deduction', 'text-red-600') . '</div>';
+        $html .= '</div>';
+
+        return $html;
     }
 
     public static function getRelations(): array
