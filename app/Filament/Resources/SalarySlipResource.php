@@ -24,6 +24,7 @@ use Filament\Tables\Columns\Layout\Stack;
 use Filament\Tables\Columns\Layout\Panel;
 use Filament\Tables\Columns\TextColumn\Badge;
 use Filament\Notifications\Notification;
+use Filament\Forms\Components\DatePicker;
 use Carbon\Carbon;
 use App\Models\SalaryComponent;
 use App\Models\Employee;
@@ -45,7 +46,7 @@ class SalarySlipResource extends Resource
             ->schema([
                 Forms\Components\Section::make('Employee Information')
                     ->schema([
-                        Forms\Components\Grid::make(2) // ← Bagi jadi 2 kolom
+                        Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\Select::make('employee_id')
                                     ->label('Employee')
@@ -85,7 +86,7 @@ class SalarySlipResource extends Resource
                             Select::make('periode')
                                 ->label('Periode')
                                 ->options(function () {
-                                        // buat daftar periode 12 bulan terakhir
+                                        
                                         $periods = [];
                                         for ($i = 0; $i < 12; $i++) {
                                             $period = Carbon::now()->subMonths($i)->format('F Y');
@@ -136,8 +137,7 @@ class SalarySlipResource extends Resource
                 Section::make('Salary Components')
                     ->schema([
                         Repeater::make('components')
-                        // ->visible(fn ($record) => $record !== null)
-                            // ->createItemButtonLabel('Add Component') // ✅ Pindahkan ke sini
+                        
                             ->schema([
                                 Select::make('salary_component_id')
                                     ->label('Salary Component')
