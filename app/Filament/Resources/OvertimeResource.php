@@ -15,12 +15,14 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Columns\BadgeColumn;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Attendance;
 
 class OvertimeResource extends Resource
 {
     protected static ?string $model = Overtime::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-clock';
+    protected static ?string $permissionPrefix = 'employees';
     protected static ?string $navigationGroup = 'HR Management';
     protected static ?string $navigationLabel = 'Overtimes';
 
@@ -40,12 +42,75 @@ class OvertimeResource extends Resource
     {
         return $form
         ->schema([
-            Forms\Components\Hidden::make('attendance_id')
-                ->default(fn () => \App\Models\Overtime::getLatestAttendanceId())
-                ->required(),
+            
             Forms\Components\Hidden::make('employee_id')
                     ->default(fn () => auth()->user()->employee?->employee_id)
                     ->visible(fn () => auth()->user()->isStaff()),
+            Forms\Components\DatePicker::make('overtime_date')
+                ->label('Overtime Date')
+                ->required()
+                ->minDate(fn ($get) => Attendance::where('employee_id', $get('employee_id'))->min('attendance_date'))
+                ->maxDate(fn ($get) => Attendance::where('employee_id', $get('employee_id'))->max('attendance_date'))
+                ->disabledDates(function ($get) {
+                    $employee_id = $get('employee_id');
+                    if (!$employee_id) {
+                        return [];
+                    }
+
+                    // Ambil semua tanggal valid
+                    $validDates = Attendance::where('employee_id', $employee_id)
+                        ->pluck('attendance_date')
+                        ->map(fn ($d) => \Carbon\Carbon::parse($d)->toDateString())
+                        ->toArray();
+
+                    if (empty($validDates)) {
+                        return [];
+                    }
+
+                    // Ambil range min → max
+                    $min = min($validDates);
+                    $max = max($validDates);
+
+                    // Generate semua tanggal dari min sampai max
+                    $allDates = collect(\Carbon\CarbonPeriod::create($min, $max))
+                        ->map(fn ($d) => $d->toDateString())
+                        ->toArray();
+
+                    // Disable semua tanggal kecuali yang ada di attendance
+                    return array_diff($allDates, $validDates);
+                })
+                ->rule(function (\Filament\Forms\Get $get) {
+                    return function (string $attribute, $value, \Closure $fail) use ($get) {
+                        $employeeId = $get('employee_id');
+
+                        if (!$employeeId || !$value) {
+                            return;
+                        }
+
+                        $exists = Attendance::where('employee_id', $employeeId)
+                            ->whereDate('attendance_date', $value)
+                            ->exists();
+
+                        if (! $exists) {
+                            $fail("The selected date ($value) is not available in attendance records.");
+                        }
+                    };
+                })
+                ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                    $employeeId = $get('employee_id');
+
+                    if ($employeeId && $state) {
+                        $attendanceId = Attendance::where('employee_id', $employeeId)
+                            ->whereDate('attendance_date', $state)
+                            ->value('id');
+
+                        $set('attendance_id', $attendanceId);
+                    } else {
+                        $set('attendance_id', null);
+                    }
+                }),
+           Forms\Components\Hidden::make('attendance_id')
+                ->required(),
 
             Forms\Components\TimePicker::make('start_time')
                 ->label('Start Time')
