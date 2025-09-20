@@ -32,10 +32,6 @@ return new class extends Migration
                   ->onDelete('cascade');
 
             $table->index('job_id');
-            $table->foreign('job_id')
-                  ->references('id')
-                  ->on('Jobs')
-                  ->onDelete('cascade');
             $table->index('employee_id');
             $table->foreign('employee_id')->references('employee_id')->on('Employees')->onDelete('cascade');
 
