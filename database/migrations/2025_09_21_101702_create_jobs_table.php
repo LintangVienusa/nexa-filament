@@ -11,10 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-         Schema::connection('mysql_employees')->create('Jobs', function (Blueprint $table) {
+        Schema::connection('mysql_employees')->create('Jobs', function (Blueprint $table) {
             $table->id();
-            $table->text('job_name');
-            $table->decimal('job_duration', 8, 2);
+            $table->foreignId('timesheet_id')->constrained('Timesheets')->cascadeOnDelete();
+            $table->decimal('job_duration', 5, 2);
+            $table->text('job_description')->nullable();
             $table->timestamps();
         });
     }

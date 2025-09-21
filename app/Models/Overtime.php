@@ -33,8 +33,7 @@ class Overtime extends Model
         'description',
         'job_id',
         'created_by',
-        'created_at',
-        'updated_at',
+        'updated_by'
     ];
 
     protected $appends = ['full_name'];
@@ -87,8 +86,4 @@ class Overtime extends Model
             ->latest('id')
             ->value('id');
     }
-
-
-
-
 }

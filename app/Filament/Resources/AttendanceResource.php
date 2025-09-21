@@ -36,7 +36,7 @@ class AttendanceResource extends Resource
         return $form
             ->schema([
                 Select::make('employee_id')
-                    ->relationship('employee', 'employee_id') // atau bisa 'email' kalau mau
+                    ->relationship('employee', 'employee_id')
                     ->searchable()
                     ->required(),
                 DatePicker::make('attendance_date')
