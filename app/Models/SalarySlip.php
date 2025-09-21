@@ -126,11 +126,7 @@ class SalarySlip extends Model
             $payroll = Payroll::where('employee_id', $salarySlip->employee_id)
             ->where('periode', $periodeString)
             ->first();
-            \Log::info('Sebelum update', [
-                'salary_slips_created' => $payroll->salary_slips_created,
-                'ta' => $ta,
-                'td' => $td,
-            ]);
+            
             if ($payroll) {
                     $total = (int)$ta - (int)$td;
                     DB::connection('mysql_employees')
@@ -141,7 +137,7 @@ class SalarySlip extends Model
                     // $payroll->save();
 
                     $payroll->refresh();
-                    \Log::info('Updated payroll', $payroll->toArray());
+                    
                 }
         });
 

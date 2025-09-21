@@ -15,8 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('service_name');
             $table->string('unit')->nullable();
-            $table->decimal('price', 15, 2)->default(0);
-            $table->string('phone')->nullable();
+            $table->integer('price')->default(0);
             $table->timestamps();
         });
     }
