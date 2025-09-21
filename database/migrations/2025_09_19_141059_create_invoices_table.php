@@ -16,16 +16,15 @@ return new class extends Migration
             $table->string('invoice_number')->unique();
             $table->foreignId('customer_id')->constrained('Customers')->cascadeOnDelete();
             $table->date('invoice_date');
-            $table->decimal('subtotal', 15, 2)->default(0);
+            $table->integer('subtotal')->default(0);
             $table->decimal('tax_rate', 5, 2)->default(0);
-            $table->decimal('tax_amount', 15, 2)->default(0);
-            $table->decimal('amount', 15, 2)->default(0);
-            $table->string('status')->default('draft');
+            $table->integer('tax_amount')->default(0);
+            $table->integer('amount')->default(0);
+            $table->string('status')->default('0')->comment('0 = draft, 1 = approved');;
             $table->string('create_by')->nullable();
             $table->timestamps();
             $table->string('approval_by')->nullable();
             $table->timestamp('approval_at')->nullable();
-            $table->string('file_path')->nullable();
             $table->timestamp('updated_at')->nullable()->change();
         });
     }

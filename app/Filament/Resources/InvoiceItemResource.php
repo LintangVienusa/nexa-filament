@@ -57,6 +57,8 @@ class InvoiceItemResource extends Resource
                             ->searchable()
                             ->preload()
                             ->required(),
+                        
+                        
                     ])
                     ->columns(1),
                 
@@ -80,8 +82,9 @@ class InvoiceItemResource extends Resource
                                                 if ($state) {
                                                     $service = \App\Models\Service::find($state);
                                                     if ($service) {
-                                                        $set('price', (int)$service->price);
-                                                        $set('subtotal',(int) $service->price);
+                                                        $set('price',  number_format($service->price, 0, ',', '.'));
+                                                        $set('qty', (int)$service->unit);
+                                                        $set('subtotal', number_format($service->price, 0, ',', '.'));
                                                     }
                                                 }
                                                 }),
@@ -94,10 +97,10 @@ class InvoiceItemResource extends Resource
                                TextInput::make('price')
                                     ->label('Unit Price')
                                     ->prefix('Rp')
-                                    ->formatStateUsing(fn($state) => $state !== null ? number_format((int)$state, 0, '.', ',') : '0')
+                                    ->formatStateUsing(fn($state) => $state !== null ? number_format((int)$state, 0, ',', '.') : '0')
                                     ->afterStateUpdated(function ($state, callable $set) {
-                                        $number = preg_replace('/[^0-9]/', '', $state);
-                                        $set('price', $number ? number_format((int) $number, 0, '.', ',') : 0);
+                                        $number =(int) preg_replace('/[^0-9]/', '', $get('price') ?? '0');
+                                        $set('price', $number ? number_format((int) $number, 0, ',', '.') : 0);
                                     })
                                     ->dehydrateStateUsing(fn($state) => (int) preg_replace('/[^0-9]/', '', (string) $state))
                                     ->required()
@@ -106,19 +109,20 @@ class InvoiceItemResource extends Resource
                                TextInput::make('qty')
                                     ->required()
                                     ->numeric()
-                                    ->default(1)
                                     ->reactive()
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
-                                        $set('subtotal', (int)$get('qty') * (int)$get('price'));
+                                        $number =(int) preg_replace('/[^0-9]/', '', $get('price') ?? '0');
+                                        $subtotal = (int)$get('qty') * $number;
+                                        $set('subtotal',  number_format($subtotal, 0, ',', '.'));
                                     }),
 
                                TextInput::make('subtotal')
                                     ->label('Subtotal')
                                     ->prefix('Rp')
-                                    ->disabled()
-                                    ->formatStateUsing(fn($state) => $state !== null ? number_format((float)$state, 0, '.', ',') : '0')
+                                    ->readonly()
+                                    ->formatStateUsing(fn($state) => $state !== null ? number_format((int)$state, 0, ',', '.') : '0')
                                     ->reactive()
-                                    ->dehydrateStateUsing(fn($state) => (float) preg_replace('/[^0-9]/', '', (string) $state))
+                                    ->dehydrateStateUsing(fn($state) => (int) preg_replace('/[^0-9]/', '', (string) $state))
                                     ->required(),
                             ])
                             ->columns(3)
@@ -209,8 +213,8 @@ class InvoiceItemResource extends Resource
         foreach ($items as $item) {
             $serviceName = $item->service->service_name ?? '-';
             $qty = $item->qty;
-            $unitPrice = 'Rp ' . number_format($item->unit_price, 0, '.', ',');
-            $subtotal = 'Rp ' . number_format($item->subtotal, 0, '.', ',');
+            $unitPrice = 'Rp ' . number_format($item->unit_price, 0, ',', '.');
+            $subtotal = 'Rp ' . number_format($item->subtotal, 0, ',', '.');
 
             $html .= "<tr class='hover:bg-gray-50 transition'>
                         <td class='px-4 py-2 border-none'>{$serviceName}</td>
@@ -224,7 +228,7 @@ class InvoiceItemResource extends Resource
                     <td class='px-4 py-2 border-none'>Total</td>
                     <td class='border-none'></td>
                     <td class='border-none'></td>
-                    <td class='px-4 py-2 border-none text-right'>Rp " . number_format($total, 0, '.', ',') . "</td>
+                    <td class='px-4 py-2 border-none text-right'>Rp " . number_format($total, 0, ',', '.') . "</td>
                     <td class='border-none'></td>
                 </tr>";
 

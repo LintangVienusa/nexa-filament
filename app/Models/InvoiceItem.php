@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+
 
 use Carbon\Carbon;
 
@@ -32,13 +34,14 @@ class InvoiceItem extends Model
             $item->subtotal = (int)$item->qty * (int)$item->unit_price;
 
             $invoiceid = $item->invoice_id ?? null; 
-            $periodeCarbon = Carbon::now();
+            $customer_id = $item->customer_id ?? null; 
+            $periodeCarbon = Carbon::parse($item->invoice_date ?? now());
             $periodeString = $periodeCarbon->format('F Y');
 
             $invoice = Invoice::when($invoiceid, function ($q) use ($invoiceid) {
-                    $q->where('customer_id', $invoiceid);
+                    $q->where('customer_id', $customer_id);
                 })
-                ->where('created_at', $periodeCarbon)
+                ->where('invoice_date', $periodeCarbon)
                 ->first();
 
             if ($invoice) {
@@ -51,7 +54,7 @@ class InvoiceItem extends Model
                     'invoice_date'   => now(),
                     'due_date'       => now()->addDays(14),
                     'customer_id'    => $item->customer_id,
-                    'status'         => 'draft',
+                    'status'         => '0',
                     'create_by'      => Auth::user()->email,
                 ]);
 
@@ -62,10 +65,16 @@ class InvoiceItem extends Model
         
         static::created(function ($item) {
             $invoice = $item->invoice;
-
             if ($invoice) {
                 $total = $invoice->items()->sum(DB::raw('qty * unit_price'));
+                $taxRate = "0.12";
+                $tax = $total * $taxRate;
+                $amount = $total - $tax;
+
                 $invoice->subtotal = $total;
+                $invoice->tax_rate = $taxRate;
+                $invoice->tax_amount = $tax;
+                $invoice->amount = $amount;
                 $invoice->save();
             }
         });
