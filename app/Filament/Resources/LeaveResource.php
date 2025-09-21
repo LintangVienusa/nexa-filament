@@ -33,7 +33,6 @@ class LeaveResource extends Resource
     {
         $query = parent::getEloquentQuery();
 
-        // Jika user login adalah staff → hanya lihat cuti miliknya
         if (Auth::check() && Auth::user()->isStaff()) {
             $query->where('employee_id', Auth::user()->employee?->employee_id);
         }
