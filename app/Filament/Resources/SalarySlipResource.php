@@ -29,6 +29,7 @@ use Carbon\Carbon;
 use App\Models\SalaryComponent;
 use App\Models\Employee;
 use App\Models\Payroll;
+use App\Services\HariKerjaService;
 
 class SalarySlipResource extends Resource
 {
@@ -73,6 +74,81 @@ class SalarySlipResource extends Resource
                                                 'amount'          => (int) $basicSalary,
                                             ];
                                         }
+
+                                        $employeeId = $get('employee_id');
+
+                                        if (!$employeeId) return;
+
+                                        
+                                        $startDate =  now()->startOfMonth()->toDateString();
+                                        $endDate = now()->endOfMonth()->toDateString();
+
+                                        
+                                        if (now()->isSameMonth(Carbon::today())) {
+                                            $endDate = Carbon::today()->toDateString();
+                                        }
+
+                                        $set('start_date', $startDate);
+                                        $set('cut_off', $endDate);
+
+                                        $hariKerjaService = app(HariKerjaService::class);
+                                        $hariKerjaData = $hariKerjaService->hitungHariKerja($employeeId, $startDate, $endDate);
+
+                                        $set('jumlah_hari_kerja', $hariKerjaData['jumlah_hari_kerja'] ?? 0);
+                                        $set('potongan_alpha', $hariKerjaData['jml_alpha'] ?? 0);
+
+                                        $overtimeHours = \App\Models\Overtime::join('Attendances', 'Overtimes.attendance_id', '=', 'Attendances.id')
+                                                        ->where('Overtimes.employee_id', $employeeId)
+                                                        ->whereBetween('Attendances.attendance_date', [$startDate, $endDate])
+                                                        ->sum('Overtimes.working_hours');
+
+                                            $alphaId = SalaryComponent::where('component_name', 'Potongan Alpha')->value('id');
+                                            $overtimeId = SalaryComponent::where('component_name', 'Overtime')->value('id');
+
+                                            $found = false;
+                                            $foundOvertime = false;
+                                            $amountpt = 100000;
+                                            $amountover = 50000;
+
+                                            foreach ($components as &$c) {
+                                                if ($c['salary_component_id'] == $alphaId) {
+                                                    $c['jumlah_hari_kerja'] = $hariKerjaData['jumlah_hari_kerja'] ?? 0;
+                                                    $c['jumlah_absensi'] = $hariKerjaData['jml_absensi'] ?? 0;
+                                                    $c['potongan_alpha'] = $hariKerjaData['jml_alpha'] ?? 0;
+                                                    $c['amount_display'] = number_format((int) $amountpt, 0, ',', '.') ?? 0;
+                                                    $c['amount'] = (int) $amountpt ?? 0;
+                                                    $found = true;
+                                                }
+                                                if ($c['salary_component_id'] == $overtimeId) {
+                                                            $c['overtime_hours'] = $overtimeHours;
+                                                            $foundOvertime = true;
+                                                        }
+                                            }
+
+                                            if (!$found) {
+                                                $components[] = [
+                                                    'salary_component_id' => $alphaId,
+                                                    'component_type' => SalaryComponent::where('component_name', 'Potongan Alpha')->value('component_type'),
+                                                    'jumlah_hari_kerja' => $hariKerjaData['jumlah_hari_kerja'] ?? 0,
+                                                    'jumlah_absensi' => $hariKerjaData['jml_absensi'] ?? 0,
+                                                    'potongan_alpha' => $hariKerjaData['jml_alpha'] ?? 0,
+                                                    'amount_display' => number_format((int) $amountpt, 0, ',', '.'),
+                                                        'amount'     => (int) $amountpt,
+                                                ];
+                                            }
+
+                                            if (!$foundOvertime && $overtimeHours > 0) {
+                                                    $components[] = [
+                                                        'salary_component_id' => $overtimeId,
+                                                        'component_type' => SalaryComponent::where('component_name', 'Overtime')->value('component_type'),
+                                                        'overtime_hours' => $overtimeHours,
+                                                        'amount_display' => number_format((int) $amountover, 0, ',', '.'),
+                                                        'amount'     => (int) $amountover,
+                                                    ];
+                                                }
+
+
+                                            $set('components', $components);
 
 
                                         $set('components', $components);
@@ -119,13 +195,119 @@ class SalarySlipResource extends Resource
                                 ->default(fn () => Carbon::now()->format('F Y'))
                                 ->disabled(fn (?SalarySlip $record) => $record !== null)
                                 ->reactive()
-                                ->afterStateUpdated(function ($state, callable $set) {
-                                    $date = Carbon::createFromFormat('F Y', $state);
-                                    $set('start_date', $date->copy()->startOfMonth()->toDateString());
-                                    $set('cut_off', $date->copy()->endOfMonth()->toDateString());
-                                })
+                                
                                 ->required()
+                                ->afterStateHydrated(function ($state, callable $set, callable $get) {
+                                    
+                                    $employeeId = $get('employee_id');
+                                    if (!$employeeId) return;
+
+                                    $date = Carbon::createFromFormat('F Y', $state);
+                                    $startDate = $date->copy()->startOfMonth()->toDateString();
+                                    $endDate = $date->copy()->endOfMonth()->toDateString();
+
+                                    if ($date->isSameMonth(Carbon::today())) {
+                                        $endDate = Carbon::today()->toDateString();
+                                    }
+
+                                    $set('start_date', $startDate);
+                                    $set('cut_off', $endDate);
+
+                                    $hariKerjaService = app(HariKerjaService::class);
+                                    $hariKerjaData = $hariKerjaService->hitungHariKerja($employeeId, $startDate, $endDate);
+
+                                    $set('jumlah_hari_kerja', $hariKerjaData['jumlah_hari_kerja'] ?? 0);
+                                    $set('potongan_alpha', $hariKerjaData['jml_alpha'] ?? 0);
+
+                                    $components = $get('components') ?? [];
+                                    $alphaId = SalaryComponent::where('component_name', 'Potongan Alpha')->value('id');
+
+                                    $found = false;
+                                    $amountpt =  number_format((int) 1000000, 0, ',', '.');
+
+                                    foreach ($components as &$c) {
+                                        if ($c['salary_component_id'] == $alphaId) {
+                                            $c['jumlah_hari_kerja'] = $hariKerjaData['jumlah_hari_kerja'] ?? 0;
+                                            $c['jumlah_absensi'] = $hariKerjaData['jml_absensi'] ?? 0;
+                                            $c['potongan_alpha'] = $hariKerjaData['jml_alpha'] ?? 0;
+                                            $c['amount_display'] = number_format((int) $amountpt, 0, ',', '.') ?? 0;
+                                            $c['amount'] = (int) $amountpt ?? 0;
+                                            $found = true;
+                                        }
+                                    }
+
+                                    if (!$found) {
+                                        $components[] = [
+                                            'salary_component_id' => $alphaId,
+                                            'component_type' => SalaryComponent::where('component_name', 'Potongan Alpha')->value('component_type'),
+                                            'jumlah_hari_kerja' => $hariKerjaData['jumlah_hari_kerja'] ?? 0,
+                                            'jumlah_absensi' => $hariKerjaData['jml_absensi'] ?? 0,
+                                            'potongan_alpha' => $hariKerjaData['jml_alpha'] ?? 0,
+                                            'amount_display' => number_format((int) $amountpt, 0, ',', '.'),
+                                                'amount'     => (int) $amountpt,
+                                        ];
+                                    }
+
+                                    $set('components', $components);
+                                })
+                                ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                    $employeeId = $get('employee_id');
+                                    if (!$employeeId) return;
+
+                                    $date = Carbon::createFromFormat('F Y', $state);
+                                    $startDate = $date->copy()->startOfMonth()->toDateString();
+                                    $endDate = $date->copy()->endOfMonth()->toDateString();
+
+                                    
+                                    if ($date->isSameMonth(Carbon::today())) {
+                                        $endDate = Carbon::today()->toDateString();
+                                    }
+
+                                    $set('start_date', $startDate);
+                                    $set('cut_off', $endDate);
+
+                                    $hariKerjaService = app(HariKerjaService::class);
+                                    $hariKerjaData = $hariKerjaService->hitungHariKerja($employeeId, $startDate, $endDate);
+
+                                    $set('jumlah_hari_kerja', $hariKerjaData['jumlah_hari_kerja'] ?? 0);
+                                    $set('potongan_alpha', $hariKerjaData['jml_alpha'] ?? 0);
+
+                                   
+
+                                         $components = $get('components') ?? [];
+                                        $alphaId = SalaryComponent::where('component_name', 'Potongan Alpha')->value('id');
+
+                                        $found = false;
+                                        $amountpt = 100000;
+
+                                        foreach ($components as &$c) {
+                                            if ($c['salary_component_id'] == $alphaId) {
+                                                $c['jumlah_hari_kerja'] = $hariKerjaData['jumlah_hari_kerja'] ?? 0;
+                                                $c['jumlah_absensi'] = $hariKerjaData['jml_absensi'] ?? 0;
+                                                $c['potongan_alpha'] = $hariKerjaData['jml_alpha'] ?? 0;
+                                                $c['amount_display'] = number_format((int) $amountpt, 0, ',', '.') ?? 0;
+                                                $c['amount'] = (int) $amountpt ?? 0;
+                                                $found = true;
+                                            }
+                                        }
+
+                                        if (!$found) {
+                                            $components[] = [
+                                                'salary_component_id' => $alphaId,
+                                                'component_type' => SalaryComponent::where('component_name', 'Potongan Alpha')->value('component_type'),
+                                                'jumlah_hari_kerja' => $hariKerjaData['jumlah_hari_kerja'] ?? 0,
+                                                'jumlah_absensi' => $hariKerjaData['jml_absensi'] ?? 0,
+                                                'potongan_alpha' => $hariKerjaData['jml_alpha'] ?? 0,
+                                                'amount_display' => number_format((int) $amountpt, 0, ',', '.'),
+                                                    'amount'     => (int) $amountpt,
+                                            ];
+                                        }
+
+
+                                        $set('components', $components);
+                                })
                                 ->columnSpan(6),
+
 
                             Forms\Components\DatePicker::make('start_date')
                                 ->label('Start Date')
@@ -152,6 +334,8 @@ class SalarySlipResource extends Resource
                                 ->disabled()
                                 ->required()
                                 ->columnSpan(3),
+                            
+                            // s
                                 
                             
                         ])
@@ -199,9 +383,55 @@ class SalarySlipResource extends Resource
                                     ->required(),
 
                                 Select::make('salary_component_id') ->label('Salary Component type') ->options(function () { return SalaryComponent::all()->mapWithKeys(fn($c) => [ $c->id => ($c->component_type == 0 ? 'Allowance' : 'Deduction'), ]); }) ->disabled() ->required(),
+                                
+                                TextInput::make('jumlah_hari_kerja')
+                                    ->label('Jumlah Hari Kerja')
+                                    ->reactive()
+                                    ->visible(function ($get) {
+                                        $basicSalaryId = \App\Models\SalaryComponent::where('component_name', 'Potongan Alpha')->value('id');
+                                        
+                                        return $get('salary_component_id') == $basicSalaryId;
+                                    })
+                                    ->required(),
+                                TextInput::make('jumlah_absensi')
+                                    ->label('Jumlah Absensi')
+                                    ->reactive()
+                                    ->required()
+                                    ->visible(function ($get) {
+                                        $basicSalaryId = SalaryComponent::where('component_name', 'Potongan Alpha')->value('id');
+                                        return $get('salary_component_id') == $basicSalaryId;
+                                    }),
+                                TextInput::make('potongan_alpha')
+                                    ->label('Jumlah Alpha')
+                                    ->reactive()
+                                    ->required()
+                                    ->visible(function ($get) {
+                                        $basicSalaryId = SalaryComponent::where('component_name', 'Potongan Alpha')->value('id');
+                                        return $get('salary_component_id') == $basicSalaryId;
+                                    }),
+                                TextInput::make('overtime_hours')
+                                    ->label('Overtime Hours')
+                                    ->reactive()
+                                    ->required()
+                                    ->visible(function ($get) {
+                                        $basicSalaryId = SalaryComponent::where('component_name', 'Overtime')->value('id');
+                                        return $get('salary_component_id') == $basicSalaryId;
+                                    }),
 
                                 TextInput::make('amount_display')
-                                    ->label('Amount')
+                                    ->label(function ($get) {
+                                        $componentId = $get('salary_component_id');
+                                        $potonganAlphaId = SalaryComponent::where('component_name', 'Potongan Alpha')->value('id');
+                                        $overtimeId = SalaryComponent::where('component_name', 'Overtime')->value('id');
+
+                                        if ($componentId == $potonganAlphaId) {
+                                            return 'Amount (*day)';
+                                        } elseif ($componentId == $overtimeId) {
+                                            return 'Amount (*hour)';
+                                        }
+
+                                        return 'Amount';
+                                    })
                                     ->prefix('Rp')
                                     ->reactive()
                                     ->formatStateUsing(fn($state) => $state ? number_format((int)$state, 0, ',', '.') : '')
@@ -212,8 +442,11 @@ class SalarySlipResource extends Resource
                                     ->dehydrateStateUsing(fn($state) => preg_replace('/[^0-9]/', '', $state))
                                     ->required(),
                                     Forms\Components\Hidden::make('amount'),
+
+                                
                             ])
                             ->columns(2)
+                            
                             
                     ])
                     ->columns(1)

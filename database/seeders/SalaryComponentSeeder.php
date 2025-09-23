@@ -35,6 +35,13 @@ class SalaryComponentSeeder extends Seeder
             ],
 
             [
+                'component_name' => 'Potongan Alpha',
+                'component_type' => '1',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+
+            [
                 'component_name' => 'PPh 21',
                 'component_type' => '1',
                 'created_at' => now(),
