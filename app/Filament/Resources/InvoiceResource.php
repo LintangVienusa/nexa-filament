@@ -89,8 +89,8 @@ class InvoiceResource extends Resource
                                 $taxAmount = round($subtotal * $rate);
                                 $amount    = round($subtotal - $taxAmount);
 
-                                $set('tax_amount', 'Rp ' . number_format($taxAmount, 0, ',', '.'));
-                                $set('amount', 'Rp ' . number_format($amount, 0, ',', '.'));
+                                $set('tax_amount',   number_format($taxAmount, 0, ',', '.'));
+                                $set('amount',  number_format($amount, 0, ',', '.'));
                             })
                             ->formatStateUsing(fn ($state) => $state !== null ? $state * 100 : 0)
                             ->dehydrateStateUsing(fn ($state) => (float) $state / 100)
@@ -100,17 +100,17 @@ class InvoiceResource extends Resource
                             ->required()
                             ->prefix('Rp ')
                             ->reactive()
-                            ->disabled()
+                            ->readonly()
                             ->formatStateUsing(fn($state) => $state ? number_format((int)$state, 0, ',', '.') : '')
-                            ->dehydrateStateUsing(fn($state) => preg_replace('/,/', '', $state))
+                            ->dehydrateStateUsing(fn($state) => preg_replace('/[^\d]/', '', $state))
                             ->default(0.00),
                         TextInput::make('amount')
                             ->required()
                             ->prefix('Rp ')
                             ->reactive()
-                            ->disabled()
+                            ->readonly()
                             ->formatStateUsing(fn($state) => $state ? number_format((int)$state, 0, ',', '.') : '')
-                            ->dehydrateStateUsing(fn($state) => preg_replace('/,/', '', $state))
+                            ->dehydrateStateUsing(fn($state) => preg_replace('/[^\d]/', '', $state))
                             ->default(0.00),
                     ])
                     ->columns(2),

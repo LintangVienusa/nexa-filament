@@ -20,11 +20,11 @@ use App\Models\Attendance;
 
 class OvertimeResource extends Resource
 {
-    use HasOwnRecordPolicy;
+    // use HasOwnRecordPolicy;
 
     protected static ?string $model = Overtime::class;
     protected static ?string $navigationIcon = 'heroicon-o-clock';
-    protected static ?string $permissionPrefix = 'employees';
+    // protected static ?string $permissionPrefix = 'employees';
     protected static ?string $navigationGroup = 'HR Management';
     protected static ?string $navigationLabel = 'Overtimes';
 
@@ -42,6 +42,20 @@ class OvertimeResource extends Resource
                 Forms\Components\DatePicker::make('overtime_date')
                     ->label('Overtime Date')
                     ->required()
+                    ->rule(function ($get) {
+                        return function (string $attribute, $value, \Closure $fail) use ($get) {
+                            $employeeId = $get('employee_id');
+                            if ($employeeId && $value) {
+                                $exists = Attendance::where('employee_id', $employeeId)
+                                    ->whereDate('attendance_date', $value)
+                                    ->exists();
+
+                                if (! $exists) {
+                                    $fail("The selected date is not available in attendance.");
+                                }
+                            }
+                        };
+                    })
                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
                         $employeeId = $get('employee_id');
                         if ($employeeId && $state) {

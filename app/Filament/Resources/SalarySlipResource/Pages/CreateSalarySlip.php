@@ -32,4 +32,28 @@ class CreateSalarySlip extends CreateRecord
         // return satu dummy untuk Filament (tidak terlalu dipakai)
         return new SalarySlip();
     }
+
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        $employeeId = $data['employee_id'] ?? null;
+
+        if (!isset($data['components']) || empty($data['components'])) {
+            $basicSalary = \App\Models\Employee::find($employeeId)?->basic_salary ?? 0;
+
+            $data['components'] = [
+                [
+                    'salary_component_id' => \App\Models\SalaryComponent::where('component_name', 'Basic Salary')->value('id'),
+                    'component_type' => \App\Models\SalaryComponent::where('component_name', 'Basic Salary')->value('component_type'),
+                    'amount' => $basicSalary,
+                ],
+                [
+                    'salary_component_id' => \App\Models\SalaryComponent::where('component_name', 'PPh 21')->value('id'),
+                    'component_type' => \App\Models\SalaryComponent::where('component_name', 'PPh 21')->value('component_type'),
+                    'amount' => 0,
+                ],
+            ];
+        }
+
+        return $data;
+    }
 }

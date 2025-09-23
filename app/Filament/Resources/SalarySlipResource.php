@@ -55,6 +55,65 @@ class SalarySlipResource extends Resource
                                             $e->employee_id => $e->first_name . ' ' . $e->last_name
                                         ])
                                     )
+                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                        if (!$state) return;
+
+                                        $basicSalary = Employee::find($state)?->basic_salary ?? 0;
+                                        
+
+                                        $components =  [];
+
+                                        
+                                        if (!collect($components)->pluck('salary_component_id')
+                                            ->contains(SalaryComponent::where('component_name', 'Basic Salary')->value('id'))) {
+                                            $components[] = [
+                                                'salary_component_id' => SalaryComponent::where('component_name', 'Basic Salary')->value('id'),
+                                                'component_type' => SalaryComponent::where('component_name', 'Basic Salary')->value('component_type'),
+                                                'amount' => $basicSalary,
+                                            ];
+                                        }
+
+
+                                        
+                                        if (!collect($components)->pluck('salary_component_id')
+                                            ->contains(SalaryComponent::where('component_name', 'PPh 21')->value('id'))) {
+                                                    $dependents = 1;
+                                                    $employee_id = $state;
+                                                        $basic_salary = $basicSalary ?? 0;
+                                                        $overtime = $get('overtime_pay') ?? 0;
+                                                        $allowance = $get('allowance') ?? 0;
+                                                    
+                                                        $bruto = $basicSalary + $allowance + $overtime;
+                                                        $biayaJabatan = min(0.05 * $bruto, 500000);
+                                                        $ptkp = 4500000 + ($dependents * 3750000 / 12);
+                                                        $pkp = $bruto - $biayaJabatan - $ptkp;
+
+                                                        if ($pkp <= 0) return 0;
+
+                                                        $pkpTahunan = $pkp * 12;
+                                                        $tax = 0;
+
+                                                        if ($pkpTahunan <= 60000000) {
+                                                            $tax = 0.05 * $pkpTahunan;
+                                                        } elseif ($pkpTahunan <= 250000000) {
+                                                            $tax = 0.05 * 60000000 + 0.15 * ($pkpTahunan - 60000000);
+                                                        } elseif ($pkpTahunan <= 500000000) {
+                                                            $tax = 0.05 * 60000000 + 0.15 * (250000000 - 60000000) + 0.25 * ($pkpTahunan - 250000000);
+                                                        } else {
+                                                            $tax = 0.05 * 60000000 + 0.15 * (250000000 - 60000000) + 0.25 * (500000000 - 250000000) + 0.30 * ($pkpTahunan - 500000000);
+                                                        }
+
+                                                    
+                                                    $pph21Amount =round($tax/12);
+                                            $components[] = [
+                                                'salary_component_id' => SalaryComponent::where('component_name', 'PPh 21')->value('id'),
+                                                'component_type' => SalaryComponent::where('component_name', 'PPh 21')->value('component_type'),
+                                                'amount' => $pph21Amount,
+                                            ];
+                                        }
+
+                                        $set('components', $components);
+                                    })
                                     ->searchable()
                                     ->reactive()
                                     ->disabled(fn (?SalarySlip $record) => $record !== null)
@@ -107,6 +166,7 @@ class SalarySlipResource extends Resource
 
                             Forms\Components\DatePicker::make('start_date')
                                 ->label('Start Date')
+                                ->default(fn () => now()->startOfMonth()->toDateString())
                                 ->afterStateHydrated(function (callable $set, $record) {
                                     if ($record?->periode) {
                                         $periode = Carbon::createFromFormat('F Y', $record->periode);
@@ -119,6 +179,7 @@ class SalarySlipResource extends Resource
 
                             Forms\Components\DatePicker::make('cut_off')
                                 ->label('Cut Off Date')
+                                ->default(fn () => now()->endOfMonth()->toDateString())
                                 ->afterStateHydrated(function (callable $set, $record) {
                                     if ($record?->periode) {
                                         $periode = Carbon::createFromFormat('F Y', $record->periode);
@@ -188,7 +249,8 @@ class SalarySlipResource extends Resource
                                     ->dehydrateStateUsing(fn($state) => preg_replace('/,/', '', $state))
                                     ->required(),
                             ])
-                            ->columns(2),
+                            ->columns(2)
+                            
                     ])
                     ->columns(1)
             ]);
