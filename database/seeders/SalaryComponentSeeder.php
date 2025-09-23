@@ -28,6 +28,13 @@ class SalaryComponentSeeder extends Seeder
             ],
 
             [
+                'component_name' => 'tunjangan',
+                'component_type' => '0',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+
+            [
                 'component_name' => 'PPh 21',
                 'component_type' => '1',
                 'created_at' => now(),

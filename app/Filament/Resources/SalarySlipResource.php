@@ -69,48 +69,11 @@ class SalarySlipResource extends Resource
                                             $components[] = [
                                                 'salary_component_id' => SalaryComponent::where('component_name', 'Basic Salary')->value('id'),
                                                 'component_type' => SalaryComponent::where('component_name', 'Basic Salary')->value('component_type'),
-                                                'amount' => $basicSalary,
+                                                'amount_display'              => number_format((int) $basicSalary, 0, ',', '.'),
+                                                'amount'          => (int) $basicSalary,
                                             ];
                                         }
 
-
-                                        
-                                        if (!collect($components)->pluck('salary_component_id')
-                                            ->contains(SalaryComponent::where('component_name', 'PPh 21')->value('id'))) {
-                                                    $dependents = 1;
-                                                    $employee_id = $state;
-                                                        $basic_salary = $basicSalary ?? 0;
-                                                        $overtime = $get('overtime_pay') ?? 0;
-                                                        $allowance = $get('allowance') ?? 0;
-                                                    
-                                                        $bruto = $basicSalary + $allowance + $overtime;
-                                                        $biayaJabatan = min(0.05 * $bruto, 500000);
-                                                        $ptkp = 4500000 + ($dependents * 3750000 / 12);
-                                                        $pkp = $bruto - $biayaJabatan - $ptkp;
-
-                                                        if ($pkp <= 0) return 0;
-
-                                                        $pkpTahunan = $pkp * 12;
-                                                        $tax = 0;
-
-                                                        if ($pkpTahunan <= 60000000) {
-                                                            $tax = 0.05 * $pkpTahunan;
-                                                        } elseif ($pkpTahunan <= 250000000) {
-                                                            $tax = 0.05 * 60000000 + 0.15 * ($pkpTahunan - 60000000);
-                                                        } elseif ($pkpTahunan <= 500000000) {
-                                                            $tax = 0.05 * 60000000 + 0.15 * (250000000 - 60000000) + 0.25 * ($pkpTahunan - 250000000);
-                                                        } else {
-                                                            $tax = 0.05 * 60000000 + 0.15 * (250000000 - 60000000) + 0.25 * (500000000 - 250000000) + 0.30 * ($pkpTahunan - 500000000);
-                                                        }
-
-                                                    
-                                                    $pph21Amount =round($tax/12);
-                                            $components[] = [
-                                                'salary_component_id' => SalaryComponent::where('component_name', 'PPh 21')->value('id'),
-                                                'component_type' => SalaryComponent::where('component_name', 'PPh 21')->value('component_type'),
-                                                'amount' => $pph21Amount,
-                                            ];
-                                        }
 
                                         $set('components', $components);
                                     })
@@ -237,17 +200,18 @@ class SalarySlipResource extends Resource
 
                                 Select::make('salary_component_id') ->label('Salary Component type') ->options(function () { return SalaryComponent::all()->mapWithKeys(fn($c) => [ $c->id => ($c->component_type == 0 ? 'Allowance' : 'Deduction'), ]); }) ->disabled() ->required(),
 
-                                TextInput::make('amount')
+                                TextInput::make('amount_display')
                                     ->label('Amount')
                                     ->prefix('Rp')
                                     ->reactive()
-                                    ->formatStateUsing(fn($state) => $state ? number_format((int)$state, 0, '.', ',') : '')
+                                    ->formatStateUsing(fn($state) => $state ? number_format((int)$state, 0, ',', '.') : '')
                                     ->afterStateUpdated(function ($state, callable $set) {
                                         $number = preg_replace('/[^0-9]/', '', $state);
-                                        $set('amount', $number === '' ? 0 : number_format((int)$number, 0, '.', ','));
+                                        $set('amount_display', $number === '' ? 0 : number_format((int)$number, 0, ',', '.'));
                                     })
-                                    ->dehydrateStateUsing(fn($state) => preg_replace('/,/', '', $state))
+                                    ->dehydrateStateUsing(fn($state) => preg_replace('/[^0-9]/', '', $state))
                                     ->required(),
+                                    Forms\Components\Hidden::make('amount'),
                             ])
                             ->columns(2)
                             

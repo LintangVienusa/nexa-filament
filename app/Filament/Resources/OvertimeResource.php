@@ -80,8 +80,8 @@ class OvertimeResource extends Resource
                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
                         $end = $get('end_time');
                         if ($state && $end) {
-                            $start = Carbon::parse($state);
-                            $e = Carbon::parse($end);
+                            $start = Carbon::createFromFormat('H:i:s', $state);
+                            $e = Carbon::createFromFormat('H:i:s',$end);
                             if ($e->lessThan($start)) $e->addDay();
                             $minutes = $start->diffInMinutes($e);
                             $set('working_hours', round($minutes / 60, 2));
@@ -95,8 +95,8 @@ class OvertimeResource extends Resource
                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
                         $start = $get('start_time');
                         if ($start && $state) {
-                            $s = Carbon::parse($start);
-                            $end = Carbon::parse($state);
+                            $s = Carbon::createFromFormat('H:i:s',$start);
+                            $end = Carbon::createFromFormat('H:i:s',$state);
                             if ($end->lessThan($s)) $end->addDay();
                             $minutes = $s->diffInMinutes($end);
                             $set('working_hours', round($minutes / 60, 2));

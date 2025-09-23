@@ -197,5 +197,5 @@ class SalarySlip extends Model
     }
 
 
-
+    
 }
