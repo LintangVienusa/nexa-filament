@@ -158,6 +158,44 @@ class SalarySlip extends Model
                     ->orderBy('id', 'asc');;
     }
 
+    public static function calculatePph21FromValues(float $basicSalary, float $allowance = 0, float $overtime = 0, int $dependents = 0): float
+    {
+        $basicSalary = $basicSalary ;
+        $allowance = $allowance ?? 0;
+        $overtime = $overtime ?? 0;
+        $dependents = $employee?->dependents ?? 0;
+
+        $bruto = $basicSalary + $allowance + $overtime;
+        $biayaJabatan = min(0.05 * $bruto, 500000);
+        $ptkp = 4500000 + ($dependents * 3750000 / 12);
+        $pkp = $bruto - $biayaJabatan - $ptkp;
+
+        if ($pkp <= 0) return 0;
+
+        $pkpTahunan = $pkp * 12;
+        $tax = 0;
+
+        if ($pkpTahunan <= 60000000) {
+            $tax = 0.05 * $pkpTahunan;
+        } elseif ($pkpTahunan <= 250000000) {
+            $tax = 0.05 * 60000000 + 0.15 * ($pkpTahunan - 60000000);
+        } elseif ($pkpTahunan <= 500000000) {
+            $tax = 0.05 * 60000000 + 0.15 * (250000000 - 60000000) + 0.25 * ($pkpTahunan - 250000000);
+        } else {
+            $tax = 0.05 * 60000000 + 0.15 * (250000000 - 60000000) + 0.25 * (500000000 - 250000000) + 0.30 * ($pkpTahunan - 500000000);
+        }
+
+        $tax =round($tax / 12);
+
+        return $basic_salary;
+    }
+
+    public function calculateNetSalary(): float
+    {
+        $pph21 = $this->calculatePph21();
+        return ($this->basic_salary + $this->allowance + $this->overtime) - $pph21;
+    }
 
 
+    
 }

@@ -34,6 +34,7 @@ return new class extends Migration
                 ->references('id')
                 ->on('Organizations')
                 ->cascadeOnDelete();
+            $table->integer('basic_salary');
             $table->string('bank_account_name', 50);
             $table->string('bank_account_no', 30);
             $table->string('created_by', 10)->nullable();

@@ -55,6 +55,28 @@ class SalarySlipResource extends Resource
                                             $e->employee_id => $e->first_name . ' ' . $e->last_name
                                         ])
                                     )
+                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                        if (!$state) return;
+
+                                        $basicSalary = Employee::find($state)?->basic_salary ?? 0;
+                                        
+
+                                        $components =  [];
+
+                                        
+                                        if (!collect($components)->pluck('salary_component_id')
+                                            ->contains(SalaryComponent::where('component_name', 'Basic Salary')->value('id'))) {
+                                            $components[] = [
+                                                'salary_component_id' => SalaryComponent::where('component_name', 'Basic Salary')->value('id'),
+                                                'component_type' => SalaryComponent::where('component_name', 'Basic Salary')->value('component_type'),
+                                                'amount_display'              => number_format((int) $basicSalary, 0, ',', '.'),
+                                                'amount'          => (int) $basicSalary,
+                                            ];
+                                        }
+
+
+                                        $set('components', $components);
+                                    })
                                     ->searchable()
                                     ->reactive()
                                     ->disabled(fn (?SalarySlip $record) => $record !== null)
@@ -107,6 +129,7 @@ class SalarySlipResource extends Resource
 
                             Forms\Components\DatePicker::make('start_date')
                                 ->label('Start Date')
+                                ->default(fn () => now()->startOfMonth()->toDateString())
                                 ->afterStateHydrated(function (callable $set, $record) {
                                     if ($record?->periode) {
                                         $periode = Carbon::createFromFormat('F Y', $record->periode);
@@ -119,6 +142,7 @@ class SalarySlipResource extends Resource
 
                             Forms\Components\DatePicker::make('cut_off')
                                 ->label('Cut Off Date')
+                                ->default(fn () => now()->endOfMonth()->toDateString())
                                 ->afterStateHydrated(function (callable $set, $record) {
                                     if ($record?->periode) {
                                         $periode = Carbon::createFromFormat('F Y', $record->periode);
@@ -176,19 +200,21 @@ class SalarySlipResource extends Resource
 
                                 Select::make('salary_component_id') ->label('Salary Component type') ->options(function () { return SalaryComponent::all()->mapWithKeys(fn($c) => [ $c->id => ($c->component_type == 0 ? 'Allowance' : 'Deduction'), ]); }) ->disabled() ->required(),
 
-                                TextInput::make('amount')
+                                TextInput::make('amount_display')
                                     ->label('Amount')
                                     ->prefix('Rp')
                                     ->reactive()
-                                    ->formatStateUsing(fn($state) => $state ? number_format((int)$state, 0, '.', ',') : '')
+                                    ->formatStateUsing(fn($state) => $state ? number_format((int)$state, 0, ',', '.') : '')
                                     ->afterStateUpdated(function ($state, callable $set) {
                                         $number = preg_replace('/[^0-9]/', '', $state);
-                                        $set('amount', $number === '' ? 0 : number_format((int)$number, 0, '.', ','));
+                                        $set('amount_display', $number === '' ? 0 : number_format((int)$number, 0, ',', '.'));
                                     })
-                                    ->dehydrateStateUsing(fn($state) => preg_replace('/,/', '', $state))
+                                    ->dehydrateStateUsing(fn($state) => preg_replace('/[^0-9]/', '', $state))
                                     ->required(),
+                                    Forms\Components\Hidden::make('amount'),
                             ])
-                            ->columns(2),
+                            ->columns(2)
+                            
                     ])
                     ->columns(1)
             ]);

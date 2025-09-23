@@ -75,15 +75,30 @@ class EmployeeResource extends Resource
                             ->relationship('organization', 'divisi_name')
                             ->searchable()
                             ->required(),
-                    ])->columns(2),
 
-                Section::make('Contact & Identification')
-                    ->schema([
                         TextInput::make('email')
                             ->email()
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(100),
+                        
+                        TextInput::make('basic_salary')
+                            ->label('Basic Salary')
+                            ->prefix('Rp')
+                            ->reactive()
+                            ->default(0) 
+                            ->formatStateUsing(fn($state) => number_format((int) $state, 0, ',', '.')) 
+                            ->afterStateUpdated(function ($state, callable $set) {
+                                $number = preg_replace('/[^0-9]/', '', $state);
+                                $set('basic_salary', $number === '' ? 0 : number_format((int) $number, 0, ',', '.'));
+                            })
+                            ->dehydrateStateUsing(fn($state) => (string) preg_replace('/[^0-9]/', '', $state)) 
+                            ->required(),
+                    ])->columns(2),
+
+                Section::make('Contact & Identification')
+                    ->schema([
+                        
 
                         TextInput::make('mobile_no')
                             ->label('Mobile Number')

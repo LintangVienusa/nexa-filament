@@ -19,7 +19,7 @@ return new class extends Migration
             $table->time('end_time');
             $table->decimal('working_hours', 8, 2);
             $table->text('description');
-            $table->unsignedBigInteger('job_id');
+            $table->unsignedBigInteger('job_id')->nullable();
             $table->string('created_by', 10)->nullable();
             $table->dateTime('created_at');
             $table->string('updated_by', 10)->nullable();

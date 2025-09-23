@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('component_name');
             $table->boolean('component_type')->comment('1=deduction, 0=allowance');
-            $table->integer('permission_level');
+            $table->integer('permission_level')->nullable();
             $table->timestamps();
         });
     }
