@@ -54,7 +54,7 @@ class InvoiceResource extends Resource
                             ->hidden()
                             ->afterStateHydrated(function ($set, $state, $record) {
                                     if ($record && $record->customer_id) {
-                                        $set('customer_name', \DB::table('customers')->where('id', $record->customer_id)->value('customer_name'));
+                                        $set('customer_name', \DB::table('Customers')->where('id', $record->customer_id)->value('customer_name'));
                                     }
                                 }),
                         TextInput::make('customer_name')
@@ -63,7 +63,7 @@ class InvoiceResource extends Resource
                         DatePicker::make('invoice_date')
                             ->required(),
                     ])
-                    ->columns(2), 
+                    ->columns(2),
 
                 Section::make('Financial Details')
                     ->schema([
@@ -94,7 +94,7 @@ class InvoiceResource extends Resource
                             })
                             ->formatStateUsing(fn ($state) => $state !== null ? $state * 100 : 0)
                             ->dehydrateStateUsing(fn ($state) => (float) $state / 100)
-                            
+
                             ->default(12),
                         TextInput::make('tax_amount')
                             ->required()
@@ -139,7 +139,7 @@ class InvoiceResource extends Resource
                             ->reactive()
                             ->afterStateUpdated(function ($state, callable $set) {
                                 if (in_array($state, ['1', '2'])) {
-                                    $set('approval_by', auth()->user()->email); 
+                                    $set('approval_by', auth()->user()->email);
                                     $set('approval_at', now());
                                 } else {
                                     $set('approval_by', null);
@@ -163,7 +163,7 @@ class InvoiceResource extends Resource
 
     public static function table(Table $table): Table
     {
-        
+
         return $table
             ->columns([
                 TextColumn::make('invoice_number')->label('Invoice Number')->sortable(),
@@ -189,9 +189,9 @@ class InvoiceResource extends Resource
                 TextColumn::make('created_at')->date()->label('Created At')->sortable(),
                 TextColumn::make('approval_by')->label('Approval By')->sortable(),
                 TextColumn::make('approval_at')->date()->label('Approval At')->sortable(),
-                
+
             ])
-            
+
             ->filters([
                 //
             ])
@@ -204,7 +204,7 @@ class InvoiceResource extends Resource
                     ->icon('heroicon-o-document-arrow-down')
                     ->action(fn ($record) => static::downloadInvoice($record)),
             ])
-            
+
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
@@ -268,7 +268,7 @@ class InvoiceResource extends Resource
                     </style>
                 </head>
                 <body>
-                
+
                     <div class="header">
                         <img src="' . public_path('assets/images/Kop Surat Logo PT Nexanira Biru.png') . '" class="logo">
                         <div class="title">
@@ -369,14 +369,14 @@ class InvoiceResource extends Resource
                             <td style="text-align:right;">Rp ' . number_format($total, 0, ',', '.') . '</td>
                             </tr>
                             <tr>
-                            
+
                             <td colspan="2" style="text-align:left; background-color:#f5f5f5;"></td>
                             <td colspan="1" style="text-align:left; background-color:#f5f5f5;">Tax</td>
                             <td style="text-align:right;">' . $taxrateper . '%</td>
                             <td style="text-align:right;">Rp ' . number_format($tax, 0, ',', '.') . '</td>
                             </tr>
                             <tr>
-                            
+
                             <td colspan="2" style="text-align:left; background-color:#f5f5f5;"></td>
                             <td colspan="2" style="text-align:left; background-color:#f5f5f5;">Total Payment</td>
                             <td style="text-align:right;">Rp ' . number_format($grandTotal, 0, ',', '.') . '</td>

@@ -13,8 +13,8 @@ use Carbon\Carbon;
 class InvoiceItem extends Model
 {
     use HasFactory;
+    protected $table = 'InvoiceItems';
     protected $primaryKey = 'id';
-
     protected $fillable = [
         'customer_id',
         'invoice_id',
@@ -33,12 +33,12 @@ class InvoiceItem extends Model
         static::creating(function ($item) {
             $item->subtotal = (int)$item->qty * (int)$item->unit_price;
 
-            $invoiceid = $item->invoice_id ?? null; 
-            $customer_id = $item->customer_id ?? null; 
+            $invoiceid = $item->invoice_id ?? null;
+            $customer_id = $item->customer_id ?? null;
             $periodeCarbon = Carbon::parse($item->invoice_date ?? now());
             $periodeString = $periodeCarbon->format('F Y');
 
-            $invoice = Invoice::when($invoiceid, function ($q) use ($invoiceid) {
+            $invoice = Invoice::when($invoiceid, function ($q) use ($customer_id, $invoiceid) {
                     $q->where('customer_id', $customer_id);
                 })
                 ->where('invoice_date', $periodeCarbon)
@@ -62,7 +62,6 @@ class InvoiceItem extends Model
             }
         });
 
-        
         static::created(function ($item) {
             $invoice = $item->invoice;
             if ($invoice) {
