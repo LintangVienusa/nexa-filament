@@ -4,6 +4,8 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Role;
 
 class DatabaseSeeder extends Seeder
 {
@@ -12,37 +14,39 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $admin = User::where('email', config('admin.email'))->first();
-        if (! $admin) {
-            User::factory()->create([
-                'name' => config('admin.name'),
-                'email' => config('admin.email'),
-                'email_verified_at' => now(),
-                'password' => bcrypt(config('admin.password')),
-                'created_at' => now(),
-                'updated_at' => now()
-            ]);
+        $roles = ['admin', 'manager', 'employee'];
+        foreach ($roles as $role) {
+            Role::firstOrCreate(['name' => $role]);
         }
+
+        $admin = User::firstOrCreate(
+            ['email' => config('admin.email')],
+            [
+                'name' => config('admin.name'),
+                'email_verified_at' => now(),
+                'password' => Hash::make(config('admin.password')),
+            ]
+        );
         $admin->assignRole('admin');
 
-        $manager = User::factory()->create([
-            'name' => 'Manager User',
-            'email' => 'manager@nexa-erp.localhost',
-            'email_verified_at' => now(),
-            'password' => bcrypt('password123'),
-            'created_at' => now(),
-            'updated_at' => now()
-        ]);
+        $manager = User::firstOrCreate(
+            ['email' => 'manager@testing.site'],
+            [
+                'name' => 'Manager User',
+                'email_verified_at' => now(),
+                'password' => Hash::make('password123'),
+            ]
+        );
         $manager->assignRole('manager');
 
-        $employee = User::factory()->create([
-            'name' => 'Employee User',
-            'email' => 'employee@nexa-erp.localhost',
-            'email_verified_at' => now(),
-            'password' => bcrypt('password123'),
-            'created_at' => now(),
-            'updated_at' => now()
-        ]);
+        $employee = User::firstOrCreate(
+            ['email' => 'employee@testing.site'],
+            [
+                'name' => 'Employee User',
+                'email_verified_at' => now(),
+                'password' => Hash::make('password123'),
+            ]
+        );
         $employee->assignRole('employee');
     }
 }
