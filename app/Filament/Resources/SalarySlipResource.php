@@ -95,14 +95,14 @@ class SalarySlipResource extends Resource
                                         $hariKerjaData = $hariKerjaService->hitungHariKerja($employeeId, $startDate, $endDate);
 
                                         $set('jumlah_hari_kerja', $hariKerjaData['jumlah_hari_kerja'] ?? 0);
-                                        $set('potongan_alpha', $hariKerjaData['jml_alpha'] ?? 0);
+                                        $set('no_attendance', $hariKerjaData['jml_alpha'] ?? 0);
 
                                         $overtimeHours = \App\Models\Overtime::join('Attendances', 'Overtimes.attendance_id', '=', 'Attendances.id')
                                                         ->where('Overtimes.employee_id', $employeeId)
                                                         ->whereBetween('Attendances.attendance_date', [$startDate, $endDate])
                                                         ->sum('Overtimes.working_hours');
 
-                                            $alphaId = SalaryComponent::where('component_name', 'Potongan Alpha')->value('id');
+                                            $alphaId = SalaryComponent::where('component_name', 'No Attendance')->value('id');
                                             $overtimeId = SalaryComponent::where('component_name', 'Overtime')->value('id');
 
                                             $found = false;
@@ -114,7 +114,7 @@ class SalarySlipResource extends Resource
                                                 if ($c['salary_component_id'] == $alphaId) {
                                                     $c['jumlah_hari_kerja'] = $hariKerjaData['jumlah_hari_kerja'] ?? 0;
                                                     $c['jumlah_absensi'] = $hariKerjaData['jml_absensi'] ?? 0;
-                                                    $c['potongan_alpha'] = $hariKerjaData['jml_alpha'] ?? 0;
+                                                    $c['no_attendance'] = $hariKerjaData['jml_alpha'] ?? 0;
                                                     $c['amount_display'] = number_format((int) $amountpt, 0, ',', '.') ?? 0;
                                                     $c['amount'] = (int) $amountpt ?? 0;
                                                     $found = true;
@@ -128,10 +128,10 @@ class SalarySlipResource extends Resource
                                             if (!$found) {
                                                 $components[] = [
                                                     'salary_component_id' => $alphaId,
-                                                    'component_type' => SalaryComponent::where('component_name', 'Potongan Alpha')->value('component_type'),
+                                                    'component_type' => SalaryComponent::where('component_name', 'No Attendance')->value('component_type'),
                                                     'jumlah_hari_kerja' => $hariKerjaData['jumlah_hari_kerja'] ?? 0,
                                                     'jumlah_absensi' => $hariKerjaData['jml_absensi'] ?? 0,
-                                                    'potongan_alpha' => $hariKerjaData['jml_alpha'] ?? 0,
+                                                    'no_attendance' => $hariKerjaData['jml_alpha'] ?? 0,
                                                     'amount_display' => number_format((int) $amountpt, 0, ',', '.'),
                                                         'amount'     => (int) $amountpt,
                                                 ];
@@ -217,10 +217,10 @@ class SalarySlipResource extends Resource
                                     $hariKerjaData = $hariKerjaService->hitungHariKerja($employeeId, $startDate, $endDate);
 
                                     $set('jumlah_hari_kerja', $hariKerjaData['jumlah_hari_kerja'] ?? 0);
-                                    $set('potongan_alpha', $hariKerjaData['jml_alpha'] ?? 0);
+                                    $set('no_attendance', $hariKerjaData['jml_alpha'] ?? 0);
 
                                     $components = $get('components') ?? [];
-                                    $alphaId = SalaryComponent::where('component_name', 'Potongan Alpha')->value('id');
+                                    $alphaId = SalaryComponent::where('component_name', 'No Attendance')->value('id');
 
                                     $found = false;
                                     $amountpt =  number_format((int) 1000000, 0, ',', '.');
@@ -229,7 +229,7 @@ class SalarySlipResource extends Resource
                                         if ($c['salary_component_id'] == $alphaId) {
                                             $c['jumlah_hari_kerja'] = $hariKerjaData['jumlah_hari_kerja'] ?? 0;
                                             $c['jumlah_absensi'] = $hariKerjaData['jml_absensi'] ?? 0;
-                                            $c['potongan_alpha'] = $hariKerjaData['jml_alpha'] ?? 0;
+                                            $c['no_attendance'] = $hariKerjaData['jml_alpha'] ?? 0;
                                             $c['amount_display'] = number_format((int) $amountpt, 0, ',', '.') ?? 0;
                                             $c['amount'] = (int) $amountpt ?? 0;
                                             $found = true;
@@ -239,10 +239,10 @@ class SalarySlipResource extends Resource
                                     if (!$found) {
                                         $components[] = [
                                             'salary_component_id' => $alphaId,
-                                            'component_type' => SalaryComponent::where('component_name', 'Potongan Alpha')->value('component_type'),
+                                            'component_type' => SalaryComponent::where('component_name', 'No Attendance')->value('component_type'),
                                             'jumlah_hari_kerja' => $hariKerjaData['jumlah_hari_kerja'] ?? 0,
                                             'jumlah_absensi' => $hariKerjaData['jml_absensi'] ?? 0,
-                                            'potongan_alpha' => $hariKerjaData['jml_alpha'] ?? 0,
+                                            'no_attendance' => $hariKerjaData['jml_alpha'] ?? 0,
                                             'amount_display' => number_format((int) $amountpt, 0, ',', '.'),
                                                 'amount'     => (int) $amountpt,
                                         ];
@@ -270,12 +270,12 @@ class SalarySlipResource extends Resource
                                     $hariKerjaData = $hariKerjaService->hitungHariKerja($employeeId, $startDate, $endDate);
 
                                     $set('jumlah_hari_kerja', $hariKerjaData['jumlah_hari_kerja'] ?? 0);
-                                    $set('potongan_alpha', $hariKerjaData['jml_alpha'] ?? 0);
+                                    $set('no_attendance', $hariKerjaData['jml_alpha'] ?? 0);
 
                                    
 
                                          $components = $get('components') ?? [];
-                                        $alphaId = SalaryComponent::where('component_name', 'Potongan Alpha')->value('id');
+                                        $alphaId = SalaryComponent::where('component_name', 'No Attendance')->value('id');
 
                                         $found = false;
                                         $amountpt = 100000;
@@ -284,7 +284,7 @@ class SalarySlipResource extends Resource
                                             if ($c['salary_component_id'] == $alphaId) {
                                                 $c['jumlah_hari_kerja'] = $hariKerjaData['jumlah_hari_kerja'] ?? 0;
                                                 $c['jumlah_absensi'] = $hariKerjaData['jml_absensi'] ?? 0;
-                                                $c['potongan_alpha'] = $hariKerjaData['jml_alpha'] ?? 0;
+                                                $c['no_attendance'] = $hariKerjaData['jml_alpha'] ?? 0;
                                                 $c['amount_display'] = number_format((int) $amountpt, 0, ',', '.') ?? 0;
                                                 $c['amount'] = (int) $amountpt ?? 0;
                                                 $found = true;
@@ -294,10 +294,10 @@ class SalarySlipResource extends Resource
                                         if (!$found) {
                                             $components[] = [
                                                 'salary_component_id' => $alphaId,
-                                                'component_type' => SalaryComponent::where('component_name', 'Potongan Alpha')->value('component_type'),
+                                                'component_type' => SalaryComponent::where('component_name', 'No Attendance')->value('component_type'),
                                                 'jumlah_hari_kerja' => $hariKerjaData['jumlah_hari_kerja'] ?? 0,
                                                 'jumlah_absensi' => $hariKerjaData['jml_absensi'] ?? 0,
-                                                'potongan_alpha' => $hariKerjaData['jml_alpha'] ?? 0,
+                                                'no_attendance' => $hariKerjaData['jml_alpha'] ?? 0,
                                                 'amount_display' => number_format((int) $amountpt, 0, ',', '.'),
                                                     'amount'     => (int) $amountpt,
                                             ];
@@ -349,10 +349,23 @@ class SalarySlipResource extends Resource
                             ->schema([
                                 Select::make('salary_component_id')
                                     ->label('Salary Component')
-                                    ->options(function () {
-                                        return SalaryComponent::all()->mapWithKeys(fn($c) => [
-                                            $c->id => $c->component_name ?? 'No Name'
-                                        ]);
+                                    ->options(function ($record) {
+                                            $query = SalaryComponent::query();
+
+                                            // Kalau edit record (tidak kosong), exclude komponen tertentu
+                                            if ($record == '') {
+                                                $query->whereNotIn('component_name', [
+                                                    'Basic Salary',
+                                                    'PPh 21',
+                                                    'No Attendance',
+                                                    'Overtime',
+                                                ]);
+                                            }
+
+                                            return $query->get()
+                                                ->mapWithKeys(fn($c) => [
+                                                    $c->id => $c->component_name ?? 'No Name'
+                                                ]);
                                     })
                                     ->rules([
                                         function (callable $get, $record) {
@@ -388,7 +401,7 @@ class SalarySlipResource extends Resource
                                     ->label('Jumlah Hari Kerja')
                                     ->reactive()
                                     ->visible(function ($get) {
-                                        $basicSalaryId = \App\Models\SalaryComponent::where('component_name', 'Potongan Alpha')->value('id');
+                                        $basicSalaryId = \App\Models\SalaryComponent::where('component_name', 'No Attendance')->value('id');
                                         
                                         return $get('salary_component_id') == $basicSalaryId;
                                     })
@@ -398,15 +411,15 @@ class SalarySlipResource extends Resource
                                     ->reactive()
                                     ->required()
                                     ->visible(function ($get) {
-                                        $basicSalaryId = SalaryComponent::where('component_name', 'Potongan Alpha')->value('id');
+                                        $basicSalaryId = SalaryComponent::where('component_name', 'No Attendance')->value('id');
                                         return $get('salary_component_id') == $basicSalaryId;
                                     }),
-                                TextInput::make('potongan_alpha')
+                                TextInput::make('no_attendance')
                                     ->label('Jumlah Alpha')
                                     ->reactive()
                                     ->required()
                                     ->visible(function ($get) {
-                                        $basicSalaryId = SalaryComponent::where('component_name', 'Potongan Alpha')->value('id');
+                                        $basicSalaryId = SalaryComponent::where('component_name', 'No Attendance')->value('id');
                                         return $get('salary_component_id') == $basicSalaryId;
                                     }),
                                 TextInput::make('overtime_hours')
@@ -421,7 +434,7 @@ class SalarySlipResource extends Resource
                                 TextInput::make('amount_display')
                                     ->label(function ($get) {
                                         $componentId = $get('salary_component_id');
-                                        $potonganAlphaId = SalaryComponent::where('component_name', 'Potongan Alpha')->value('id');
+                                        $potonganAlphaId = SalaryComponent::where('component_name', 'No Attendance')->value('id');
                                         $overtimeId = SalaryComponent::where('component_name', 'Overtime')->value('id');
 
                                         if ($componentId == $potonganAlphaId) {
@@ -457,7 +470,13 @@ class SalarySlipResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->query(SalarySlip::uniqueEmployee())
+            ->query(
+                SalarySlip::query()
+                    ->select('employee_id', 'periode')
+                    ->selectRaw('MAX(id) as id') // ambil salah satu id untuk anchor record
+                    ->groupBy('employee_id', 'periode')
+                    ->orderByRaw('MAX(id) DESC')
+            )
             ->columns([
                  
                 Split::make([
@@ -470,13 +489,19 @@ class SalarySlipResource extends Resource
                         ->label('Employee Name')
                         ->sortable()
                         ->searchable(),
+
+                    TextColumn::make('periode')
+                        ->label('Payroll Periode')
+                        ->sortable()
+                        ->searchable(),
                 ]),
 
                 Panel::make([
                     TextColumn::make('components')
                         ->label('Salary Components')
                          ->getStateUsing(function ($record) {
-                            return SalarySlipResource::renderComponentsSideBySide($record->employee_id);
+                            return SalarySlipResource::renderComponentsSideBySide($record->employee_id,
+                            $record->periode);
                         })
                     ->html()
                 ])
@@ -499,10 +524,11 @@ class SalarySlipResource extends Resource
     }
     
 
-    protected static function renderComponentsSideBySide($employeeId)
+    protected static function renderComponentsSideBySide($employeeId,$periode)
     {
         $components = SalarySlip::with('SalaryComponent')
             ->where('employee_id', $employeeId)
+            ->where('periode', $periode)
             ->get();
 
         $allowances = $components->where('SalaryComponent.component_type', 0);

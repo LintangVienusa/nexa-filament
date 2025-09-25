@@ -51,6 +51,7 @@ class SalarySlip extends Model
         static::creating(function ($model) {
             $exists = static::where('employee_id', $model->employee_id)
                 ->where('salary_component_id', $model->salary_component_id)
+                ->where('periode', $model->periode)
                 ->exists();
 
             if ($exists) {
@@ -94,20 +95,7 @@ class SalarySlip extends Model
                              
             }
             
-            
-            
-           
-            
-        });
-
-        static::created(function ($salarySlip) {
-            
-            $periodeCarbon = $salarySlip->periode
-                        ? Carbon::createFromFormat('F Y', $salarySlip->periode)
-                        : Carbon::now();
-             $periodeString = $periodeCarbon->format('F Y');
-
-           // Total Allowance
+            // Total Allowance
             $ta = SalarySlip::where('employee_id', $salarySlip->employee_id)
                 ->where('periode', $periodeString)
                 ->whereHas('salaryComponent', function ($q) {
@@ -139,7 +127,12 @@ class SalarySlip extends Model
                     $payroll->refresh();
                     
                 }
+            
+           
+            
         });
+
+        
 
         
     }

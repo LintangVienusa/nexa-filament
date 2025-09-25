@@ -23,10 +23,10 @@ use Spatie\Permission\Traits\HasPermissions;
 
 class AttendanceResource extends Resource
 {
-    use HasPermissions, HasOwnRecordPolicy;
+    // use HasPermissions, HasOwnRecordPolicy;
     protected static ?string $model = Attendance::class;
-    protected static ?string $permissionPrefix = 'employees';
-    protected static string $ownerColumn = 'email';
+    // protected static ?string $permissionPrefix = 'employees';
+    // protected static string $ownerColumn = 'email';
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-check';
     protected static ?string $navigationGroup = 'HR Management';
     protected static ?string $navigationLabel = 'Attendances';

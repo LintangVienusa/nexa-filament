@@ -35,7 +35,7 @@ class SalaryComponentSeeder extends Seeder
             ],
 
             [
-                'component_name' => 'Potongan Alpha',
+                'component_name' => 'No Attendance',
                 'component_type' => '1',
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -47,11 +47,26 @@ class SalaryComponentSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
+
+            [
+                'component_name' => 'BPJS Kesehatan',
+                'component_type' => '0',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+
             
 
             [
                 'component_name' => 'BPJS Kesehatan',
                 'component_type' => '1',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+
+            [
+                'component_name' => 'BPJS Ketenagakerjaan',
+                'component_type' => '0',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
