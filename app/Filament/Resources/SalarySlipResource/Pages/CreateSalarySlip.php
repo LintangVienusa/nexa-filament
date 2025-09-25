@@ -21,11 +21,21 @@ class CreateSalarySlip extends CreateRecord
     protected function handleRecordCreation(array $data): SalarySlip
     {
         foreach ($data['components'] as $component) {
+            $potonganAlpha = $component['potongan_alpha'] ?? 0; 
+            $overtime_hours = $component['overtime_hours'] ?? 0; 
+
+            if($potonganAlpha != 0){
+                $amount = $potonganAlpha * $component['amount'];
+            }elseif($overtime_hours != 0){
+                $amount = $overtime_hours * $component['amount'];
+            }else{
+                $amount =  $component['amount'];
+            }
             SalarySlip::create([
                 'employee_id' => $data['employee_id'],
                 'periode' => $data['periode'],
                 'salary_component_id' => $component['salary_component_id'],
-                'amount' => $component['amount'],
+                'amount' => $amount,
             ]);
         }
 
