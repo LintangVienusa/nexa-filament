@@ -71,7 +71,7 @@ class EditSalarySlip extends EditRecord
         $basicSalary    = \App\Models\SalarySlip::join('SalaryComponents', 'SalarySlips.salary_component_id', '=', 'SalaryComponents.id')
                         ->where('SalarySlips.employee_id', $employeeId)
                         ->where('SalarySlips.periode', $periode)
-                        ->where('SalarySlips.component_name','Basic Salary')
+                        ->where('SalaryComponents.component_name','Basic Salary')
                         ->first();
 
         $basicSalary = $SalarySlip?->amount ?? 0;
@@ -79,7 +79,7 @@ class EditSalarySlip extends EditRecord
         $allowance = \App\Models\SalarySlip::join('SalaryComponents', 'SalarySlips.salary_component_id', '=', 'SalaryComponents.id')
                         ->where('SalarySlips.employee_id', $employeeId)
                         ->where('SalarySlips.periode', $periode)
-                        ->whereNotIn('SalarySlips.component_name', ['Basic Salary', 'Overtime']) 
+                        ->whereNotIn('SalaryComponents.component_name', ['Basic Salary', 'Overtime']) 
                         ->where('SalaryComponents.component_type', 0)
                         ->sum('SalarySlips.amount');
 
@@ -87,7 +87,7 @@ class EditSalarySlip extends EditRecord
         $overtime = \App\Models\SalarySlip::join('SalaryComponents', 'SalarySlips.salary_component_id', '=', 'SalaryComponents.id')
                 ->where('SalarySlips.employee_id', $employeeId)
                 ->where('SalarySlips.periode', $periode)
-                ->where('SalarySlips.component_name','Overtime')
+                ->where('SalaryComponents.component_name','Overtime')
                 ->sum('amount');
         
         $dependents  =  0;

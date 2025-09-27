@@ -28,7 +28,7 @@ class SalaryComponentSeeder extends Seeder
             ],
 
             [
-                'component_name' => 'tunjangan',
+                'component_name' => 'Allowance',
                 'component_type' => '0',
                 'created_at' => now(),
                 'updated_at' => now(),

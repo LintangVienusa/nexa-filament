@@ -19,6 +19,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 class SalaryComponentResource extends Resource
 {
     protected static ?string $model = SalaryComponent::class;
+    
+    protected $fillable = ['component_name', 'component_type'];
 
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';
     protected static ?string $navigationGroup = 'HR Management';

@@ -148,7 +148,6 @@ class SalarySlipResource extends Resource
                                                 }
 
 
-                                            $set('components', $components);
 
 
                                         $set('components', $components);
@@ -225,6 +224,17 @@ class SalarySlipResource extends Resource
                                     $found = false;
                                     $amountpt =  number_format((int) 1000000, 0, ',', '.');
 
+                                    $overtimeHours = \App\Models\Overtime::join('Attendances', 'Overtimes.attendance_id', '=', 'Attendances.id')
+                                                        ->where('Overtimes.employee_id', $employeeId)
+                                                        ->whereBetween('Attendances.attendance_date', [$startDate, $endDate])
+                                                        ->sum('Overtimes.working_hours');
+
+                                            $overtimeId = SalaryComponent::where('component_name', 'Overtime')->value('id');
+
+                                            $found = false;
+                                            $foundOvertime = false;
+                                            $amountover = 50000;
+
                                     foreach ($components as &$c) {
                                         if ($c['salary_component_id'] == $alphaId) {
                                             $c['jumlah_hari_kerja'] = $hariKerjaData['jumlah_hari_kerja'] ?? 0;
@@ -234,6 +244,13 @@ class SalarySlipResource extends Resource
                                             $c['amount'] = (int) $amountpt ?? 0;
                                             $found = true;
                                         }
+
+                                         if ($c['salary_component_id'] == $overtimeId) {
+                                                            $c['overtime_hours'] = $overtimeHours;
+                                                            $foundOvertime = true;
+                                                        }
+
+                                        
                                     }
 
                                     if (!$found) {
@@ -247,6 +264,17 @@ class SalarySlipResource extends Resource
                                                 'amount'     => (int) $amountpt,
                                         ];
                                     }
+
+                                    if (!$foundOvertime && $overtimeHours > 0) {
+                                                    $components[] = [
+                                                        'salary_component_id' => $overtimeId,
+                                                        'component_type' => SalaryComponent::where('component_name', 'Overtime')->value('component_type'),
+                                                        'overtime_hours' => $overtimeHours,
+                                                        'amount_display' => number_format((int) $amountover, 0, ',', '.'),
+                                                        'amount'     => (int) $amountover,
+                                                    ];
+                                                }
+
 
                                     $set('components', $components);
                                 })
@@ -272,6 +300,17 @@ class SalarySlipResource extends Resource
                                     $set('jumlah_hari_kerja', $hariKerjaData['jumlah_hari_kerja'] ?? 0);
                                     $set('no_attendance', $hariKerjaData['jml_alpha'] ?? 0);
 
+                                       $overtimeHours = \App\Models\Overtime::join('Attendances', 'Overtimes.attendance_id', '=', 'Attendances.id')
+                                                        ->where('Overtimes.employee_id', $employeeId)
+                                                        ->whereBetween('Attendances.attendance_date', [$startDate, $endDate])
+                                                        ->sum('Overtimes.working_hours');
+
+                                            $overtimeId = SalaryComponent::where('component_name', 'Overtime')->value('id');
+
+                                            $found = false;
+                                            $foundOvertime = false;
+                                            $amountover = 50000;
+
                                    
 
                                          $components = $get('components') ?? [];
@@ -289,6 +328,11 @@ class SalarySlipResource extends Resource
                                                 $c['amount'] = (int) $amountpt ?? 0;
                                                 $found = true;
                                             }
+
+                                             if ($c['salary_component_id'] == $overtimeId) {
+                                                            $c['overtime_hours'] = $overtimeHours;
+                                                            $foundOvertime = true;
+                                                        }
                                         }
 
                                         if (!$found) {
@@ -302,6 +346,16 @@ class SalarySlipResource extends Resource
                                                     'amount'     => (int) $amountpt,
                                             ];
                                         }
+
+                                        if (!$foundOvertime && $overtimeHours > 0) {
+                                                    $components[] = [
+                                                        'salary_component_id' => $overtimeId,
+                                                        'component_type' => SalaryComponent::where('component_name', 'Overtime')->value('component_type'),
+                                                        'overtime_hours' => $overtimeHours,
+                                                        'amount_display' => number_format((int) $amountover, 0, ',', '.'),
+                                                        'amount'     => (int) $amountover,
+                                                    ];
+                                                }
 
 
                                         $set('components', $components);
@@ -355,10 +409,9 @@ class SalarySlipResource extends Resource
                                             // Kalau edit record (tidak kosong), exclude komponen tertentu
                                             if ($record == '') {
                                                 $query->whereNotIn('component_name', [
-                                                    'Basic Salary',
+                                                    'BPJS Kesehatan',
+                                                    'BPJS KetenagaKerjaan',
                                                     'PPh 21',
-                                                    'No Attendance',
-                                                    'Overtime',
                                                 ]);
                                             }
 
@@ -451,10 +504,11 @@ class SalarySlipResource extends Resource
                                     ->afterStateUpdated(function ($state, callable $set) {
                                         $number = preg_replace('/[^0-9]/', '', $state);
                                         $set('amount_display', $number === '' ? 0 : number_format((int)$number, 0, ',', '.'));
+                                         $set('amount', (int) $number);
                                     })
                                     ->dehydrateStateUsing(fn($state) => preg_replace('/[^0-9]/', '', $state))
                                     ->required(),
-                                    Forms\Components\Hidden::make('amount'),
+                                    Forms\Components\Hidden::make('amount')->required()->dehydrated(true),
 
                                 
                             ])

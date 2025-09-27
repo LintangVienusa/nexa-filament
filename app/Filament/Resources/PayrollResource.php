@@ -22,6 +22,10 @@ use Filament\Tables\Columns\BooleanColumn;
 use Carbon\Carbon;
 use App\Models\Employee;
 use App\Models\SalarySlip;
+use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Actions\Action;
+use Filament\Notifications\Notification;
+use App\Services\DownloadSlipService;
 
 class PayrollResource extends Resource
 {
@@ -32,6 +36,11 @@ class PayrollResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
     protected static ?string $navigationGroup = 'HR Management';
     protected static ?string $navigationLabel = 'Payroll';
+
+    public static function canCreate(): bool
+    {
+        return false; 
+    }
 
     public static function mutateFormDataBeforeCreate(array $data): array
     {
@@ -150,7 +159,7 @@ class PayrollResource extends Resource
                                         $set('salary_slips_created', $number === '' ? 0 : number_format((int)$number, 0, '.', ','));
                                     })
                                     ->dehydrateStateUsing(fn($state) => preg_replace('/,/', '', $state))
-                                    ->disabled()
+                                    ->readonly()
                                     ->required(),
 
                                 Forms\Components\TextInput::make('salary_slips_approved')
@@ -165,11 +174,17 @@ class PayrollResource extends Resource
                                     ->dehydrateStateUsing(fn($state) => preg_replace('/,/', '', $state))
                                     ->required(),
 
+                                
+
                                 Forms\Components\Toggle::make('status')
                                     ->label('Approved')
                                     ->inline(false),
+                                
 
-                            ]),
+                            ])
+                             
+                            
+                            
                     ]),
 
 
@@ -186,7 +201,19 @@ class PayrollResource extends Resource
                 Split::make([
                     TextColumn::make('employee_id'),
                     TextColumn::make('periode')->sortable()->searchable(),
-                    BooleanColumn::make('status')->label('Status'),
+                    TextColumn::make('status')
+                        ->label('Status')
+                        ->formatStateUsing(fn ($state): string => match ((int) $state) {
+                            0 => 'Draft',
+                            1 => 'Approved',
+                            default => 'Unknown',
+                        })
+                        ->badge()
+                        ->color(fn ($state): string => match ((int) $state) {
+                            0 => 'danger',
+                            1 => 'success',
+                            default => 'primary',
+                        }),
                     TextColumn::make('number_of_employees'),
                     TextColumn::make('start_date')->date(),
                     TextColumn::make('cutoff_date')->date(),
@@ -209,10 +236,37 @@ class PayrollResource extends Resource
                 ])
                 ->collapsible(),
             ])
+            
             ->filters([
                 //
             ])
             ->actions([
+                Action::make('approve')
+                    ->label('Approve')
+                    ->icon('heroicon-o-check')
+                    ->visible(fn ($record) => (int) $record->status === 0) 
+                    ->requiresConfirmation()
+                    ->action(function ($record) {
+                        $record->update(['status' => 1]);
+
+                        Notification::make()
+                            ->title('Payroll Approved')
+                            ->success()
+                            ->send();
+                    }),
+                Action::make('downloadSlip')
+                        ->label('Download PDF')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->action(function ($record, DownloadSlipService $pdfService) {
+                            $pdf = $pdfService->downloadSlip($record->employee_id, $record->periode);
+
+                            return response()->streamDownload(
+                                fn () => print($pdf->output()),
+                                "SalarySlip-{$record->employee_id}-{$record->periode}.pdf"
+                            );
+                        }),
+                    
+                
                 Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
@@ -297,7 +351,7 @@ class PayrollResource extends Resource
     {
         return [
             'index' => Pages\ListPayrolls::route('/'),
-            'create' => Pages\CreatePayroll::route('/create'),
+            // 'create' => Pages\CreatePayroll::route('/create'),
             'edit' => Pages\EditPayroll::route('/{record}/edit'),
         ];
     }

@@ -9,12 +9,37 @@ use Carbon\Carbon;
 use App\Models\SalarySlip;
 use App\Services\BpjsKesehatanService;
 use App\Services\BpjsKetenagakerjaanService;
+use App\Models\Payroll;
+use Filament\Notifications\Notification;
+use Illuminate\Support\Facades\DB;
 
 class CreateSalarySlip extends CreateRecord
 {
     protected static string $resource = SalarySlipResource::class;
 
-    
+    protected function mutateFormDataBeforeCreate(array $data): array
+    {
+        $periodeCarbon = $data['periode']
+            ? Carbon::createFromFormat('F Y', $data['periode'])
+            : Carbon::now();
+        $periodeString = $periodeCarbon->format('F Y');
+
+        $payroll = Payroll::where('employee_id', $data['employee_id'])
+            ->where('periode', $periodeString)
+            ->first();
+
+        if ($payroll) {
+            Notification::make()
+                ->title('Salary Slip Creation Failed')
+                ->body("Payroll for the {$periodeString} period already exists.")
+                ->danger()
+                ->send();
+
+            $this->halt(); // stop proses create
+        }
+
+        return $data;
+    }
 
     protected function getRedirectUrl(): string
     {
@@ -35,15 +60,26 @@ class CreateSalarySlip extends CreateRecord
         // ->first();
 
         foreach ($data['components'] as $component) {
+            $salaryComponent = \App\Models\SalaryComponent::find($component['salary_component_id']);
+    
             $potonganAlpha = $component['no_attendance'] ?? 0; 
             $overtime_hours = $component['overtime_hours'] ?? 0; 
-
-            if($potonganAlpha != 0){
-                $amount = $potonganAlpha * $component['amount'];
-            }elseif($overtime_hours != 0){
-                $amount = $overtime_hours * $component['amount'];
+            
+            $baseAmount    = $component['amount'] ?? 0;
+            
+            if ($salaryComponent) {
+                if ($salaryComponent->component_name === 'No Attendance') {
+                    $noAttendance = $component['no_attendance'] ?? 0;
+                    $amount = $noAttendance * $baseAmount;
+                } elseif ($salaryComponent->component_name === 'Overtime') {
+                    $overtimeHours = $component['overtime_hours'] ?? 0;
+                    $amount = $overtimeHours * $baseAmount;
+                }else{
+                    $amount = $baseAmount;
+                }
             }else{
-                $amount =  $component['amount'];
+                
+                    $amount = $baseAmount;
             }
             SalarySlip::create([
                 'employee_id' => $data['employee_id'],
@@ -112,8 +148,30 @@ class CreateSalarySlip extends CreateRecord
 
 
          // ==== Hitung PPh21 ====
-            $allowance   = $data['allowance'] ?? 0;
-            $overtime    = $data['overtime_pay'] ?? 0;
+
+                $basicSalary = SalarySlip::query()
+                                ->join('SalaryComponents', 'SalarySlips.salary_component_id', '=', 'SalaryComponents.id')
+                                ->where('SalarySlips.employee_id', $data['employee_id'])
+                                ->where('SalarySlips.periode', $data['periode'])
+                                ->where('SalaryComponents.component_name', 'Basic Salary')
+                                ->value('SalarySlips.amount') ?? 0;
+
+                $allowance = SalarySlip::query()
+                            ->join('SalaryComponents', 'SalarySlips.salary_component_id', '=', 'SalaryComponents.id')
+                            ->where('SalarySlips.employee_id', $data['employee_id'])
+                            ->where('SalarySlips.periode', $data['periode'])
+                            ->where('SalaryComponents.component_type', 0) // allowance
+                            ->sum('SalarySlips.amount');
+
+                $overtime = SalarySlip::query()
+                            ->join('SalaryComponents', 'SalarySlips.salary_component_id', '=', 'SalaryComponents.id')
+                            ->where('SalarySlips.employee_id', $data['employee_id'])
+                            ->where('SalarySlips.periode', $data['periode'])
+                            ->where('SalaryComponents.component_name', 'Overtime')
+                            ->value('SalarySlips.amount') ?? 0;
+
+            $allowance   = $allowance ?? 0;
+            $overtime    = $overtime ?? 0;
             $dependents  = $employee?->dependents ?? 0;
 
             $bruto        = $basicSalary + $allowance + $overtime;
@@ -148,6 +206,42 @@ class CreateSalarySlip extends CreateRecord
                     'amount'              => $pph21Amount,
                     'payroll_id'          => $data['payroll_id'] ?? null,
                 ]);
+
+                
+
+                // Total Allowance
+                $ta = SalarySlip::where('employee_id', $data['employee_id'])
+                    ->where('periode', $data['periode'])
+                    ->whereHas('salaryComponent', function ($q) {
+                        $q->where('component_type', 0); // Allowance
+                    })
+                    ->sum('amount');
+
+                // Total Deduction
+                $td = SalarySlip::where('employee_id', $data['employee_id'])
+                    ->where('periode', $data['periode'])
+                    ->whereHas('salaryComponent', function ($q) {
+                        $q->where('component_type', 1); // Deduction
+                    })
+                    ->sum('amount');
+
+                $payroll = Payroll::where('employee_id', $data['employee_id'])
+                    ->where('periode', $data['periode'])
+                    ->first();
+                
+                if ($payroll) {
+                        $total = $ta - $td;
+                        DB::connection('mysql_employees')
+                            ->table('Payrolls')
+                            ->where('id', $payroll->id)
+                            ->update(['salary_slips_created' => $total, 'salary_slips_approved' => $total]);
+                        // $payroll->salary_slips_created = (int)$ta - (int)$td; // allowance - deduction
+                        // $payroll->save();
+
+                        $payroll->refresh();
+                        
+                    }
+                
             }
 
 

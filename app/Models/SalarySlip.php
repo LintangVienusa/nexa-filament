@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\SalaryComponent;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Filament\Notifications\Notification;
 
 
 class SalarySlip extends Model
@@ -79,6 +80,7 @@ class SalarySlip extends Model
                 $salarySlip->payroll_id = $payroll->id;
                 // $payroll->salary_slips_created = ($payroll->salary_slips_created ?? 0) + ($salarySlip->amount ?? 0);
                 // $payroll->save();
+                
             }else{
                     
                 $payroll = Payroll::create([
@@ -116,7 +118,7 @@ class SalarySlip extends Model
             ->first();
             
             if ($payroll) {
-                    $total = (int)$ta - (int)$td;
+                    $total = $ta - $td;
                     DB::connection('mysql_employees')
                         ->table('Payrolls')
                         ->where('id', $payroll->id)
@@ -189,6 +191,6 @@ class SalarySlip extends Model
         return ($this->basic_salary + $this->allowance + $this->overtime) - $pph21;
     }
 
-
+    
     
 }
