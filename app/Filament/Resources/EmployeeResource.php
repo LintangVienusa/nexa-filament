@@ -32,25 +32,31 @@ class EmployeeResource extends Resource
     {
         return $form
             ->schema([
-                Section::make('Personal Information')
+                Section::make('Informasi Personal')
                     ->schema([
                         TextInput::make('employee_id')
-                            ->label('Employee ID')
+                            ->label('Nomor Induk Karyawan(NIK)')
+                            ->numeric()
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(20),
 
                         TextInput::make('first_name')
+                            ->label('Nama Depan')
                             ->required()
                             ->maxLength(50),
 
                         TextInput::make('middle_name')
+                            ->label('Nama Tengah')
                             ->maxLength(50),
 
                         TextInput::make('last_name')
+                            ->label('Nama Belakang')
+                            ->required()
                             ->maxLength(50),
 
                         Select::make('gender')
+                            ->label('Jenis Kelamin')
                             ->options([
                                 'Male' => 'Male',
                                 'Female' => 'Female',
@@ -58,76 +64,83 @@ class EmployeeResource extends Resource
                             ->required(),
 
                         DatePicker::make('date_of_birth')
-                            ->label('Date of Birth'),
+                            ->label('Tanggal Lahir'),
                     ])->columns(2),
 
-                Section::make('Employment Details')
+                Section::make('Detail Karyawan')
                     ->schema([
                         DatePicker::make('date_of_joining')
-                            ->label('Date of Joining')
+                            ->label('Tanggal Masuk')
                             ->default(now()),
 
                         TextInput::make('job_title')
+                            ->label('Jabatan')
                             ->maxLength(100),
 
                         Select::make('org_id')
-                            ->label('Organization')
+                            ->label('Divisi')
                             ->relationship('organization', 'divisi_name')
                             ->searchable()
                             ->required(),
 
+                        TextInput::make('basic_salary')
+                            ->label('Gaji Pokok')
+                            ->prefix('Rp')
+                            ->reactive()
+                            ->default(0)
+                            ->formatStateUsing(fn($state) => number_format((int) $state, 0, ',', '.'))
+                            ->afterStateUpdated(function ($state, callable $set) {
+                                $number = preg_replace('/[^0-9]/', '', $state);
+                                $set('basic_salary', $number === '' ? 0 : number_format((int) $number, 0, ',', '.'));
+                            })
+                            ->dehydrateStateUsing(fn($state) => (string) preg_replace('/[^0-9]/', '', $state))
+                            ->required(),
+                    ])->columns(2),
+
+                Section::make('Kontak dan Informasi Detail')
+                    ->schema([
                         TextInput::make('email')
                             ->email()
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(100),
-                        
-                        TextInput::make('basic_salary')
-                            ->label('Basic Salary')
-                            ->prefix('Rp')
-                            ->reactive()
-                            ->default(0) 
-                            ->formatStateUsing(fn($state) => number_format((int) $state, 0, ',', '.')) 
-                            ->afterStateUpdated(function ($state, callable $set) {
-                                $number = preg_replace('/[^0-9]/', '', $state);
-                                $set('basic_salary', $number === '' ? 0 : number_format((int) $number, 0, ',', '.'));
-                            })
-                            ->dehydrateStateUsing(fn($state) => (string) preg_replace('/[^0-9]/', '', $state)) 
-                            ->required(),
-                    ])->columns(2),
-
-                Section::make('Contact & Identification')
-                    ->schema([
-                        
 
                         TextInput::make('mobile_no')
-                            ->label('Mobile Number')
-                            ->tel(),
+                            ->label('Nomor Handphone')
+                            ->tel()
+                            ->numeric()
+                            ->required(),
 
                         TextInput::make('ktp_no')
-                            ->label('KTP No')
+                            ->label('No. KTP')
                             ->required()
+                            ->numeric()
                             ->maxLength(20),
 
                         TextInput::make('bpjs_kes_no')
-                            ->label('BPJS Kesehatan No')
+                            ->label('No. BPJS Kesehatan')
+                            ->numeric()
                             ->maxLength(20),
 
                         TextInput::make('bpjs_tk_no')
-                            ->label('BPJS Ketenagakerjaan No')
+                            ->label('No. BPJS Ketenagakerjaan')
+                            ->numeric()
                             ->maxLength(20),
 
                         TextInput::make('npwp_no')
                             ->label('NPWP No.')
+                            ->numeric()
                             ->maxLength(20),
 
                         Textarea::make('address')
+                            ->label('Alamat')
                             ->rows(3),
                     ])->columns(2),
 
-                Section::make('Additional Info')
+                Section::make('Info Tambahan')
                     ->schema([
                         Select::make('religion')
+                            ->label('Agama')
                             ->options([
                                 'Islam' => 'Islam',
                                 'Kristen' => 'Kristen',
@@ -142,16 +155,31 @@ class EmployeeResource extends Resource
                             ->options([
                                 0 => "Single",
                                 1 => "Married"
-                            ]),
+                            ])
+                            ->reactive(),
 
+                        TextInput::make('number_of_children')
+                            ->label('Jumlah Anak')
+                            ->numeric()
+                            ->default(0)
+                            ->visible(fn (callable $get) => $get('marital_status') == 1)
+                    ])->columns(2),
+
+                Section::make('Info Rekening')
+                    ->schema([
                         TextInput::make('bank_account_name')
-                            ->label('Bank Account Name')
+                            ->label('Bank')
                             ->maxLength(100),
 
                         TextInput::make('bank_account_no')
-                            ->label('Bank Account Number')
+                            ->label('No. Rekening')
+                            ->numeric()
                             ->maxLength(50),
-                    ])->columns(2),
+
+                        TextInput::make('name_in_bank_account')
+                            ->label('Nama di Rekening')
+                            ->maxLength(100),
+                    ])->columns(3),
             ]);
     }
 
@@ -169,6 +197,7 @@ class EmployeeResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make()
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

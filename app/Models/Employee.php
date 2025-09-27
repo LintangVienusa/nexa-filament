@@ -34,10 +34,12 @@ class Employee extends Model
         'address',
         'religion',
         'marital_status',
+        'children_count',
         'job_title',
         'org_id',
         'bank_account_name',
-        'bank_account_no'
+        'bank_account_no',
+        'name_in_bank_account'
     ];
 
     public function getFullNameAttribute(): string
