@@ -20,11 +20,11 @@ use Spatie\Permission\Traits\HasPermissions;
 
 class LeaveResource extends Resource
 {
-    use HasPermissions,  HasOwnRecordPolicy;
+    // use HasPermissions,  HasOwnRecordPolicy;
 
     protected static ?string $model = Leave::class;
-    protected static ?string $permissionPrefix = 'employees';
-    protected static string $ownerColumn = 'email';
+    // protected static ?string $permissionPrefix = 'employees';
+    // protected static string $ownerColumn = 'email';
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';
     protected static ?string $navigationGroup = 'HR Management';
     protected static ?string $navigationLabel = 'Leaves';

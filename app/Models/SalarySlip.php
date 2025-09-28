@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\SalaryComponent;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Filament\Notifications\Notification;
 
 
 class SalarySlip extends Model
@@ -51,6 +52,7 @@ class SalarySlip extends Model
         static::creating(function ($model) {
             $exists = static::where('employee_id', $model->employee_id)
                 ->where('salary_component_id', $model->salary_component_id)
+                ->where('periode', $model->periode)
                 ->exists();
 
             if ($exists) {
@@ -78,6 +80,7 @@ class SalarySlip extends Model
                 $salarySlip->payroll_id = $payroll->id;
                 // $payroll->salary_slips_created = ($payroll->salary_slips_created ?? 0) + ($salarySlip->amount ?? 0);
                 // $payroll->save();
+                
             }else{
                     
                 $payroll = Payroll::create([
@@ -94,20 +97,7 @@ class SalarySlip extends Model
                              
             }
             
-            
-            
-           
-            
-        });
-
-        static::created(function ($salarySlip) {
-            
-            $periodeCarbon = $salarySlip->periode
-                        ? Carbon::createFromFormat('F Y', $salarySlip->periode)
-                        : Carbon::now();
-             $periodeString = $periodeCarbon->format('F Y');
-
-           // Total Allowance
+            // Total Allowance
             $ta = SalarySlip::where('employee_id', $salarySlip->employee_id)
                 ->where('periode', $periodeString)
                 ->whereHas('salaryComponent', function ($q) {
@@ -128,7 +118,7 @@ class SalarySlip extends Model
             ->first();
             
             if ($payroll) {
-                    $total = (int)$ta - (int)$td;
+                    $total = $ta - $td;
                     DB::connection('mysql_employees')
                         ->table('Payrolls')
                         ->where('id', $payroll->id)
@@ -139,7 +129,12 @@ class SalarySlip extends Model
                     $payroll->refresh();
                     
                 }
+            
+           
+            
         });
+
+        
 
         
     }
@@ -196,6 +191,6 @@ class SalarySlip extends Model
         return ($this->basic_salary + $this->allowance + $this->overtime) - $pph21;
     }
 
-
+    
     
 }

@@ -26,7 +26,7 @@ class Payroll extends Model
     ];
 
     protected $casts = [
-        'status' => 'boolean',
+        'status' => 'integer',
         'start_date' => 'date',
         'cutoff_date' => 'date',
     ];
@@ -72,49 +72,11 @@ class Payroll extends Model
 
             $calc = self::recalculate($payroll->toArray());
             // $payroll->gross_salary = $calc['gross_salary'];
-            $payroll->salary_slips_created   = $calc['salary_slips_created'];
+            // $payroll->salary_slips_created   = (int)$calc['salary_slips_created'];
         });
     }
 
-    public static function mutateFormDataBeforeCreate(array $data): array
-    {
-        $data['basic_salary'] = self::getBasicSalary($data['employee_id']);
-        $data['overtime'] = self::calculateOvertime($data['employee_id'], $data['period_start'], $data['period_end']);
-        return $data;
-    }
-
-    public static function mutateFormDataBeforeSave(array $data): array
-    {
-        $data['basic_salary'] = self::getBasicSalary($data['employee_id']);
-        $data['overtime'] = self::calculateOvertime($data['employee_id'], $data['period_start'], $data['period_end']);
-        return $data;
-    }
-
-    public static function calculateOvertime($employeeId, $start, $end): int
-    {
-        $startDate = Carbon::parse($start)->format('Y-m-d');
-        $endDate   = Carbon::parse($end)->format('Y-m-d');
-
-        $overtimes = DB::connection('mysql_employees')
-            ->table('overtimes as o')
-            ->join('attendances as a', 'o.attendance_id', '=', 'a.id')
-            ->where('o.employee_id', $employeeId)
-            ->whereBetween('a.attendance_date', [$startDate, $endDate])
-            ->select('o.working_hours', 'a.attendance_date')
-            ->get();
-
-        $total = 0;
-
-        foreach ($overtimes as $ot) {
-            $date = Carbon::parse($ot->attendance_date);
-            $day = $date->dayOfWeek; // 0 = Sunday, 6 = Saturday
-            $rate = in_array($day, [0,6]) ? 60000 : 30000;
-
-            $total += $ot->working_hours * $rate;
-        }
-
-        return round(max(0, $total));
-    }
+    
 
     public static  function recalculate(array $data)
     {
@@ -130,7 +92,7 @@ class Payroll extends Model
 
         return [
             // 'gross_salary' => $gross,
-            'salary_slips_created'   => $net,
+            'salary_slips_created'   =>  (int)$net,
         ];
     
     }
