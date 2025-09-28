@@ -49,130 +49,126 @@ class SalarySlipResource extends Resource
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
-                                Forms\Components\Select::make('employee_id')
+                                // Department
+                                Forms\Components\Select::make('department_id')
+                                    ->label('Department')
+                                    ->options(\App\Models\Organization::query()
+                                        ->select('id', 'divisi_name')
+                                        ->distinct('divisi_name')
+                                        ->pluck('divisi_name', 'id'))
+                                    ->reactive()
+                                    ->required()
+                                    ->disabled(fn ($record) => $record !== null) 
+                                    ->afterStateUpdated(function ($state, callable $set) {
+                                        // reset unit dan employee jika department berubah
+                                        $set('unit_id', null);
+                                        $set('employee_id', null);
+                                        $set('employee_id', null);
+                                    }),
+
+                                // Unit (filtered by department)
+                                Forms\Components\Select::make('unit_id')
+                                    ->label('Unit')
+                                    ->options(function (callable $get) {
+                                        $departmentId = $get('department_id');
+                                        if (!$departmentId) return [];
+                                        return \App\Models\Organization::where('id', $departmentId)
+                                            ->pluck('unit_name', 'id');
+                                    })
+                                    ->reactive()
+                                    ->required()
+                                    ->disabled(fn ($record) => $record !== null) 
+                                    ->afterStateUpdated(function ($state, callable $set) {
+                                        // reset employee jika unit berubah
+                                        $set('employee_name', null);
+                                        $set('employee_id', null);
+                                    }),
+
+                                // Employee (filtered by department + unit)
+                                Forms\Components\Select::make('employee_name')
                                     ->label('Employee')
-                                    ->options(
-                                        \App\Models\Employee::all()->mapWithKeys(fn ($e) => [
-                                            $e->employee_id => $e->first_name . ' ' . $e->last_name
-                                        ])
-                                    )
-                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
-                                        if (!$state) return;
-
-                                        $basicSalary = Employee::find($state)?->basic_salary ?? 0;
-                                        
-
-                                        $components =  [];
-
-                                        
-                                        if (!collect($components)->pluck('salary_component_id')
-                                            ->contains(SalaryComponent::where('component_name', 'Basic Salary')->value('id'))) {
-                                            $components[] = [
-                                                'salary_component_id' => SalaryComponent::where('component_name', 'Basic Salary')->value('id'),
-                                                'component_type' => SalaryComponent::where('component_name', 'Basic Salary')->value('component_type'),
-                                                'amount_display'              => number_format((int) $basicSalary, 0, ',', '.'),
-                                                'amount'          => (int) $basicSalary,
-                                            ];
-                                        }
-
-                                        $employeeId = $get('employee_id');
-
-                                        if (!$employeeId) return;
-
-                                        
-                                        $startDate =  now()->startOfMonth()->toDateString();
-                                        $endDate = now()->endOfMonth()->toDateString();
-
-                                        
-                                        if (now()->isSameMonth(Carbon::today())) {
-                                            $endDate = Carbon::today()->toDateString();
-                                        }
-
-                                        $set('start_date', $startDate);
-                                        $set('cut_off', $endDate);
-
-                                        $hariKerjaService = app(HariKerjaService::class);
-                                        $hariKerjaData = $hariKerjaService->hitungHariKerja($employeeId, $startDate, $endDate);
-
-                                        $set('jumlah_hari_kerja', $hariKerjaData['jumlah_hari_kerja'] ?? 0);
-                                        $set('no_attendance', $hariKerjaData['jml_alpha'] ?? 0);
-
-                                        $overtimeHours = \App\Models\Overtime::join('Attendances', 'Overtimes.attendance_id', '=', 'Attendances.id')
-                                                        ->where('Overtimes.employee_id', $employeeId)
-                                                        ->whereBetween('Attendances.attendance_date', [$startDate, $endDate])
-                                                        ->sum('Overtimes.working_hours');
-
-                                            $alphaId = SalaryComponent::where('component_name', 'No Attendance')->value('id');
-                                            $overtimeId = SalaryComponent::where('component_name', 'Overtime')->value('id');
-
-                                            $found = false;
-                                            $foundOvertime = false;
-                                            $amountpt = 100000;
-                                            $amountover = 50000;
-
-                                            foreach ($components as &$c) {
-                                                if ($c['salary_component_id'] == $alphaId) {
-                                                    $c['jumlah_hari_kerja'] = $hariKerjaData['jumlah_hari_kerja'] ?? 0;
-                                                    $c['jumlah_absensi'] = $hariKerjaData['jml_absensi'] ?? 0;
-                                                    $c['no_attendance'] = $hariKerjaData['jml_alpha'] ?? 0;
-                                                    $c['amount_display'] = number_format((int) $amountpt, 0, ',', '.') ?? 0;
-                                                    $c['amount'] = (int) $amountpt ?? 0;
-                                                    $found = true;
-                                                }
-                                                if ($c['salary_component_id'] == $overtimeId) {
-                                                            $c['overtime_hours'] = $overtimeHours;
-                                                            $foundOvertime = true;
-                                                        }
-                                            }
-
-                                            if (!$found) {
-                                                $components[] = [
-                                                    'salary_component_id' => $alphaId,
-                                                    'component_type' => SalaryComponent::where('component_name', 'No Attendance')->value('component_type'),
-                                                    'jumlah_hari_kerja' => $hariKerjaData['jumlah_hari_kerja'] ?? 0,
-                                                    'jumlah_absensi' => $hariKerjaData['jml_absensi'] ?? 0,
-                                                    'no_attendance' => $hariKerjaData['jml_alpha'] ?? 0,
-                                                    'amount_display' => number_format((int) $amountpt, 0, ',', '.'),
-                                                        'amount'     => (int) $amountpt,
-                                                ];
-                                            }
-
-                                            if (!$foundOvertime && $overtimeHours > 0) {
-                                                    $components[] = [
-                                                        'salary_component_id' => $overtimeId,
-                                                        'component_type' => SalaryComponent::where('component_name', 'Overtime')->value('component_type'),
-                                                        'overtime_hours' => $overtimeHours,
-                                                        'amount_display' => number_format((int) $amountover, 0, ',', '.'),
-                                                        'amount'     => (int) $amountover,
-                                                    ];
-                                                }
-
-
-
-
-                                        $set('components', $components);
+                                    ->options(function (callable $get) {
+                                        $unitId = $get('unit_id');
+                                        if (!$unitId) return [];
+                                        return \App\Models\Employee::where('org_id', $unitId)
+                                            ->get()
+                                            ->mapWithKeys(fn ($e) => [$e->employee_id => $e->first_name . ' ' . $e->last_name]);
                                     })
                                     ->searchable()
                                     ->reactive()
-                                    ->disabled(fn (?SalarySlip $record) => $record !== null)
-                                    ->required(),
+                                    ->required()
+                                    ->disabled(fn ($record) => $record !== null) 
+                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                        if (!$state) return;
+
+                                        // set Employee ID di TextInput
+                                        $set('employee_id', $state);
+
+                                        // Hitung salary components
+                                        $employee = \App\Models\Employee::find($state);
+                                        $basicSalary = $employee?->basic_salary ?? 0;
+
+                                        $components = [];
+
+                                        $basicId = \App\Models\SalaryComponent::where('component_name', 'Basic Salary')->value('id');
+                                        $basicType = \App\Models\SalaryComponent::where('component_name', 'Basic Salary')->value('component_type');
+
+                                        $components[] = [
+                                            'salary_component_id' => $basicId,
+                                            'component_type' => $basicType,
+                                            'amount_display' => number_format((int)$basicSalary, 0, ',', '.'),
+                                            'amount' => (int)$basicSalary,
+                                        ];
+
+                                        // Hari kerja & overtime
+                                        $startDate = now()->startOfMonth()->toDateString();
+                                        $endDate = now()->endOfMonth()->toDateString();
+                                        if (now()->isSameMonth(now())) $endDate = now()->toDateString();
+
+                                        $hariKerjaService = app(HariKerjaService::class);
+                                        $hariKerjaData = $hariKerjaService->hitungHariKerja($state, $startDate, $endDate);
+
+                                        $overtimeHours = \App\Models\Overtime::join('Attendances', 'Overtimes.attendance_id', '=', 'Attendances.id')
+                                            ->where('Overtimes.employee_id', $state)
+                                            ->whereBetween('Attendances.attendance_date', [$startDate, $endDate])
+                                            ->sum('Overtimes.working_hours');
+
+                                        $alphaId = \App\Models\SalaryComponent::where('component_name', 'No Attendance')->value('id');
+                                        $overtimeId = \App\Models\SalaryComponent::where('component_name', 'Overtime')->value('id');
+
+                                        $components[] = [
+                                            'salary_component_id' => $alphaId,
+                                            'component_type' => \App\Models\SalaryComponent::where('component_name', 'No Attendance')->value('component_type'),
+                                            'jumlah_hari_kerja' => $hariKerjaData['jumlah_hari_kerja'] ?? 0,
+                                            'jumlah_absensi' => $hariKerjaData['jml_absensi'] ?? 0,
+                                            'no_attendance' => $hariKerjaData['jml_alpha'] ?? 0,
+                                            'amount_display' => number_format(100000, 0, ',', '.'),
+                                            'amount' => 100000,
+                                        ];
+
+                                        if ($overtimeHours > 0) {
+                                            $components[] = [
+                                                'salary_component_id' => $overtimeId,
+                                                'component_type' => \App\Models\SalaryComponent::where('component_name', 'Overtime')->value('component_type'),
+                                                'overtime_hours' => $overtimeHours,
+                                                'amount_display' => number_format($overtimeHours > 0 ? 50000 : 0, 0, ',', '.'),
+                                                 'amount' => $overtimeHours > 0 ? 50000 : 0,
+                                            ];
+                                        }
+
+                                        $set('components', $components);
+
+                                        $set('start_date', $startDate);
+                                        $set('cut_off', $endDate);
+                                        $set('jumlah_hari_kerja', $hariKerjaData['jumlah_hari_kerja'] ?? 0);
+                                        $set('no_attendance', $hariKerjaData['jml_alpha'] ?? 0);
+                                    }),
 
                                 Forms\Components\TextInput::make('employee_id')
                                     ->label('Employee ID')
-                                    ->disabled()
-                                    ->dehydrated(false)
+                                    ->readonly()
+                                    ->dehydrated(true)
                                     ->reactive()
-                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
-                                        
-
-                                        if ($state) {
-                                            $start = \Carbon\Carbon::parse($get('start_date'));
-                                            $end = \Carbon\Carbon::parse($get('cutoff_date'));
-
-                                            $overtime = \App\Models\Payroll::calculateOvertime($state, $start, $end);
-                                            $set('overtime_pay', $overtime);
-                                        }
-                                    })
                                     ->required(),
                             ]),
                             
@@ -269,9 +265,9 @@ class SalarySlipResource extends Resource
                                                     $components[] = [
                                                         'salary_component_id' => $overtimeId,
                                                         'component_type' => SalaryComponent::where('component_name', 'Overtime')->value('component_type'),
-                                                        'overtime_hours' => $overtimeHours,
-                                                        'amount_display' => number_format((int) $amountover, 0, ',', '.'),
-                                                        'amount'     => (int) $amountover,
+                                                        'overtime_hours' => $overtimeHours ?? 0,
+                                                        'amount_display' => number_format((int) ($overtimeHours > 0 ? $amountover : 0), 0, ',', '.'),
+                                                        'amount' => (int) ($overtimeHours > 0 ? $amountover : 0),
                                                     ];
                                                 }
 
@@ -351,9 +347,9 @@ class SalarySlipResource extends Resource
                                                     $components[] = [
                                                         'salary_component_id' => $overtimeId,
                                                         'component_type' => SalaryComponent::where('component_name', 'Overtime')->value('component_type'),
-                                                        'overtime_hours' => $overtimeHours,
-                                                        'amount_display' => number_format((int) $amountover, 0, ',', '.'),
-                                                        'amount'     => (int) $amountover,
+                                                        'overtime_hours' => $overtimeHours ?? 0,
+                                                        'amount_display' => number_format((int) ($overtimeHours > 0 ? $amountover : 0), 0, ',', '.'),
+                                                        'amount' => (int) ($overtimeHours > 0 ? $amountover : 0),
                                                     ];
                                                 }
 
@@ -410,7 +406,12 @@ class SalarySlipResource extends Resource
                                             if ($record == '') {
                                                 $query->whereNotIn('component_name', [
                                                     'BPJS Kesehatan',
-                                                    'BPJS KetenagaKerjaan',
+                                                    'JHT BPJS TK',
+                                                    'JP BPJS TK',
+                                                    'JKK BPJS TK',
+                                                    'JKM BPJS TK',
+                                                    'Marriage Allowance',
+                                                    'Child Allowance',
                                                     'PPh 21',
                                                 ]);
                                             }
@@ -484,7 +485,7 @@ class SalarySlipResource extends Resource
                                         return $get('salary_component_id') == $basicSalaryId;
                                     }),
 
-                                TextInput::make('amount_display')
+                                Forms\Components\TextInput::make('amount_display')
                                     ->label(function ($get) {
                                         $componentId = $get('salary_component_id');
                                         $potonganAlphaId = SalaryComponent::where('component_name', 'No Attendance')->value('id');
@@ -500,15 +501,20 @@ class SalarySlipResource extends Resource
                                     })
                                     ->prefix('Rp')
                                     ->reactive()
-                                    ->formatStateUsing(fn($state) => $state ? number_format((int)$state, 0, ',', '.') : '')
+                                    ->formatStateUsing(fn($state) => $state !== null ? number_format((int)$state, 0, ',', '.') : '0')
                                     ->afterStateUpdated(function ($state, callable $set) {
                                         $number = preg_replace('/[^0-9]/', '', $state);
-                                        $set('amount_display', $number === '' ? 0 : number_format((int)$number, 0, ',', '.'));
-                                         $set('amount', (int) $number);
+                                        $amount = $number !== '' ? (int)$number : 0;
+                                        $set('amount_display', number_format($amount, 0, ',', '.'));
+                                        $set('amount', $amount);
                                     })
                                     ->dehydrateStateUsing(fn($state) => preg_replace('/[^0-9]/', '', $state))
                                     ->required(),
-                                    Forms\Components\Hidden::make('amount')->required()->dehydrated(true),
+
+                                Forms\Components\Hidden::make('amount')
+                                    ->default(0)
+                                    ->required()
+                                    ->dehydrated(true),
 
                                 
                             ])

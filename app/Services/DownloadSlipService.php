@@ -4,6 +4,7 @@ namespace App\Services;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\Employee;
 use App\Models\SalarySlip;
+use Carbon\Carbon;
 
 class DownloadSlipService
 {
@@ -32,6 +33,7 @@ class DownloadSlipService
 
         $total_dec = $slips_decd->sum('amount');
         $net_salary = $total-$total_dec;
+        $date = Carbon::now()->format('Y/m/d H:m:s');
 
         // Buat HTML langsung tanpa blade
         $html = '
@@ -41,7 +43,7 @@ class DownloadSlipService
                             body {font-family: DejaVu Sans, Helvetica, Arial, sans-serif; margin: 20px; }
                             .header { display: flex; align-items: center; }
                             .logo { height: 80px; width: 300px; margin-right: 20px; }
-                            .title { font-family: DejaVu Sans, Helvetica, Arial, sans-serif; font-size: 24px; font-weight: bold;  color: #888; }
+                            .title { font-family: DejaVu Sans, Helvetica, Arial, sans-serif; font-size: 20px; font-weight: bold;  color: #888; }
                             .info { font-size: 12px; margin-top: 15px; }
                             .info_pt { font-size: 16px; font-weight: bold; margin-top: 20px; }
                             table { font-size: 14px; width: 100%; border-collapse: collapse; margin-top: 15px; }
@@ -53,13 +55,25 @@ class DownloadSlipService
                     </head>
                 <body>
 
-                    <div class="header">
-                    <div class="title">
-                            SALARY SLIP
-                        </div>
-                        <img src="' . public_path('assets/images/Kop Surat Logo PT Nexanira Biru.png') . '" class="logo">
-                        
+                
+                    <div style="font-size: 12px; text-align: right;">
+                        '. $date.'
                     </div>
+
+                    <div class="header">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="text-align: left; font-weight: bold; font-size: 16px;">
+                                    SALARY SLIP
+                                </td>
+                                <td style="text-align: right; font-size: 20px; font-weight: bold;">
+                                    PRIVATE & CONFIDENTIAL
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <img src="' . public_path('assets/images/Kop Surat Logo PT Nexanira Biru.png') . '" class="logo">
+                        
                     <div class="info" style="display: flex; justify-content: space-between; gap: 10px;">
                         <table style="width: 50%; float:left; border-collapse: collapse; ">
                             <thead>

@@ -54,6 +54,7 @@ class PayrollResource extends Resource
         return $data;
     }
 
+    
 
     public static function form(Form $form): Form
     {
@@ -61,8 +62,9 @@ class PayrollResource extends Resource
             ->schema([
                 Forms\Components\Section::make('Employee Information')
                     ->schema([
-                        Forms\Components\Grid::make(2) // ← Bagi jadi 2 kolom
+                        Forms\Components\Grid::make(2) 
                             ->schema([
+                                
                                 Forms\Components\Select::make('employee_id')
                                     ->label('Employee')
                                     ->options(
@@ -97,7 +99,6 @@ class PayrollResource extends Resource
                             Forms\Components\Select::make('periode')
                                 ->label('Periode')
                                 ->options(function () {
-                                        // buat daftar periode 12 bulan terakhir
                                         $periods = [];
                                         for ($i = 0; $i < 12; $i++) {
                                             $period = Carbon::now()->subMonths($i)->format('F Y');
@@ -139,6 +140,7 @@ class PayrollResource extends Resource
                                 ->required()
                                 ->columnSpan(3),
                             
+                            
                         ])
                     
                     ->columns(12),
@@ -152,15 +154,12 @@ class PayrollResource extends Resource
                                 Forms\Components\TextInput::make('salary_slips_created')
                                     ->label('Salary Created')
                                     ->prefix('Rp')
-                                    ->reactive()
-                                    ->formatStateUsing(fn($state) => $state ? number_format((int)$state, 0, '.', ',') : '')
-                                    ->afterStateUpdated(function ($state, callable $set) {
-                                        $number = preg_replace('/[^0-9]/', '', $state);
-                                        $set('salary_slips_created', $number === '' ? 0 : number_format((int)$number, 0, '.', ','));
-                                    })
-                                    ->dehydrateStateUsing(fn($state) => preg_replace('/,/', '', $state))
                                     ->readonly()
-                                    ->required(),
+                                    ->formatStateUsing(fn($state) => $state !== null ? number_format((int)$state, 0, '.', ',') : '0')
+                                    
+                                    ->dehydrateStateUsing(fn($state) => (int) preg_replace('/[^0-9]/', '', (int) $state))
+                                    ->required()
+                                    ->reactive(),
 
                                 Forms\Components\TextInput::make('salary_slips_approved')
                                     ->label('Salary Approved')
@@ -169,16 +168,11 @@ class PayrollResource extends Resource
                                     ->formatStateUsing(fn($state) => $state ? number_format((int)$state, 0, '.', ',') : '')
                                     ->afterStateUpdated(function ($state, callable $set) {
                                         $number = preg_replace('/[^0-9]/', '', $state);
-                                        $set('salary_slips_approved', $number === '' ? 0 : number_format((int)$number, 0, '.', ','));
+                                        $set('salary_slips_approved', $number === '' ? 0 : number_format((int)$number, 0, ',', '.'));
                                     })
-                                    ->dehydrateStateUsing(fn($state) => preg_replace('/,/', '', $state))
+                                    ->dehydrateStateUsing(fn($state) => preg_replace('/[^0-9]/', '', $state))
                                     ->required(),
 
-                                
-
-                                Forms\Components\Toggle::make('status')
-                                    ->label('Approved')
-                                    ->inline(false),
                                 
 
                             ])
@@ -192,7 +186,10 @@ class PayrollResource extends Resource
 
             
             ]);
+            
     }
+
+    
 
     public static function table(Table $table): Table
     {
@@ -202,26 +199,27 @@ class PayrollResource extends Resource
                     TextColumn::make('employee_id'),
                     TextColumn::make('periode')->sortable()->searchable(),
                     TextColumn::make('status')
-                        ->label('Status')
-                        ->formatStateUsing(fn ($state): string => match ((int) $state) {
-                            0 => 'Draft',
-                            1 => 'Approved',
-                            default => 'Unknown',
-                        })
-                        ->badge()
-                        ->color(fn ($state): string => match ((int) $state) {
-                            0 => 'danger',
-                            1 => 'success',
-                            default => 'primary',
-                        }),
-                    TextColumn::make('number_of_employees'),
+                                ->label('Status')
+                                ->formatStateUsing(fn ($state): string => match ((int) $state) {
+                                    0 => 'Draft',
+                                    1 => 'Approved',
+                                    2 => 'Paid',
+                                    default => 'Unknown',
+                                })
+                                ->badge()
+                                ->color(fn ($state): string => match ((int) $state) {
+                                    0 => 'danger',    
+                                    1 => 'success',  
+                                    2 => 'info',  
+                                    default => 'secondary',
+                                }),
                     TextColumn::make('start_date')->date(),
                     TextColumn::make('cutoff_date')->date(),
                     TextColumn::make('salary_slips_created')
-                    ->formatStateUsing(fn($state) => $state ? number_format((int)$state, 0, '.', ',') : '')
+                    ->formatStateUsing(fn($state) => $state ? number_format((int)$state, 0, ',', '.') : '0')
                                     ,
                     TextColumn::make('salary_slips_approved')
-                    ->formatStateUsing(fn($state) => $state ? number_format((int)$state, 0, '.', ',') : '')
+                    ->formatStateUsing(fn($state) => $state ? number_format((int)$state, 0, ',', '.') : '0')
                                     ,
                     TextColumn::make('created_by'),
                     TextColumn::make('updated_by'),
@@ -242,18 +240,33 @@ class PayrollResource extends Resource
             ])
             ->actions([
                 Action::make('approve')
-                    ->label('Approve')
-                    ->icon('heroicon-o-check')
-                    ->visible(fn ($record) => (int) $record->status === 0) 
-                    ->requiresConfirmation()
-                    ->action(function ($record) {
-                        $record->update(['status' => 1]);
-
-                        Notification::make()
-                            ->title('Payroll Approved')
-                            ->success()
-                            ->send();
-                    }),
+                        ->label('Approve')
+                        ->icon('heroicon-o-check')
+                        ->visible(fn ($record) => (int)$record->status === 0) 
+                        ->requiresConfirmation()
+                        ->action(function ($record) {
+                            $record->update(['status' => 1]);
+                            Notification::make()
+                                ->title('Payroll Approved')
+                                ->success()
+                                ->send();
+                                return $record->fresh();
+                        }),
+                Action::make('paid')
+                        ->label('Mark as Paid')
+                        ->icon('heroicon-o-banknotes')
+                        ->visible(fn ($record) => (int)$record->status === 1) 
+                        ->requiresConfirmation()
+                        ->action(function ($record) {
+                              $record->update(['status' => 2]);
+                            Notification::make()
+                                ->title('Payroll marked as Paid')
+                                ->success()
+                                ->send();
+                                return $record->fresh();
+                                
+                                
+                        }),
                 Action::make('downloadSlip')
                         ->label('Download PDF')
                         ->icon('heroicon-o-document-arrow-down')
@@ -355,4 +368,6 @@ class PayrollResource extends Resource
             'edit' => Pages\EditPayroll::route('/{record}/edit'),
         ];
     }
+
+    
 }
