@@ -35,6 +35,7 @@ class Leave extends Model
         'leave_duration',
         'reason',
         'status',
+        'created_by',
         'approved_by',
         'note_rejected',
         'leave_evidence',
@@ -62,8 +63,10 @@ class Leave extends Model
     protected static function booted()
     {
         static::creating(function ($leave) {
+             $user = auth()->user();
             if (auth()->check() && auth()->user()->employee?->job_title !== 'Manager') {
                 $leave->status = 0; // submit
+                $leave->created_by = $user->employee?->email;
             }
 
             if ($leave->start_date && $leave->end_date) {
@@ -84,8 +87,21 @@ class Leave extends Model
         });
 
         static::saving(function ($leave) {
-            if ($leave->leave_type === '4' && empty($leave->leave_evidence)) {
+            $user = auth()->user();
+            
+            if ($leave->leave_type === '2' && empty($leave->leave_evidence)) {
                 throw new \Exception('Evidence wajib diisi untuk cuti sakit.');
+            }else{
+                if ($leave->status == 2 && $leave->exists) {
+                    $leave->approved_by = $user->employee?->email;
+                    $leave->updated_at = now(); 
+                }
+            }
+
+            if ($leave->status == 3) { 
+                $leave->approved_by = $user->employee?->email;
+                $leave->note_rejected = $leave->note_rejected; 
+                $leave->updated_at = now(); 
             }
         });
     }
@@ -103,6 +119,8 @@ class Leave extends Model
 
         // Belum 1 tahun kerja → tidak ada saldo
         if ($dateJoin->diffInYears($now) < 1) {
+               session()->flash('info', 'Employee belum genap 1 tahun bekerja. Cuti tahunan mungkin terbatas.');
+    
             return 0;
         }
 
@@ -117,6 +135,39 @@ class Leave extends Model
             ->sum('leave_duration');
 
         return max($quota - $used, 0);
+    }
+
+    public static function getMarriageLeaveBalance($employeeId)
+    {
+        // Kuota cuti menikah = 3 hari sekali seumur hidup
+        $used = self::where('employee_id', $employeeId)
+            ->where('leave_type', 7) // Marriage Leave
+            ->where('status', 2)
+            ->count(); // cukup cek pernah approve atau belum
+
+        return $used > 0 ? 0 : 3;
+    }
+
+    public static function getMaternityLeaveBalance($employeeId)
+    {
+        // Kuota cuti melahirkan = 3 bulan (90 hari) per event
+        // Diatur per tahun atau per kejadian, tergantung kebijakan
+        $now = Carbon::now();
+
+        $used = self::where('employee_id', $employeeId)
+            ->where('leave_type', 3) // Maternity Leave
+            ->where('status', 2)
+            ->whereYear('start_date', $now->year) // kalau per tahun
+            ->sum('leave_duration');
+
+        return max(90 - $used, 0);
+    }
+
+    public function getLeaveEvidenceUrlAttribute()
+    {
+        return $this->leave_evidence 
+            ? asset('/storage/leave-evidence/' . $this->leave_evidence) 
+            : null;
     }
 
     

@@ -11,11 +11,14 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Tables\Actions;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Columns\BadgeColumn;
 use Illuminate\Support\Facades\Auth;
 use Spatie\Permission\Traits\HasPermissions;
+use App\Models\Employee;
+use Filament\Forms\Components\FileUpload;
 
 
 class LeaveResource extends Resource
@@ -31,10 +34,19 @@ class LeaveResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        $query = parent::getEloquentQuery();
+        $query = Leave::query()
+                ->select('Leaves.*', 'Employees.first_name','Employees.middle_name','Employees.last_name', 'Employees.org_id')
+                ->join('Employees', 'Leaves.employee_id', '=', 'Employees.employee_id');
+        $user = auth()->user();
+        $empId = $user->employee?->employee_id;
+        $orgId = $user->employee?->org_id ?? 0;
 
-        if (Auth::check() && Auth::user()->isStaff()) {
-            $query->where('employee_id', Auth::user()->employee?->employee_id);
+        if ($user->isStaff() && $empId) {
+            // Staff hanya bisa melihat data dirinya sendiri
+            $query->where('Leaves.employee_id', $empId);
+        } else {
+            // Admin / Manager bisa melihat data dengan org_id yang sama
+            $query->where('Employees.org_id', $orgId);
         }
 
         return $query;
@@ -44,26 +56,58 @@ class LeaveResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Hidden::make('employee_id')
-                    ->default(fn () => auth()->user()->employee?->employee_id)
-                    ->visible(fn () => auth()->user()->isStaff()),
+
+                
+               Forms\Components\Select::make('employee_id')
+                    ->label('Nama')
+                    ->options(Employee::all()->pluck('full_name', 'employee_id'))
+                    ->searchable()
+                    ->required()
+                    ->default(fn ($record) => 
+                        $record?->employee_id 
+                        ?? auth()->user()->employee?->employee_id
+                    )
+                    ->disabled(fn ($state, $component, $record) => 
+                        $record !== null || auth()->user()->isStaff()
+                    ) 
+                    ->afterStateUpdated(function ($state, $set) {
+                        if ($state) {
+                            $employee = \App\Models\Employee::find($state);
+                            $set('employee_nik', $employee?->employee_id);
+                        }
+                    })->dehydrated(true),
+
+
+                Forms\Components\TextInput::make('employee_nik')
+                    ->label('NIK')
+                    ->required()
+                    ->default(fn ($record) => 
+                        $record?->employee_id 
+                        ?? auth()->user()->employee?->employee_id
+                    )
+                    ->dehydrated(true)
+                    ->disabled(fn ($state, $component, $record) => 
+                        $record !== null || auth()->user()->isStaff()
+                    ),
+
+
                 Forms\Components\Select::make('leave_type')
-                    ->label('Leave Type')
+                    ->label('Jenis Cuti')
                     ->options(function () {
                          $options = [
-                                1 => 'Annual Leave',
-                                2 => 'Sick Leave',
-                                5 => 'Leave for Important Reasons',
-                                6 => 'Religious Leave',
+                                1 => 'Cuti Tahunan',
+                                2 => 'Cuti Sakit',
+                                5 => 'Cuti Karena Alasan Penting',
+                                6 => 'Cuti Keagamaan',
                          ];
 
                          if (auth()->user()->employee?->gender === 'Female') {
-                            $options[3] = 'Maternity / Miscarriage Leave';
-                            $options[4] = 'Menstrual Leave';
+                            $options[3] = 'Cuti Melahirkan / Keguguran';
+                            $options[4] = 'Cuti Haid';
                         }
 
                         if (auth()->user()->employee?->marital_status === 0) {
-                            $options[7] = 'Marriage Leave';
+                            $options[7] = 'Cuti Menikah';
                         }
                         return $options;
                     })
@@ -75,20 +119,37 @@ class LeaveResource extends Resource
 
 
                 Forms\Components\FileUpload::make('leave_evidence')
-                    ->label('Evidence')
+                    ->label('Lampiran')
                     ->required(fn ($get) => $get('leave_type') === '2')
-                    ->visible(fn ($get) => $get('leave_type') === '2')
+                    ->visible(fn ($get, $record) => $get('leave_type') === '2' || filled($record?->leave_evidence))
                     ->disk('public')
                     ->directory('leave-evidence')
-                    ->reactive(),
+                    ->downloadable()
+                    ->openable()
+                    ->previewable(true)
+                    ->image()
+                    ->reactive()
+                    ->afterStateUpdated(fn ($state, callable $set, callable $get) => 
+                        $set('annual_leave_balance', match((int) $state) {
+                            1 => Leave::getAnnualLeaveBalance($get('employee_id')),
+                            3 => Leave::getMaternityLeaveBalance($get('employee_id')),
+                            7 => Leave::getMarriageLeaveBalance($get('employee_id')),
+                            default => 1,
+                        })
+                    )
+                    ->default(fn ($record) => $record?->leave_evidence ? $record->leave_evidence_url : null),
+                
+
 
                 Forms\Components\TextInput::make('annual_leave_balance')
-                        ->label('Remaining Annual Leave')
-                        ->default(fn () => Leave::getAnnualLeaveBalance(auth()->user()->employee?->employee_id))
+                        ->label('Saldo Cuti')
+                    
                         ->disabled()
                         ->dehydrated(false)
-                        ->visible(fn ($get) => $get('leave_type') == 1),
+                        ->reactive()
+                        ->visible(fn ($get) => in_array($get('leave_type'), [1,3,7])),
                 Forms\Components\DatePicker::make('start_date')
+                    ->label('Dari Tgl')
                     ->reactive()
                     ->afterStateUpdated(function ($set, $get) {
                         if ($get('start_date') && $get('end_date')) {
@@ -98,6 +159,7 @@ class LeaveResource extends Resource
                     }),
 
                 Forms\Components\DatePicker::make('end_date')
+                    ->label('Sampai Tgl')
                     ->reactive()
                     ->afterStateUpdated(function ($set, $get) {
                         if ($get('start_date') && $get('end_date')) {
@@ -107,18 +169,29 @@ class LeaveResource extends Resource
                     }),
 
                 Forms\Components\TextInput::make('leave_duration')
-                    ->label('Duration (days)')
+                    ->label('Durasi (Hari)')
                     ->disabled()
                     ->dehydrated(true)
+                    ->reactive()
                     ->afterStateUpdated(function ($set, $get) {
                         if ($get('start_date') && $get('end_date')) {
                             $days = \Carbon\Carbon::parse($get('start_date'))
                                 ->diffInDays(\Carbon\Carbon::parse($get('end_date'))) + 1;
+
+                            // aturan maksimal berdasarkan jenis cuti
+                            $leaveType = $get('leave_type');
+                            if ($leaveType == 7 && $days > 3) {
+                                $days = 3; // cuti menikah maksimal 3 hari
+                            }
+                            if ($leaveType == 3 && $days > 90) {
+                                $days = 90; // cuti melahirkan maksimal 90 hari
+                            }
+
                             $set('leave_duration', $days);
                         }
-                    })
-                    ->reactive(),
+                    }),
                 Forms\Components\Textarea::make('reason')
+                    ->label('Alasan')
                     ->required()
                     ->columnSpanFull(),
                 Forms\Components\Select::make('status')
@@ -127,15 +200,15 @@ class LeaveResource extends Resource
 
                         if ($user->isManager()) {
                             return [
-                                1 => 'Pending',
-                                2 => 'Approved',
-                                3 => 'Rejected',
+                                1 => 'Ditunda',
+                                2 => 'Disetujui',
+                                3 => 'Ditolak',
                             ];
                         }
 
                         if ($user->isStaff()) {
                             return [
-                                0 => 'Submit',
+                                0 => 'Kirim',
                             ];
                         }
 
@@ -147,7 +220,7 @@ class LeaveResource extends Resource
                     ->reactive(),
 
                 Forms\Components\Textarea::make('note_rejected')
-                    ->label('Rejection Note')
+                    ->label('Keterangan')
                     ->visible(fn (callable $get) => $get('status') == 3)
                     ->required(fn (callable $get) => $get('status') == 3)
                     ->columnSpanFull(),
@@ -157,34 +230,50 @@ class LeaveResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+             
             ->columns([
                 Tables\Columns\TextColumn::make('full_name')
-                    ->label('Employee Name')
+                    ->label('Nama')
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('leave_type')
-                    ->numeric()
+                    ->label('Jenis Cuti')
+                    ->formatStateUsing(function ($state, $record) {
+                            $options = [
+                                1 => 'Cuti Tahunan',
+                                2 => 'Cuti Sakit',
+                                3 => 'Cuti Melahirkan / Keguguran',
+                                4 => 'Cuti Haid',
+                                5 => 'Cuti Karena Alasan Penting',
+                                6 => 'Cuti Keagamaan',
+                                7 => 'Cuti Menikah',
+                            ];
+                            return $options[$state] ?? $state;
+                        })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('start_date')
+                    ->label('Dari Tgl')
                     ->date()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('end_date')
+                    ->label('Sampai Tgl')
                     ->date()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('leave_duration')
+                    ->label('Durasi')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->formatStateUsing(fn ($state) => match ($state) {
-                        0 => 'Submit',
-                        1 => 'Pending',
-                        2 => 'Approved',
-                        3 => 'Rejected',
+                        0 => 'Kirim',
+                        1 => 'Ditunda',
+                        2 => 'Disetujui',
+                        3 => 'Ditolak',
                         default => $state,
                     })
                     ->color(fn ($state): string => match ($state) {
-                        0 => 'secondary',
+                        0 => 'warning',
                         1 => 'warning',
                         2 => 'success',
                         3 => 'danger',
@@ -192,9 +281,14 @@ class LeaveResource extends Resource
                     })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('approved_by')
+                    ->label('Disetujui oleh')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('leave_evidence')
-                    ->searchable(),
+                // Tables\Columns\TextColumn::make('leave_evidence')
+                //     ->searchable(),
+                    Tables\Columns\ImageColumn::make('leave_evidence')
+                    ->label('Lampiran')
+                    ->disk('public') // penting → ambil dari storage/app/public
+                    ->height(50),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -208,7 +302,40 @@ class LeaveResource extends Resource
                 //
             ])
             ->actions([
+               Actions\Action::make('approved')
+                        ->label('Disetujui')
+                        ->color('success')
+                        ->icon('heroicon-o-check')
+                        ->visible(fn ($record) => (int)$record->status === 0  && ! auth()->user()->isStaff()) 
+                        ->requiresConfirmation()
+                        ->action(function ($record) {
+                            $type = $record->leave_type;
+                            $record->update(['status' => 2]);
+                            Notification::make()
+                                ->title( $type .' Disetujui')
+                                ->success()
+                                ->send();
+                                return $record->fresh();
+                        }),
+                Actions\Action::make('reject')
+                        ->label('Ditolak')
+                        ->color('danger')
+                        ->icon('heroicon-o-x-circle')
+                        ->visible(fn ($record) => (int)$record->status === 0  && ! auth()->user()->isStaff()) 
+                        ->requiresConfirmation()
+                        ->action(function ($record) {
+                              $record->update(['status' => 3]);
+                            Notification::make()
+                                ->title( $type .' Ditolak')
+                                ->success()
+                                ->send();
+                                return $record->fresh();
+                                
+                                
+                        }),
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make()
+                        ->visible(fn ($record) => (int)$record->status != 2) ,
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
