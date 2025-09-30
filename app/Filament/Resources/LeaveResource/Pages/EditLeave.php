@@ -5,6 +5,8 @@ namespace App\Filament\Resources\LeaveResource\Pages;
 use App\Filament\Resources\LeaveResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
+use Filament\Pages\Actions\Action;
+use Filament\Notifications\Notification;
 
 class EditLeave extends EditRecord
 {
@@ -13,7 +15,13 @@ class EditLeave extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            
             Actions\DeleteAction::make(),
         ];
+    }
+
+    public static function edit(Leave $record): static
+    {
+        return parent::edit($record);
     }
 }

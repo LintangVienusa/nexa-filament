@@ -20,7 +20,8 @@ return new class extends Migration
             $table->integer('leave_duration');
             $table->text('reason');
             $table->tinyInteger('status')->comment('0=submit,1=pending,2=approved,3=rejected');
-            $table->string('approved_by', 10)->nullable();
+            $table->string('created_by', 100)->nullable();
+            $table->string('approved_by', 100)->nullable();
             $table->text('note_rejected')->nullable();
             $table->string('leave_evidence', 50)->nullable();
             $table->index('employee_id');
