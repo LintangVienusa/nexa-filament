@@ -41,7 +41,7 @@ class Attendance extends Model
         return null;
     }
 
-    public function employee(): BelongsTo
+    public function Employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class, 'employee_id', 'employee_id');
     }

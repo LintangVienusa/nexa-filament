@@ -16,6 +16,9 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Spatie\Permission\Traits\HasPermissions;
+use Filament\Forms\Components\FileUpload;
+use Filament\Tables\Columns\ImageColumn;
+
 
 class EmployeeResource extends Resource
 {
@@ -28,12 +31,30 @@ class EmployeeResource extends Resource
     protected static ?string $navigationGroup = 'HR Management';
     protected static ?string $navigationLabel = 'Employees';
 
+    public static function canCreate(): bool
+    {
+        // Hanya admin dan manager yang boleh membuat Employee baru
+        return auth()->user()->hasAnyRole(['admin', 'manager']);
+    }
+
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
                 Section::make('Informasi Personal')
                     ->schema([
+
+                        FileUpload::make('file_photo')
+                            ->label('Photo')
+                            ->image()
+                            ->directory('employee-photos')
+                            ->acceptedFileTypes(['image/jpeg']) 
+                            ->visibility('public')
+                            ->imageResizeTargetWidth(500)
+                            ->imageResizeTargetHeight(900)
+                            ->required()
+                            ->maxSize(1024),
+
                         TextInput::make('employee_id')
                             ->label('Nomor Induk Karyawan(NIK)')
                             ->numeric()
@@ -58,8 +79,8 @@ class EmployeeResource extends Resource
                         Select::make('gender')
                             ->label('Jenis Kelamin')
                             ->options([
-                                'Male' => 'Male',
-                                'Female' => 'Female',
+                                'Laki-laki' => 'Laki-laki',
+                                'Perempuan' => 'Perempuan',
                             ])
                             ->required(),
 
@@ -153,8 +174,8 @@ class EmployeeResource extends Resource
                         Select::make('marital_status')
                             ->label('Status Pernikahan')
                             ->options([
-                                0 => "Single",
-                                1 => "Married"
+                                0 => "Belum Menikah",
+                                1 => "Menikah"
                             ])
                             ->reactive(),
 
@@ -187,6 +208,7 @@ class EmployeeResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\ImageColumn::make('file_photo')->label('Photo'),
                 Tables\Columns\TextColumn::make('employee_id'),
                 Tables\Columns\TextColumn::make('first_name'),
                 Tables\Columns\TextColumn::make('last_name'),

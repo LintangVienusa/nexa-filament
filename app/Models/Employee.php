@@ -18,6 +18,7 @@ class Employee extends Model
 
     protected $fillable = [
         'employee_id',
+        'file_photo',
         'first_name',
         'middle_name',
         'last_name',
@@ -60,4 +61,10 @@ class Employee extends Model
     {
         return $this->hasMany(Attendance::class, 'employee_id', 'employee_id');
     }
+
+    public function getFilePhotoUrlAttribute(): ?string
+    {
+        return $this->file_photo ? asset('storage/' . $this->file_photo) : null;
+    }
+    
 }

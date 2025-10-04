@@ -65,7 +65,7 @@ class Leave extends Model
         static::creating(function ($leave) {
              $user = auth()->user();
             if (auth()->check() && auth()->user()->employee?->job_title !== 'Manager') {
-                $leave->status = 0; // submit
+                $leave->status = 0;
                 $leave->created_by = $user->employee?->email;
             }
 
@@ -117,47 +117,43 @@ class Leave extends Model
         $dateJoin = Carbon::parse($employee->date_of_joining);
         $now = Carbon::now();
 
-        // Belum 1 tahun kerja → tidak ada saldo
         if ($dateJoin->diffInYears($now) < 1) {
                session()->flash('info', 'Employee belum genap 1 tahun bekerja. Cuti tahunan mungkin terbatas.');
     
             return 0;
+        }else{
+            $quota = 12;
+
+            $used = self::where('employee_id', $employeeId)
+                ->where('leave_type', 1) 
+                ->where('status', 2)    
+                ->whereYear('start_date', $now->year)
+                ->sum('leave_duration');
+
+            return max($quota - $used, 0);
         }
 
-        // Default quota
-        $quota = 12;
-
-        // Hitung cuti tahunan yang sudah diambil tahun ini
-        $used = self::where('employee_id', $employeeId)
-            ->where('leave_type', 1) // Annual Leave
-            ->where('status', 2)     // Approved
-            ->whereYear('start_date', $now->year)
-            ->sum('leave_duration');
-
-        return max($quota - $used, 0);
+        
     }
 
     public static function getMarriageLeaveBalance($employeeId)
     {
-        // Kuota cuti menikah = 3 hari sekali seumur hidup
         $used = self::where('employee_id', $employeeId)
-            ->where('leave_type', 7) // Marriage Leave
+            ->where('leave_type', 7) 
             ->where('status', 2)
-            ->count(); // cukup cek pernah approve atau belum
+            ->count(); 
 
         return $used > 0 ? 0 : 3;
     }
 
     public static function getMaternityLeaveBalance($employeeId)
     {
-        // Kuota cuti melahirkan = 3 bulan (90 hari) per event
-        // Diatur per tahun atau per kejadian, tergantung kebijakan
         $now = Carbon::now();
 
         $used = self::where('employee_id', $employeeId)
-            ->where('leave_type', 3) // Maternity Leave
+            ->where('leave_type', 7) 
             ->where('status', 2)
-            ->whereYear('start_date', $now->year) // kalau per tahun
+            ->whereYear('start_date', $now->year) 
             ->sum('leave_duration');
 
         return max(90 - $used, 0);
