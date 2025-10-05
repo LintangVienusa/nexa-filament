@@ -34,6 +34,11 @@ trait HasOwnRecordPolicy
                 });
             }
         
+        }else{
+            $orgId = \App\Models\Employee::where('email', $user->email)->value('org_id');
+            $query->whereHas('employee', function ($q) use ($orgId) {
+                $q->where('org_id', $orgId);
+            });
         }
 
         return $query;
@@ -42,21 +47,36 @@ trait HasOwnRecordPolicy
 
     public static function canEdit($record): bool
     {
-        if (auth()->user()->hasRole('employee')) {
-            return $record->{static::$ownerColumn} === auth()->user()->email;
+        $query = parent::getEloquentQuery();
+        $user = auth()->user();
+
+        // // Jika role employee → hanya boleh edit data miliknya sendiri
+        if ($user->hasRole('employee')) {
+            return $record->employee->email === $user->email;
+        }else{
+            return auth()->user()->hasAnyRole(['admin', 'manager']);
         }
 
+        // // Jika admin atau manager → hanya boleh edit jika org_id sama
+        // $orgId = \App\Models\Employee::where('email', $user->email)->value('org_id');
+
+        // return $record->employee?->org_id === $orgId;
+        
         return true;
     }
 
     public static function canDelete($record): bool
     {
-        // if (auth()->user()->hasRole('Employee')) {
-        //     return $record->{static::$ownerColumn} === auth()->user()->email;
-        // }
+        $user = auth()->user();
 
-        // return true;
+        if ($user->hasRole('employee')) {
+            return $record->employee->email === $user->email;
+        }else{
+            return auth()->user()->hasAnyRole(['admin', 'manager']);
+        }
+        return true;
+        //   return auth()->user()->hasAnyRole(['admin', 'manager']);
         
-        return auth()->user()->hasAnyRole(['admin', 'manager']);
+       
     }
 }

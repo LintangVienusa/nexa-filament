@@ -19,38 +19,20 @@ use Illuminate\Support\Facades\Auth;
 use Spatie\Permission\Traits\HasPermissions;
 use App\Models\Employee;
 use Filament\Forms\Components\FileUpload;
+use Filament\Notifications\Notification;
 
 
 class LeaveResource extends Resource
 {
-    // use HasPermissions,  HasOwnRecordPolicy;
+    use HasPermissions,  HasOwnRecordPolicy;
 
     protected static ?string $model = Leave::class;
-    // protected static ?string $permissionPrefix = 'employees';
-    // protected static string $ownerColumn = 'email';
+    protected static ?string $permissionPrefix = 'employees';
+    protected static string $ownerColumn = 'email';
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';
     protected static ?string $navigationGroup = 'HR Management';
     protected static ?string $navigationLabel = 'Leaves';
 
-    public static function getEloquentQuery(): Builder
-    {
-        $query = Leave::query()
-                ->select('Leaves.*', 'Employees.first_name','Employees.middle_name','Employees.last_name', 'Employees.org_id')
-                ->join('Employees', 'Leaves.employee_id', '=', 'Employees.employee_id');
-        $user = auth()->user();
-        $empId = $user->employee?->employee_id;
-        $orgId = $user->employee?->org_id ?? 0;
-
-        if ($user->isStaff() && $empId) {
-            // Staff hanya bisa melihat data dirinya sendiri
-            $query->where('Leaves.employee_id', $empId);
-        } else {
-            // Admin / Manager bisa melihat data dengan org_id yang sama
-            $query->where('Employees.org_id', $orgId);
-        }
-
-        return $query;
-    }
 
     public static function form(Form $form): Form
     {
@@ -207,36 +189,43 @@ class LeaveResource extends Resource
                             ->columnSpanFull(),
                     
                     ]),
-                Forms\Components\Select::make('status')
-                    ->options(function () {
-                        $user = auth()->user();
 
-                        if ($user->isManager()) {
-                            return [
-                                1 => 'Ditunda',
-                                2 => 'Disetujui',
-                                3 => 'Ditolak',
-                            ];
-                        }
+                Forms\Components\Section::make('Status')
+                    ->schema([
+                        Forms\Components\Select::make('status')
+                            ->label('Status')
+                            ->options(function () {
+                                $user = auth()->user();
 
-                        if ($user->isStaff()) {
-                            return [
-                                0 => 'Kirim',
-                            ];
-                        }
+                                if ($user->isManager()) {
+                                    return [
+                                        1 => 'Pending',
+                                        2 => 'Approve',
+                                        3 => 'Reject',
+                                    ];
+                                }
 
-                        return [];
-                    })
-                    ->default(fn () => auth()->user()->isStaff() ? 0 : null)
-                    ->hidden(fn () => auth()->user()->isStaff())
-                    ->required()
-                    ->reactive(),
+                                if ($user->isStaff()) {
+                                    return [
+                                        0 => 'Draft',
+                                    ];
+                                }
 
-                Forms\Components\Textarea::make('note_rejected')
-                    ->label('Keterangan')
-                    ->visible(fn (callable $get) => $get('status') == 3)
-                    ->required(fn (callable $get) => $get('status') == 3)
-                    ->columnSpanFull(),
+                                return [];
+                            })
+                            ->default(fn () => auth()->user()->isStaff() ? 0 : null)
+                            ->hidden(fn () => auth()->user()->isStaff()) // Staff tidak melihat dropdown
+                            ->required()
+                            ->reactive(),
+
+                        Forms\Components\Textarea::make('note_rejected')
+                            ->label('Keterangan')
+                            ->visible(fn (callable $get) => $get('status') == 3) // Muncul jika status = Reject
+                            ->required(fn (callable $get) => $get('status') == 3)
+                            ->columnSpanFull(),
+                    ])
+                    ->columns(1)
+                    ->hidden(fn (string $operation) => $operation === 'create'),
             ]);
     }
 
@@ -279,10 +268,10 @@ class LeaveResource extends Resource
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->formatStateUsing(fn ($state) => match ($state) {
-                        0 => 'Kirim',
-                        1 => 'Ditunda',
-                        2 => 'Disetujui',
-                        3 => 'Ditolak',
+                        0 => 'Draft',
+                        1 => 'Pending',
+                        2 => 'Approve',
+                        3 => 'Reject',
                         default => $state,
                     })
                     ->color(fn ($state): string => match ($state) {
@@ -316,7 +305,7 @@ class LeaveResource extends Resource
             ])
             ->actions([
                Actions\Action::make('approved')
-                        ->label('Disetujui')
+                        ->label('Approve')
                         ->color('success')
                         ->icon('heroicon-o-check')
                         ->visible(fn ($record) => (int)$record->status === 0  && ! auth()->user()->isStaff()) 
@@ -325,13 +314,13 @@ class LeaveResource extends Resource
                             $type = $record->leave_type;
                             $record->update(['status' => 2]);
                             Notification::make()
-                                ->title( $type .' Disetujui')
+                                ->title( $type .' Approve')
                                 ->success()
                                 ->send();
                                 return $record->fresh();
                         }),
                 Actions\Action::make('reject')
-                        ->label('Ditolak')
+                        ->label('Reject')
                         ->color('danger')
                         ->icon('heroicon-o-x-circle')
                         ->visible(fn ($record) => (int)$record->status === 0  && ! auth()->user()->isStaff()) 
@@ -339,16 +328,16 @@ class LeaveResource extends Resource
                         ->action(function ($record) {
                               $record->update(['status' => 3]);
                             Notification::make()
-                                ->title( $type .' Ditolak')
+                                ->title( $type .' Reject')
                                 ->success()
                                 ->send();
                                 return $record->fresh();
                                 
                                 
                         }),
-                Tables\Actions\EditAction::make(),
+                Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make()
-                        ->visible(fn ($record) => (int)$record->status != 2) ,
+                        ->visible(fn ($record) => (int)$record->status !== 2) ,
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

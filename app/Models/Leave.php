@@ -9,6 +9,10 @@ use Carbon\Carbon;
 
 class Leave extends Model
 {
+
+    
+    use HasFactory;
+    
     protected $connection = 'mysql_employees';
     protected $table = 'Leaves';
 
