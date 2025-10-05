@@ -56,144 +56,157 @@ class LeaveResource extends Resource
     {
         return $form
             ->schema([
-
-                
-               Forms\Components\Select::make('employee_id')
-                    ->label('Nama')
-                    ->options(Employee::all()->pluck('full_name', 'employee_id'))
-                    ->searchable()
-                    ->required()
-                    ->default(fn ($record) => 
-                        $record?->employee_id 
-                        ?? auth()->user()->employee?->employee_id
-                    )
-                    ->disabled(fn ($state, $component, $record) => 
-                        $record !== null || auth()->user()->isStaff()
-                    ) 
-                    ->afterStateUpdated(function ($state, $set) {
-                        if ($state) {
-                            $employee = \App\Models\Employee::find($state);
-                            $set('employee_nik', $employee?->employee_id);
-                        }
-                    })->dehydrated(true),
-
-
-                Forms\Components\TextInput::make('employee_nik')
-                    ->label('NIK')
-                    ->required()
-                    ->default(fn ($record) => 
-                        $record?->employee_id 
-                        ?? auth()->user()->employee?->employee_id
-                    )
-                    ->dehydrated(true)
-                    ->disabled(fn ($state, $component, $record) => 
-                        $record !== null || auth()->user()->isStaff()
-                    ),
+                Forms\Components\Section::make('Info Karyawan')
+                    ->columns(2)
+                    ->schema([
+                        Forms\Components\Select::make('employee_id')
+                                ->label('Nama')
+                                ->options(Employee::all()->pluck('full_name', 'employee_id'))
+                                ->searchable()
+                                ->required()
+                                ->default(fn ($record) => 
+                                    $record?->employee_id 
+                                    ?? auth()->user()->employee?->employee_id
+                                )
+                                ->disabled(fn ($state, $component, $record) => 
+                                    $record !== null || auth()->user()->isStaff()
+                                ) 
+                                ->afterStateUpdated(function ($state, $set) {
+                                    if ($state) {
+                                        $employee = \App\Models\Employee::find($state);
+                                        $set('employee_nik', $employee?->employee_id);
+                                    }
+                                })->dehydrated(true),
 
 
-                Forms\Components\Select::make('leave_type')
-                    ->label('Jenis Cuti')
-                    ->options(function () {
-                         $options = [
-                                1 => 'Cuti Tahunan',
-                                2 => 'Cuti Sakit',
-                                5 => 'Cuti Karena Alasan Penting',
-                                6 => 'Cuti Keagamaan',
-                         ];
+                            Forms\Components\TextInput::make('employee_nik')
+                                ->label('NIK')
+                                ->required()
+                                ->default(fn ($record) => 
+                                    $record?->employee_id 
+                                    ?? auth()->user()->employee?->employee_id
+                                )
+                                ->dehydrated(true)
+                                ->disabled(fn ($state, $component, $record) => 
+                                    $record !== null || auth()->user()->isStaff()
+                                ),
+                    ]),
 
-                         if (auth()->user()->employee?->gender === 'Female') {
-                            $options[3] = 'Cuti Melahirkan / Keguguran';
-                            $options[4] = 'Cuti Haid';
-                        }
+                 Forms\Components\Section::make('Detail Cuti')
+                    ->columns(2)
+                    ->schema([
+                        Forms\Components\Select::make('leave_type')
+                            ->label('Jenis Cuti')
+                            ->options(function () {
+                                $options = [
+                                        1 => 'Cuti Tahunan',
+                                        2 => 'Cuti Sakit',
+                                        5 => 'Cuti Karena Alasan Penting',
+                                        6 => 'Cuti Keagamaan',
+                                ];
 
-                        if (auth()->user()->employee?->marital_status === 0) {
-                            $options[7] = 'Cuti Menikah';
-                        }
-                        return $options;
-                    })
+                                if (auth()->user()->employee?->gender === 'Perempuan') {
+                                    $options[3] = 'Cuti Melahirkan / Keguguran';
+                                    $options[4] = 'Cuti Haid';
+                                }
 
-                    ->required()
-                    ->searchable()
-                    ->reactive()
-                    ->preload(),
+                                if (auth()->user()->employee?->marital_status === 0) {
+                                    $options[7] = 'Cuti Menikah';
+                                }
+                                return $options;
+                            })
 
+                            ->required()
+                            ->afterStateUpdated(function  ($state, callable $set, callable $get){
+                                $balance = match((int) $state) {
+                                    1 => Leave::getAnnualLeaveBalance($get('employee_id')),
+                                    3 => Leave::getMaternityLeaveBalance($get('employee_id')),
+                                    7 => Leave::getMarriageLeaveBalance($get('employee_id')),
+                                    default => 1,
+                                };
 
-                Forms\Components\FileUpload::make('leave_evidence')
-                    ->label('Lampiran')
-                    ->required(fn ($get) => $get('leave_type') === '2')
-                    ->visible(fn ($get, $record) => $get('leave_type') === '2' || filled($record?->leave_evidence))
-                    ->disk('public')
-                    ->directory('leave-evidence')
-                    ->downloadable()
-                    ->openable()
-                    ->previewable(true)
-                    ->image()
-                    ->reactive()
-                    ->afterStateUpdated(fn ($state, callable $set, callable $get) => 
-                        $set('annual_leave_balance', match((int) $state) {
-                            1 => Leave::getAnnualLeaveBalance($get('employee_id')),
-                            3 => Leave::getMaternityLeaveBalance($get('employee_id')),
-                            7 => Leave::getMarriageLeaveBalance($get('employee_id')),
-                            default => 1,
-                        })
-                    )
-                    ->default(fn ($record) => $record?->leave_evidence ? $record->leave_evidence_url : null),
-                
+                                // dump( $balance);
+                                $set('annual_leave_balance', $balance);
+                            })
+                            ->searchable()
+                            ->reactive()
+                            ->preload(),
 
 
-                Forms\Components\TextInput::make('annual_leave_balance')
-                        ->label('Saldo Cuti')
+                        Forms\Components\FileUpload::make('leave_evidence')
+                            ->label('Lampiran')
+                            ->required(fn ($get) => $get('leave_type') === '2')
+                            ->visible(fn ($get, $record) => $get('leave_type') === '2' || filled($record?->leave_evidence))
+                            ->disk('public')
+                            ->directory('leave-evidence')
+                            ->downloadable()
+                            ->openable()
+                            ->previewable(true)
+                            ->image()
+                            ->reactive()
+                            ->default(fn ($record) => $record?->leave_evidence ? $record->leave_evidence_url : null),
+                        
+
+
+                        Forms\Components\TextInput::make('annual_leave_balance')
+                                ->label('Saldo Cuti')
+                                ->disabled()
+                                ->afterStateHydrated(function ($component, $state, $record) {
+                                    if ($record) {
+                                        $component->state(\App\Models\Leave::getAnnualLeaveBalance($record->employee_id));
+                                    }
+                                    
+                                })
+                                ->reactive()
+                                ->visible(fn ($get) => in_array($get('leave_type'), [1,3,7])),
+                   
+                        Forms\Components\DatePicker::make('start_date')
+                            ->label('Dari Tgl')
+                            ->reactive()
+                            ->afterStateUpdated(function ($set, $get) {
+                                if ($get('start_date') && $get('end_date')) {
+                                    $set('leave_duration', \Carbon\Carbon::parse($get('start_date'))
+                                        ->diffInDays(\Carbon\Carbon::parse($get('end_date'))) + 1);
+                                }
+                            }),
+
+                        Forms\Components\DatePicker::make('end_date')
+                            ->label('Sampai Tgl')
+                            ->reactive()
+                            ->afterStateUpdated(function ($set, $get) {
+                                if ($get('start_date') && $get('end_date')) {
+                                    $set('leave_duration', \Carbon\Carbon::parse($get('start_date'))
+                                        ->diffInDays(\Carbon\Carbon::parse($get('end_date'))) + 1);
+                                }
+                            }),
+
+                        Forms\Components\TextInput::make('leave_duration')
+                            ->label('Durasi (Hari)')
+                            ->disabled()
+                            ->dehydrated(true)
+                            ->reactive()
+                            ->afterStateUpdated(function ($set, $get) {
+                                if ($get('start_date') && $get('end_date')) {
+                                    $days = \Carbon\Carbon::parse($get('start_date'))
+                                        ->diffInDays(\Carbon\Carbon::parse($get('end_date'))) + 1;
+
+                                    $leaveType = $get('leave_type');
+                                    if ($leaveType == 7 && $days > 7) {
+                                        $days = 7; 
+                                    }
+                                    if ($leaveType == 3 && $days > 90) {
+                                        $days = 90; 
+                                    }
+
+                                    $set('leave_duration', $days);
+                                }
+                            }),
+                        Forms\Components\Textarea::make('reason')
+                            ->label('Alasan')
+                            ->required()
+                            ->columnSpanFull(),
                     
-                        ->disabled()
-                        ->dehydrated(false)
-                        ->reactive()
-                        ->visible(fn ($get) => in_array($get('leave_type'), [1,3,7])),
-                Forms\Components\DatePicker::make('start_date')
-                    ->label('Dari Tgl')
-                    ->reactive()
-                    ->afterStateUpdated(function ($set, $get) {
-                        if ($get('start_date') && $get('end_date')) {
-                            $set('leave_duration', \Carbon\Carbon::parse($get('start_date'))
-                                ->diffInDays(\Carbon\Carbon::parse($get('end_date'))) + 1);
-                        }
-                    }),
-
-                Forms\Components\DatePicker::make('end_date')
-                    ->label('Sampai Tgl')
-                    ->reactive()
-                    ->afterStateUpdated(function ($set, $get) {
-                        if ($get('start_date') && $get('end_date')) {
-                            $set('leave_duration', \Carbon\Carbon::parse($get('start_date'))
-                                ->diffInDays(\Carbon\Carbon::parse($get('end_date'))) + 1);
-                        }
-                    }),
-
-                Forms\Components\TextInput::make('leave_duration')
-                    ->label('Durasi (Hari)')
-                    ->disabled()
-                    ->dehydrated(true)
-                    ->reactive()
-                    ->afterStateUpdated(function ($set, $get) {
-                        if ($get('start_date') && $get('end_date')) {
-                            $days = \Carbon\Carbon::parse($get('start_date'))
-                                ->diffInDays(\Carbon\Carbon::parse($get('end_date'))) + 1;
-
-                            // aturan maksimal berdasarkan jenis cuti
-                            $leaveType = $get('leave_type');
-                            if ($leaveType == 7 && $days > 3) {
-                                $days = 3; // cuti menikah maksimal 3 hari
-                            }
-                            if ($leaveType == 3 && $days > 90) {
-                                $days = 90; // cuti melahirkan maksimal 90 hari
-                            }
-
-                            $set('leave_duration', $days);
-                        }
-                    }),
-                Forms\Components\Textarea::make('reason')
-                    ->label('Alasan')
-                    ->required()
-                    ->columnSpanFull(),
+                    ]),
                 Forms\Components\Select::make('status')
                     ->options(function () {
                         $user = auth()->user();
@@ -287,7 +300,7 @@ class LeaveResource extends Resource
                 //     ->searchable(),
                     Tables\Columns\ImageColumn::make('leave_evidence')
                     ->label('Lampiran')
-                    ->disk('public') // penting → ambil dari storage/app/public
+                    ->disk('public') 
                     ->height(50),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()

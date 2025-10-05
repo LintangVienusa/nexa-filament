@@ -7,8 +7,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasAvatar;
 
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser, HasAvatar
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
@@ -19,6 +21,11 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
+
+    public function canAccessPanel(\Filament\Panel $panel): bool
+    {
+        return true;
+    }
     protected $fillable = [
         'name',
         'employee_id',
@@ -67,5 +74,19 @@ class User extends Authenticatable
     public function isStaff(): bool
     {
         return $this->employee && strtolower($this->employee->job_title) === 'staff';
+    }
+
+    public function getFilamentAvatarUrl(): ?string
+    {
+        return $this->employee && $this->employee->file_photo
+        ? asset('storage/' . $this->employee->file_photo)
+        : null;
+
+        // return null; // Filament pakai avatar default kalau foto kosong
+    }
+
+    public function getFilamentName(): string
+    {
+        return $this->employee?->full_name ?? $this->name ?? $this->email;
     }
 }
