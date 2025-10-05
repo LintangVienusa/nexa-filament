@@ -56,6 +56,6 @@ class CreateLeave extends CreateRecord
 
     protected function getRedirectUrl(): string
     {
-        return $this->getResource()::getUrl('index'); // ✅ arahkan ke tabel list
+        return $this->getResource()::getUrl('index'); 
     }
 }

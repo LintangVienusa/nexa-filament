@@ -214,13 +214,13 @@ class LeaveResource extends Resource
                                 return [];
                             })
                             ->default(fn () => auth()->user()->isStaff() ? 0 : null)
-                            ->hidden(fn () => auth()->user()->isStaff()) // Staff tidak melihat dropdown
+                            ->hidden(fn () => auth()->user()->isStaff()) 
                             ->required()
                             ->reactive(),
 
                         Forms\Components\Textarea::make('note_rejected')
                             ->label('Keterangan')
-                            ->visible(fn (callable $get) => $get('status') == 3) // Muncul jika status = Reject
+                            ->visible(fn (callable $get) => $get('status') == 3) 
                             ->required(fn (callable $get) => $get('status') == 3)
                             ->columnSpanFull(),
                     ])

@@ -50,14 +50,12 @@ trait HasOwnRecordPolicy
         $query = parent::getEloquentQuery();
         $user = auth()->user();
 
-        // // Jika role employee → hanya boleh edit data miliknya sendiri
         if ($user->hasRole('employee')) {
             return $record->employee->email === $user->email;
         }else{
             return auth()->user()->hasAnyRole(['admin', 'manager']);
         }
 
-        // // Jika admin atau manager → hanya boleh edit jika org_id sama
         // $orgId = \App\Models\Employee::where('email', $user->email)->value('org_id');
 
         // return $record->employee?->org_id === $orgId;
