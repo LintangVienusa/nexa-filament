@@ -21,32 +21,29 @@ use Filament\View\PanelsRenderHook;
 use Filament\Navigation\UserMenuItem;
 use Filament\Pages\Auth\EditProfile;
 use Illuminate\Support\Facades\Auth;
+use Rupadana\ApiService\ApiServicePlugin;
 
 
 class AdminPanelProvider extends PanelProvider
 {
-    
-    
     public function panel(Panel $panel): Panel
     {
         return $panel
             ->default()
             ->id('admin')
             ->path('admin')
-            
             ->brandName('HRMS - DPNG')
             ->profile()
             ->userMenuItems([
 
-            'profile' => UserMenuItem::make()
-                ->label('Ganti Password')
-                ->url(fn (): string => EditProfile::getUrl())
-                ->icon('heroicon-o-user'),
-                
+                'profile' => UserMenuItem::make()
+                    ->label('Ganti Password')
+                    ->url(fn(): string => EditProfile::getUrl())
+                    ->icon('heroicon-o-user'),
+
             ])
-            
             ->renderHook(PanelsRenderHook::HEAD_END, function () {
-                $favicon =asset('assets/images/LOGO PT DAPOER POESAT NUSANTARA-07.png'); 
+                $favicon = asset('assets/images/LOGO PT DAPOER POESAT NUSANTARA-07.png');
                 return <<<HTML
                 <title>HRMS - DPN</title>
                     <link rel="icon" type="image/png" href="{$favicon}" />
@@ -57,24 +54,21 @@ class AdminPanelProvider extends PanelProvider
             ->colors([
                 'primary' => '#cccccc',
             ])
-            
-            
-            
             ->brandLogo(asset('assets/images/LOGO PT DAPOER POESAT NUSANTARA-03.png'))
             ->brandLogoHeight('10rem')
             ->renderHook(PanelsRenderHook::HEAD_END, function () {
-                    $logoLight = asset('assets/images/LOGO PT DAPOER POESAT NUSANTARA-03.png');
-                    $logoDark  = asset('assets/images/LOGO PT DAPOER POESAT NUSANTARA-05.png');
+                $logoLight = asset('assets/images/LOGO PT DAPOER POESAT NUSANTARA-03.png');
+                $logoDark = asset('assets/images/LOGO PT DAPOER POESAT NUSANTARA-05.png');
 
-                    return <<<HTML
+                return <<<HTML
                     <script>
                         document.addEventListener('DOMContentLoaded', () => {
                             const logo = document.querySelector('.filament-brand a img');
                             if (!logo) return;
 
                             function updateLogo() {
-                                logo.src = document.documentElement.classList.contains('dark') 
-                                    ? '{$logoDark}' 
+                                logo.src = document.documentElement.classList.contains('dark')
+                                    ? '{$logoDark}'
                                     : '{$logoLight}';
                             }
 
@@ -85,7 +79,7 @@ class AdminPanelProvider extends PanelProvider
                         });
                     </script>
                     HTML;
-                })
+            })
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
@@ -98,10 +92,10 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->renderHook(PanelsRenderHook::BODY_END, function () {
                 $logo = asset('assets/images/LOGO PT DAPOER POESAT NUSANTARA-07.png');
-                $logoWhite =asset('assets/images/LOGO PT DAPOER POESAT NUSANTARA-07.png');
+                $logoWhite = asset('assets/images/LOGO PT DAPOER POESAT NUSANTARA-07.png');
 
-               return <<<HTML
-                <div id="watermark-container" 
+                return <<<HTML
+                <div id="watermark-container"
                     class="fixed inset-0 pointer-events-none -z-10"
                     style="transform: rotate(65deg); transform-origin: center center;">
                 </div>
@@ -112,23 +106,23 @@ class AdminPanelProvider extends PanelProvider
                     const logo = "{$logo}";
                     const logoWhite = "{$logoWhite}";
                     function createWatermark() {
-                        container.innerHTML = ''; 
+                        container.innerHTML = '';
                         const isDark = document.documentElement.classList.contains('dark');
                         const imgSrc = isDark ? logoWhite : logo;
 
                         const screenWidth = window.innerWidth * 2.5;
                         const screenHeight = window.innerHeight * 2.5;
 
-                        const cols = 8; 
-                        const rows = 11; 
+                        const cols = 8;
+                        const rows = 11;
 
-                        const baseWidthRem = 35; 
-                        const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize); 
+                        const baseWidthRem = 35;
+                        const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
                         const imgWidthPx = baseWidthRem * rootFontSize;
-                        const imgHeightPx = imgWidthPx; 
-                        
+                        const imgHeightPx = imgWidthPx;
 
-                        const padding = 1; 
+
+                        const padding = 1;
                         const gap = (Math.min(screenWidth, screenHeight) -  imgWidthPx) / (Math.max(cols, rows) - 1);
 
                         const gapX = screenWidth / cols;
@@ -165,13 +159,10 @@ class AdminPanelProvider extends PanelProvider
 
                     const observer = new MutationObserver(createWatermark);
                     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-               
                 })();
                 </script>
                 HTML;
             })
-
-            
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
@@ -185,6 +176,9 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
+            ])
+            ->plugins([
+                ApiServicePlugin::make()
             ]);
     }
 }
