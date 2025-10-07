@@ -14,17 +14,18 @@ trait HasOwnRecordPolicy
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery();
-
         $user = Auth::user();
+        $model = new static::$model;
+        $table = $model->getTable();
+
+        if ($model instanceof \App\Models\Employee) {
+            return $query;
+        }
 
         if ($user->hasRole('employee')) {
 
-            
-            $model = new static::$model;
-            $table = $model->getTable();
-
-            if (property_exists(static::class, 'ownerColumn') 
-                && Schema::connection($model->getConnectionName())->hasColumn($table, static::$ownerColumn)) 
+            if (property_exists(static::class, 'ownerColumn')
+                && Schema::connection($model->getConnectionName())->hasColumn($table, static::$ownerColumn))
             {
                 $query->where(static::$ownerColumn, $user->email);
             }
@@ -33,48 +34,47 @@ trait HasOwnRecordPolicy
                     $q->where('email', $user->email);
                 });
             }
-        
-        }else{
+
+        } else {
             $orgId = \App\Models\Employee::where('email', $user->email)->value('org_id');
-            $query->whereHas('employee', function ($q) use ($orgId) {
-                $q->where('org_id', $orgId);
-            });
+
+            if (method_exists($model, 'employee')) {
+                $query->whereHas('employee', function ($q) use ($orgId) {
+                    $q->where('org_id', $orgId);
+                });
+            }
         }
 
         return $query;
     }
-    
 
     public static function canEdit($record): bool
     {
-        $query = parent::getEloquentQuery();
         $user = auth()->user();
 
-        if ($user->hasRole('employee')) {
-            return $record->employee->email === $user->email;
-        }else{
-            return auth()->user()->hasAnyRole(['admin', 'manager']);
+        if ($record instanceof \App\Models\Employee) {
+            return $user->hasAnyRole(['admin', 'manager']);
         }
 
-        // $orgId = \App\Models\Employee::where('email', $user->email)->value('org_id');
+        if ($user->hasRole('employee')) {
+            return $record->employee?->email === $user->email;
+        }
 
-        // return $record->employee?->org_id === $orgId;
-        
-        return true;
+        return $user->hasAnyRole(['admin', 'manager']);
     }
 
     public static function canDelete($record): bool
     {
         $user = auth()->user();
 
-        if ($user->hasRole('employee')) {
-            return $record->employee->email === $user->email;
-        }else{
-            return auth()->user()->hasAnyRole(['admin', 'manager']);
+        if ($record instanceof \App\Models\Employee) {
+            return $user->hasAnyRole(['admin', 'manager']);
         }
-        return true;
-        //   return auth()->user()->hasAnyRole(['admin', 'manager']);
-        
-       
+
+        if ($user->hasRole('employee')) {
+            return $record->employee?->email === $user->email;
+        }
+
+        return $user->hasAnyRole(['admin', 'manager']);
     }
 }
