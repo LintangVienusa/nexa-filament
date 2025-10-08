@@ -19,6 +19,9 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Filament\View\PanelsRenderHook;
 use App\Filament\Resources\ProfileResource;
+use Filament\Navigation\UserMenuItem;
+use Filament\Pages\Auth\EditProfile;
+use Illuminate\Support\Facades\Auth;
 
 
 class AdminPanelProvider extends PanelProvider
@@ -118,7 +121,7 @@ class AdminPanelProvider extends PanelProvider
                             const screenWidth = window.innerWidth * 2.5;
                             const screenHeight = window.innerHeight * 2.5;
                             const cols = 8; // jumlah kolom
-                            const rows = 11; // jumlah baris
+                            const rows = 9; // jumlah baris
 
                             const baseWidthRem = 35;
                             const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize);

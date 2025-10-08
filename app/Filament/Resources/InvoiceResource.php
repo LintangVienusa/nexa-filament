@@ -264,19 +264,121 @@ class InvoiceResource extends Resource
         $html = '
                 <html>
                 <head>
-                    <style>
-                        body { font-family: Arial, sans-serif; margin: 20px; }
-                        .header { display: flex; align-items: left; }
-                        .logo { height: 20rem; width: 20rem; margin-right: 30px; }
-                        .title { font-size: 24px; font-weight: bold; }
-                        .info { font-size: 12px; margin-top: 5px; }
-                        .info_alamat { font-size: 12px; margin-top: 10px; }
-                        .info_pt { font-size: 16px; font-weight: bold; margin-top: 5px; background-color: #ffffff;}
-                        table { font-size: 14px; width: 100%; border-collapse: collapse; margin-top: 5px; }
-                        th, td { border: none; padding: 5px; text-align: left; }
-                        th { background-color: #f5f5f5; }
-                        tfoot td { font-weight: bold; }
-                        .footer { position: fixed; bottom: 20px; width: 100%; text-align: center; font-size: 12px; color: #888; }
+                     <style>
+                        @page {
+                            margin: 0;
+                        }
+
+                        html, body {
+                            margin: 0;
+                            padding: 0;
+                            font-family: Arial, sans-serif;
+                            background-color: #e8d1ad; /* coklat muda */
+                        }
+
+                        body {
+                            padding: 40px;
+                            position: relative;
+                        }
+
+                        .header {
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: flex-start;
+                            margin-top: 0;
+                            padding-top: 0;
+                        }
+
+                        .logo {
+                            height: 100px;
+                            margin-top: -10;
+                            display: block;
+                        }
+
+                        .invoice-title {
+                            font-family: Times New Roman, serif;
+                            font-size: 40px;
+                            font-weight: bold;
+                            text-align: center;
+                            display: flex;
+                            align-items: center; 
+                            justify-content: center;
+                        }
+
+                        .invoice-info {
+                            margin-top: 20px;
+                            background-color: #3a3a3a;
+                            color: white;
+                            padding: 10px 15px;
+                            font-size: 14px;
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                            border-radius: 5px;
+                        }
+
+                        .invoice-info .number {
+                            font-weight: bold;
+                        }
+
+                        .to-section {
+                            margin-top: 10px;
+                            display: flex;
+                            justify-content: space-between;
+                            font-size: 14px;
+                        }
+
+                        .to-section .left strong {
+                            display: block;
+                        }
+
+                        table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin-top: 0;
+                            font-size: 14px;
+                        }
+
+                        thead {
+                            background-color: #3a3a3a;
+                            color: white;
+                        }
+
+                        thead th {
+                            padding: 10px;
+                            text-align: left;
+                        }
+
+                        tbody td {
+                            padding: 8px 10px;
+                            border-bottom: 1px solid #ccc;
+                        }
+
+                        .total-box {
+                            background-color: #3a3a3a;
+                            color: white;
+                            width: 200px;
+                            padding: 10px;
+                            margin-left: auto;
+                            margin-top: 40px;
+                            border-radius: 5px;
+                            font-size: 12px;
+                        }
+
+                        .total-box div {
+                            margin-bottom: 4px;
+                        }
+
+                        /* Watermark logo samar di background */
+                        .watermark {
+                            position: fixed;
+                            top: 35%;
+                            left: 50%;
+                            transform: translate(-50%, -50%);
+                            opacity: 0.05;
+                            z-index: 0;
+                            width: 600px;
+                        }
                     </style>
                 </head>
                 <body>

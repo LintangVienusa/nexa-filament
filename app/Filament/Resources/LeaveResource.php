@@ -325,6 +325,8 @@ class LeaveResource extends Resource
                         ->visible(fn ($record) => (int)$record->status === 0  && ! auth()->user()->isStaff()) 
                         ->requiresConfirmation()
                         ->action(function ($record) {
+                            
+                            $type = $record->leave_type;
                               $record->update(['status' => 3]);
                             Notification::make()
                                 ->title( $type .' Reject')
