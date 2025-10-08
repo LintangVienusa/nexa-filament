@@ -35,19 +35,28 @@ class AttendanceResource extends Resource
         return $form
             ->schema([
                 Select::make('employee_id')
+                    ->Label('NIK / ID Karyawan')
                     ->relationship('employee', 'employee_id')
                     ->searchable()
                     ->required(),
                 DatePicker::make('attendance_date')
+                    ->Label('Tanggal Attendance')
+                    ->default(now())
                     ->required(),
-                DateTimePicker::make('check_in_time'),
-                DateTimePicker::make('check_out_time'),
+                DateTimePicker::make('check_in_time')
+                    ->Label('Waktu Check In')
+                    ->default(now())
+                    ->required(),
+                DateTimePicker::make('check_out_time')
+                    ->Label('Waktu Check Out')
+                    ->default(now()),
                 TextInput::make('working_hours')
-                    ->label('Working Hours')
+                    ->label('Waktu Kerja (Jam)')
                     ->disabled()
                     ->dehydrated(false)
                     ->formatStateUsing(fn ($record) => $record?->working_hours),
                 FileUpload::make('check_in_evidence')
+                    ->Label('Evidence Check In')
                     ->directory('attendances/checkin')
                     ->maxSize(1024)
                     ->preserveFilenames(),
