@@ -37,7 +37,7 @@ class AppServiceProvider extends ServiceProvider
                     $employee = $user?->employee;
                     $organization = $employee?->organization;
                     $avatarUrl = $user?->getFilamentAvatarUrl() ?? asset('images/default-avatar.png');
-                    $name =strtoupper($user?->getFilamentName() ?? '-');
+                    $name =strtoupper(optional($user?->employee)->first_name ?? '-');
                     $position = e(optional($user?->employee)->job_title ?? optional($user?->employee)->job_title ?? '-');
                     $division = $organization?->divisi_name ?? '-';
                     $unit = $organization?->unit_name ?? '-';
@@ -55,8 +55,6 @@ class AppServiceProvider extends ServiceProvider
                                 >
                                 <div class="flex flex-col justify-center">
                                     <span class="font-semibold text-sm leading-tight text-gray-900 dark:text-white uppercase">{$name}</span>
-                                    <span class="text-[11px] text-gray-400">{$division}</span>
-                                    <span class="text-[11px] text-gray-400">{$unit}</span>
                                     <span class="text-xs text-gray-500 dark:text-gray-400">{$position}</span>
                                 </div>
                             </div>

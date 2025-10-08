@@ -20,6 +20,7 @@ use Spatie\Permission\Traits\HasPermissions;
 use App\Models\Employee;
 use Filament\Forms\Components\FileUpload;
 use Filament\Notifications\Notification;
+use App\Services\HariKerjaService;
 
 
 class LeaveResource extends Resource
@@ -155,10 +156,14 @@ class LeaveResource extends Resource
                         Forms\Components\DatePicker::make('end_date')
                             ->label('Sampai Tgl')
                             ->reactive()
-                            ->afterStateUpdated(function ($set, $get) {
+                            ->afterStateUpdated(function ($state,$set, $get) {
                                 if ($get('start_date') && $get('end_date')) {
-                                    $set('leave_duration', \Carbon\Carbon::parse($get('start_date'))
-                                        ->diffInDays(\Carbon\Carbon::parse($get('end_date'))) + 1);
+                                     $startDate = $get('start_date');
+                                     $endDate = $get('end_date');
+                                     $hariKerjaService = app(HariKerjaService::class);
+                                     $hariKerjaData = $hariKerjaService->hitungHariKerja($state, $startDate, $endDate);
+                                     $jml = $hariKerjaData['jumlah_hari_kerja'] ?? 0;
+                                    $set('leave_duration', $jml);
                                 }
                             }),
 
@@ -167,20 +172,14 @@ class LeaveResource extends Resource
                             ->disabled()
                             ->dehydrated(true)
                             ->reactive()
-                            ->afterStateUpdated(function ($set, $get) {
+                            ->afterStateUpdated(function ($state, $set, $get) {
                                 if ($get('start_date') && $get('end_date')) {
-                                    $days = \Carbon\Carbon::parse($get('start_date'))
-                                        ->diffInDays(\Carbon\Carbon::parse($get('end_date'))) + 1;
-
-                                    $leaveType = $get('leave_type');
-                                    if ($leaveType == 7 && $days > 7) {
-                                        $days = 7; 
-                                    }
-                                    if ($leaveType == 3 && $days > 90) {
-                                        $days = 90; 
-                                    }
-
-                                    $set('leave_duration', $days);
+                                     $startDate = $get('start_date');
+                                     $endDate = $get('end_date');
+                                     $hariKerjaService = app(HariKerjaService::class);
+                                     $hariKerjaData = $hariKerjaService->hitungHariKerja($state, $startDate, $endDate);
+                                     $jml = $hariKerjaData['jumlah_hari_kerja'] ?? 0;
+                                    $set('leave_duration', $jml);
                                 }
                             }),
                         Forms\Components\Textarea::make('reason')
@@ -213,7 +212,7 @@ class LeaveResource extends Resource
 
                                 return [];
                             })
-                            ->default(fn () => auth()->user()->isStaff() ? 0 : null)
+                            ->default(fn () => auth()->user()->isStaff() ? 0 : 0)
                             ->hidden(fn () => auth()->user()->isStaff()) 
                             ->required()
                             ->reactive(),
@@ -326,6 +325,8 @@ class LeaveResource extends Resource
                         ->visible(fn ($record) => (int)$record->status === 0  && ! auth()->user()->isStaff()) 
                         ->requiresConfirmation()
                         ->action(function ($record) {
+                            
+                            $type = $record->leave_type;
                               $record->update(['status' => 3]);
                             Notification::make()
                                 ->title( $type .' Reject')

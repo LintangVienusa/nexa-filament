@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Role;
 
 class Employee extends Model
 {
@@ -65,6 +67,36 @@ class Employee extends Model
     public function getFilePhotoUrlAttribute(): ?string
     {
         return $this->file_photo ? asset('storage/' . $this->file_photo) : null;
+    }
+
+    public function Employee(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class, 'employee_id', 'employee_id');
+    }
+
+    protected static function booted()
+    {
+        static::created(function ($employee) {
+            $middle = $employee->middle_name;
+            if($middle ===''){
+                $fullname = $employee->first_name.' '.$employee->last_name;
+            }else{
+                 $fullname = $employee->first_name.' '.$employee->middle_name.' '.$employee->last_name;
+            }
+            
+            $job_title = $employee->job_title;
+            if($job_title == 'Staff'){
+                $role = 'employee';
+            }else{
+                $role = 'manager';
+            }
+            $createuser = User::firstOrCreate([
+                'name' => $fullname,
+                'email' => $employee->email,
+                'password' => Hash::make('n3x4@1234'),
+            ]);
+            $createuser->assignRole($role);
+        });
     }
     
 }

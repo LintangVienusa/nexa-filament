@@ -17,6 +17,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Columns\BadgeColumn;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Attendance;
+use Filament\Tables\Actions;
+use Filament\Notifications\Notification;
 
 class OvertimeResource extends Resource
 {
@@ -135,9 +137,42 @@ class OvertimeResource extends Resource
                 Tables\Columns\TextColumn::make('working_hours')->label('Hours'),
                 Tables\Columns\TextColumn::make('start_time')->time(),
                 Tables\Columns\TextColumn::make('end_time')->time(),
+                Tables\Columns\TextColumn::make('status')
+                    ->badge()
+                    ->formatStateUsing(fn ($state) => match ($state) {
+                        0 => 'Draft',
+                        1 => 'Approve',
+                        default => $state,
+                    })
+                    ->color(fn ($state): string => match ($state) {
+                        0 => 'warning',
+                        1 => 'success',
+                        default => 'primary',
+                    })
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')->dateTime()->toggleable(isToggledHiddenByDefault: true),
             ])
-            ->actions([Tables\Actions\EditAction::make()])
+            ->actions([
+               Actions\Action::make('approved')
+                        ->label('Approve')
+                        ->color('success')
+                        ->icon('heroicon-o-check')
+                        ->visible(fn ($record) => (int)$record->status === 0  && ! auth()->user()->isStaff()) 
+                        ->requiresConfirmation()
+                        ->action(function ($record) {
+                            $type = $record->leave_type;
+                            $record->update(['status' => 1]);
+                            Notification::make()
+                                ->title( $type .' Approve')
+                                ->success()
+                                ->send();
+                                return $record->fresh();
+                        }),
+                Tables\Actions\EditAction::make(),
+                
+                Tables\Actions\DeleteAction::make()
+                    ->visible(fn ($record) => $record->status != 1),
+            ])
             ->bulkActions([Tables\Actions\DeleteBulkAction::make()]);
     }
 

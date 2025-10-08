@@ -18,6 +18,7 @@ use Filament\Tables\Table;
 use Spatie\Permission\Traits\HasPermissions;
 use Filament\Forms\Components\FileUpload;
 use Filament\Tables\Columns\ImageColumn;
+use Filament\Forms\Components\Hidden;
 
 
 class EmployeeResource extends Resource
@@ -65,15 +66,21 @@ class EmployeeResource extends Resource
                         TextInput::make('first_name')
                             ->label('Nama Depan')
                             ->required()
+                            ->extraInputAttributes(['style' => 'text-transform: uppercase;'])
+                            ->reactive()
                             ->maxLength(50),
 
                         TextInput::make('middle_name')
                             ->label('Nama Tengah')
+                            ->extraInputAttributes(['style' => 'text-transform: uppercase;'])
+                            ->reactive()
                             ->maxLength(50),
 
                         TextInput::make('last_name')
                             ->label('Nama Belakang')
+                            ->extraInputAttributes(['style' => 'text-transform: uppercase;'])
                             ->required()
+                            ->reactive()
                             ->maxLength(50),
 
                         Select::make('gender')
@@ -94,15 +101,49 @@ class EmployeeResource extends Resource
                             ->label('Tanggal Masuk')
                             ->default(now()),
 
-                        TextInput::make('job_title')
+                        
+                        Select::make('job_title')
                             ->label('Jabatan')
-                            ->maxLength(100),
-
-                        Select::make('org_id')
-                            ->label('Divisi')
-                            ->relationship('organization', 'divisi_name')
-                            ->searchable()
+                            ->options([
+                                'Staff'     => 'Staff',
+                                'SPV'       => 'SPV',
+                                'Manager'   => 'Manager',
+                                'VP'        => 'VP',
+                            ])
                             ->required(),
+
+                        Select::make('divisi_name')
+                                ->label('Department')
+                                ->options(\App\Models\Organization::query()
+                                    ->select('id', 'divisi_name')
+                                    ->distinct('divisi_name')
+                                    ->pluck('divisi_name', 'divisi_name'))
+                                ->reactive()
+                                ->required()
+                                ->disabled(fn ($record) => $record !== null) 
+                                ->afterStateUpdated(function ($state, callable $set) {
+                                    $set('unit_id', null);
+                                }),
+
+                        Select::make('unit_id')
+                                ->label('Unit')
+                                ->options(function (callable $get) {
+                                    $departmentName = $get('divisi_name');
+                                    if (!$departmentName) return [];
+                                    return \App\Models\Organization::where('divisi_name', $departmentName)
+                                        ->pluck('unit_name', 'id');
+                                })
+                                ->required()
+                                ->disabled(fn ($record) => $record !== null) 
+                                ->afterStateUpdated(function ($state, callable $set) {
+                                    
+                                    $set('org_id', $state);
+                                    $set('org_id_display', $state);
+                                })
+                                ->reactive(),
+
+                        Hidden::make('org_id')
+                            ->reactive(),
 
                         TextInput::make('basic_salary')
                             ->label('Gaji Pokok')
@@ -130,13 +171,23 @@ class EmployeeResource extends Resource
                             ->label('Nomor Handphone')
                             ->tel()
                             ->numeric()
+                            ->maxLength(16)
+                            ->helperText('Masukan 08xxxxxxxxxx')
                             ->required(),
 
                         TextInput::make('ktp_no')
                             ->label('No. KTP')
-                            ->required()
                             ->numeric()
-                            ->maxLength(20),
+                            ->maxLength(16)
+                            ->reactive()
+                            ->afterStateUpdated(function ($state, callable $set) {
+                                    if (strlen($state) > 16) {
+                                        $set('ktp_no', substr($state, 0, 16));
+                                    }
+                                })             
+                            ->required()
+                            ->helperText('Masukkan 16 digit KTP')
+                            ->rule('digits:16'),
 
                         TextInput::make('bpjs_kes_no')
                             ->label('No. BPJS Kesehatan')
