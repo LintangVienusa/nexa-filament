@@ -16,4 +16,11 @@ class CreateEmployee extends CreateRecord
         $data['created_at'] = now();
         return $data;
     }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index'); 
+    }
+
+    
 }

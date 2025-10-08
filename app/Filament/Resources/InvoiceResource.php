@@ -21,7 +21,7 @@ use Filament\Forms\Components\Section;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\BadgeColumn;
 use Filament\Forms\Components\Select;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\DownloadInvoiceService;
 
 class InvoiceResource extends Resource
 {
@@ -203,6 +203,17 @@ class InvoiceResource extends Resource
                     ->label('Download PDF')
                     ->icon('heroicon-o-document-arrow-down')
                     ->action(fn ($record) => static::downloadInvoice($record)),
+                // Action::make('download')
+                // ->label('Download Invoice')
+                // ->icon('heroicon-o-arrow-down-tray')
+                // ->action(function ($record, DownloadInvoiceService $service) {
+                //     $pdf = $service->downloadInvoice($record);
+
+                //             return response()->streamDownload(
+                //                 fn () => print($pdf->output()),
+                //                 "Invoice-{$record->id}.pdf"
+                //             );
+                // }),
             ])
 
             ->bulkActions([
@@ -255,12 +266,13 @@ class InvoiceResource extends Resource
                 <head>
                     <style>
                         body { font-family: Arial, sans-serif; margin: 20px; }
-                        .header { display: flex; align-items: center; }
-                        .logo { height: 80px; width: 300px; margin-right: 20px; }
+                        .header { display: flex; align-items: left; }
+                        .logo { height: 20rem; width: 20rem; margin-right: 30px; }
                         .title { font-size: 24px; font-weight: bold; }
-                        .info { font-size: 14px; margin-top: 15px; }
-                        .info_pt { font-size: 16px; font-weight: bold; margin-top: 20px; }
-                        table { font-size: 14px; width: 100%; border-collapse: collapse; margin-top: 15px; }
+                        .info { font-size: 12px; margin-top: 5px; }
+                        .info_alamat { font-size: 12px; margin-top: 10px; }
+                        .info_pt { font-size: 16px; font-weight: bold; margin-top: 5px; background-color: #ffffff;}
+                        table { font-size: 14px; width: 100%; border-collapse: collapse; margin-top: 5px; }
                         th, td { border: none; padding: 5px; text-align: left; }
                         th { background-color: #f5f5f5; }
                         tfoot td { font-weight: bold; }
@@ -268,20 +280,48 @@ class InvoiceResource extends Resource
                     </style>
                 </head>
                 <body>
-
-                    <div class="header">
-                        <img src="' . public_path('assets/images/Kop Surat Logo PT Nexanira Biru.png') . '" class="logo">
-                        <div class="title">
-                            Invoice
-                            <div style="font-size: 12px; font-weight: normal; margin-top: 5px;">
-                                This invoice is a valid proof of payment.
-                            </div>
+                    
+                            <div class="header" style="display: flex; align-items: center; justify-content: space-between;  width: 100%; margin-top: 5px;">
+                                <table>
+                                    <td>
+                                            <div class="logo-container" style="width: 240px; height: 180px; overflow: hidden; display: flex; align-items: center;">
+                                                <img 
+                                                    src="'. public_path('assets/images/Invoice Permit_20251008_233910_0001.png') .'" 
+                                                    alt="Logo" 
+                                                    style="width: 100%; height: 100%; object-fit: cover; object-position: center;">
+                                            </div>
+                                    </td>
+                                    <td>
+                                        <div class="title" style="text-align: right; flex-grow: 1; margin-left: 20px; margin-top: 5px;">
+                                                <div style="font-size: 20px; font-weight: bold; text-transform: uppercase;">
+                                                    Invoice
+                                                </div>
+                                                <div style="font-size: 12px; margin-top: 5px;">
+                                                    This invoice is a valid proof of payment.
+                                                </div>
+                                            </div>
+                                        
+                                    </td>
+                                </table>
                         </div>
-                    </div>
 
-                    <div class="info_pt">
-                        <div class="info">PT Nexanira Techno Solutions</div>
-                        <div class="info">---- Alamat ----</div>
+                    <div  style="width: 50%;">
+                        <table  class="info" >
+                            <tr>
+                                <td><strong>TOWER SEQUIS CENTER 9TH FLOOR NO. 902</strong></td>
+                            </tr>
+                            <tr>
+                                <td>JL. JEND. SUDIRMAN 71, Kelurahan Senayan</td>
+                            </tr>
+                            
+                            <tr>
+                                <td>Kec. Kebayoran Baru, Adm. Jakarta Selatan</td>
+                            </tr>
+                            <tr>
+                                <td>Provinsi DKI Jakarta, Kode Pos: 12190</td>
+                            </tr>
+                        </table>
+                        
                     </div>
 
                     <div class="info">
@@ -384,6 +424,16 @@ class InvoiceResource extends Resource
                             <tr>
                             <td colspan="5" style="text-align:right; font-style:italic; font-size:12px;">
                                 (** ' . trim($spellNumber ($grandTotal)) . ' Rupiah **)
+                            </td>
+                            </tr>
+                            <tr>
+                            <td colspan="5" style="text-align:left; font-style:italic; font-size:12px;">
+                                BANK MANDIRI 1180014213705
+                            </td>
+                            </tr>
+                            <tr>
+                            <td colspan="5" style="text-align:left; font-style:italic; font-size:12px;">
+                                 PT DAPOER POESAT NOESANTARA GROUP
                             </td>
                             </tr>
                         </tfoot>

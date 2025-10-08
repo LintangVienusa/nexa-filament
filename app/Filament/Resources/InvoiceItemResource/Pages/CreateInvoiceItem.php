@@ -34,4 +34,5 @@ class CreateInvoiceItem extends CreateRecord
         }
         return new InvoiceItem();
     }
+    
 }

@@ -21,6 +21,7 @@ use Filament\View\PanelsRenderHook;
 use Filament\Navigation\UserMenuItem;
 use Filament\Pages\Auth\EditProfile;
 use Illuminate\Support\Facades\Auth;
+use App\Filament\Resources\ProfileResource;
 
 
 class AdminPanelProvider extends PanelProvider
@@ -37,11 +38,19 @@ class AdminPanelProvider extends PanelProvider
             ->brandName('HRMS - DPNG')
             ->profile()
             ->userMenuItems([
-
-            'profile' => UserMenuItem::make()
-                ->label('Ganti Password')
-                ->url(fn (): string => EditProfile::getUrl())
-                ->icon('heroicon-o-user'),
+                'profile' => UserMenuItem::make()
+                    ->label('Profil Saya')
+                    ->icon('heroicon-o-user')
+                    ->url(function () {
+                        $recordId = auth()->user()->email; 
+                        // return ProfileResource::getUrl('edit', ['record' => $recordId]);s
+                        return ProfileResource::getUrl('edit', ['record' => $recordId]);
+                    }),
+            
+            // 'profile' => UserMenuItem::make()
+            //     ->label('Ganti Password')
+            //     ->url(fn (): string => EditProfile::getUrl())
+            //     ->icon('heroicon-o-user'),
                 
             ])
             

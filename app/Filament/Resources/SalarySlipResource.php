@@ -49,42 +49,36 @@ class SalarySlipResource extends Resource
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
-                                // Department
-                                Forms\Components\Select::make('department_id')
-                                    ->label('Department')
-                                    ->options(\App\Models\Organization::query()
-                                        ->select('id', 'divisi_name')
-                                        ->distinct('divisi_name')
-                                        ->pluck('divisi_name', 'id'))
-                                    ->reactive()
-                                    ->required()
-                                    ->disabled(fn ($record) => $record !== null) 
-                                    ->afterStateUpdated(function ($state, callable $set) {
-                                        // reset unit dan employee jika department berubah
-                                        $set('unit_id', null);
-                                        $set('employee_id', null);
-                                        $set('employee_id', null);
-                                    }),
+                               Select::make('divisi_name')
+                                ->label('Department')
+                                ->options(\App\Models\Organization::query()
+                                    ->select('id', 'divisi_name')
+                                    ->distinct('divisi_name')
+                                    ->pluck('divisi_name', 'divisi_name'))
+                                ->reactive()
+                                ->required()
+                                ->disabled(fn ($record) => $record !== null) 
+                                ->afterStateUpdated(function ($state, callable $set) {
+                                    $set('unit_id', null);
+                                }),
 
-                                // Unit (filtered by department)
-                                Forms\Components\Select::make('unit_id')
+
+                                Select::make('unit_id')
                                     ->label('Unit')
                                     ->options(function (callable $get) {
-                                        $departmentId = $get('department_id');
-                                        if (!$departmentId) return [];
-                                        return \App\Models\Organization::where('id', $departmentId)
-                                            ->pluck('unit_name', 'id');
-                                    })
-                                    ->reactive()
+                                            $departmentName = $get('divisi_name');
+                                            if (!$departmentName) return [];
+                                            return \App\Models\Organization::where('divisi_name', $departmentName)
+                                                ->pluck('unit_name', 'id');
+                                        })
                                     ->required()
                                     ->disabled(fn ($record) => $record !== null) 
                                     ->afterStateUpdated(function ($state, callable $set) {
-                                        // reset employee jika unit berubah
                                         $set('employee_name', null);
                                         $set('employee_id', null);
-                                    }),
+                                    })
+                                    ->reactive(),
 
-                                // Employee (filtered by department + unit)
                                 Forms\Components\Select::make('employee_name')
                                     ->label('Employee')
                                     ->options(function (callable $get) {
@@ -574,6 +568,8 @@ class SalarySlipResource extends Resource
                 
             ])
             ->actions([
+                
+                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
@@ -593,6 +589,10 @@ class SalarySlipResource extends Resource
 
         $allowances = $components->where('SalaryComponent.component_type', 0);
         $deductions = $components->where('SalaryComponent.component_type', 1);
+        
+        $totalAllowances = $allowances->sum('amount');
+        $totalDeductions = $deductions->sum('amount');
+        $totalpay = ($totalAllowances - $totalDeductions);
 
         $renderTable = function($items, $typeLabel, $colorClass) {
             if ($items->isEmpty()) {
@@ -613,7 +613,7 @@ class SalarySlipResource extends Resource
             foreach ($items as $c) {
                 $name = $c->SalaryComponent->component_name ?? '-';
                 $id = $c->id?? '-';
-                $amount = 'Rp ' . number_format($c->amount, 0, '.', ',');
+                $amount = 'Rp ' . number_format($c->amount, 0, ',', '.');
                 if ($id) {
                     $editUrl = SalarySlipResource::getUrl('edit', ['record' => $id]);
                     $editButton = '<a href="'.$editUrl.'" class="text-gray-700 hover:text-blue-600 inline-flex items-center justify-center">
@@ -632,21 +632,30 @@ class SalarySlipResource extends Resource
                 }
             }
 
-            $totalFormatted = 'Rp' . number_format($total, 0, '.', ',');
+            $totalFormatted = 'Rp' . number_format($total, 0, ',', '.');
             $html .= "<tr class='font-semibold {$colorClass}'>
                         <td class='px-4 py-2 border-none'>Total</td>
                         <td class='px-4 py-2 text-right border-none'>{$totalFormatted}</td>
                         <td class='border-none'></td>
                     </tr>";
+            
+            
 
             $html .= '</tbody></table></div>';
 
             return $html;
         };
-
+        
         $html = '<div class="flex w-full max-w-none gap-8 justify-between">';
         $html .= '<div class="flex-1">' . $renderTable($allowances, 'Allowance', 'text-green-600') . '</div>';
         $html .= '<div class="flex-1">' . $renderTable($deductions, 'Deduction', 'text-red-600') . '</div>';
+        
+            $totalpayFormatted = 'Rp' . number_format($totalpay, 0, ',', '.');
+        $html .= "<table><tr>
+                        <td class='px-4 py-2 border-none'><b>Total Pay</td>
+                        <td class='px-4 py-2 text-right border-none'>".$totalpayFormatted."</b></td>
+                        <td class='border-none'></td>
+                    </tr></table>";
         $html .= '</div>';
 
         return $html;
