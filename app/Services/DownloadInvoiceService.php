@@ -14,10 +14,14 @@ class DownloadInvoiceService
         $record->load('items.service', 'customer');
 
         $total = $record->items->sum(fn($i) => $i->subtotal);
-        $taxRate = $record->tax_rate ?? 0.10;
+        $taxRate = $record->tax_rate ?? 0.11;
         $taxrateper = $record->tax_rate * 100;
+        $dp = 0.20;
+        $dpteper = $total * $dp;
         $tax = $total * $taxRate;
-        $grandTotal = $total + $tax;
+        $totaldp = $tax + $dpteper;
+        $grandTotal = ($total ) - $dpteper;
+
 
         $spellNumber  = null;
         $spellNumber  = function ($number) use (&$spellNumber )  {
@@ -92,8 +96,7 @@ class DownloadInvoiceService
                             display: flex;
                             justify-content: space-between;
                             align-items: flex-start;
-                            margin-top: 0;
-                            padding-top: 0;
+                            margin-top: -30px;
                         }
 
                         .logo {
@@ -107,30 +110,48 @@ class DownloadInvoiceService
                             font-size: 40px;
                             font-weight: bold;
                             text-align: center;
-                            display: flex;
                             align-items: center; 
                             justify-content: center;
                         }
 
-                        .invoice-info {
-                            margin-top: 20px;
+                        .footer {
+                            justify-content: space-between; 
+                            align-items: center;            
+                            margin-top: 10px;
                             background-color: #3a3a3a;
                             color: white;
-                            padding: 10px 15px;
-                            font-size: 14px;
-                            display: flex;
-                            justify-content: space-between;
-                            align-items: center;
+                            padding: 5px 15px;
+                            font-size: 12px;
                             border-radius: 5px;
+                            width: 100%;
+                            flex-wrap: nowrap;
+                            border: none;  
+                            font-style:italic;
                         }
 
-                        .invoice-info .number {
-                            font-weight: bold;
+                        .invoice-info {
+                            justify-content: space-between; 
+                            align-items: center;            
+                            margin-top: 10px;
+                            background-color: #3a3a3a;
+                            color: white;
+                            padding: 5px 15px;
+                            font-size: 14px;
+                            border-radius: 5px;
+                            width: 100%;
+                            flex-wrap: nowrap;
+                            border: none;  
+                        }
+
+                        .invoice-info .number,
+                        .invoice-info .date {
+                            white-space: nowrap; 
+                            text-decoration: none; /* hilangkan underline jika ada */
+                            border: none;  
                         }
 
                         .to-section {
-                            margin-top: 10px;
-                            display: flex;
+                            margin-top: 5px;
                             justify-content: space-between;
                             font-size: 14px;
                         }
@@ -144,6 +165,7 @@ class DownloadInvoiceService
                             border-collapse: collapse;
                             margin-top: 0;
                             font-size: 14px;
+                            border: none; 
                         }
 
                         thead {
@@ -157,104 +179,236 @@ class DownloadInvoiceService
                         }
 
                         tbody td {
-                            padding: 8px 10px;
+                            padding: 5px 5px;
                             border-bottom: 1px solid #ccc;
+                            border: none; 
                         }
 
                         .total-box {
+                            position: absolute;
+                            right: 40px;       
+                            bottom: 100px; 
                             background-color: #3a3a3a;
                             color: white;
-                            width: 200px;
+                            width: 250px;
                             padding: 10px;
                             margin-left: auto;
-                            margin-top: 40px;
+                            margin-top: 50px;
+                            margin-bottom: 10px;
                             border-radius: 5px;
                             font-size: 12px;
                         }
 
                         .total-box div {
-                            margin-bottom: 4px;
+                            margin-bottom: 5px;
                         }
+
+                         
+                        
+                        .total-box-footer {
+                                position: fixed;
+                                bottom: 70;
+                                left: 40px;
+                                right: 80px;
+                                width: 90%;
+                                background-color: #3a3a3a;
+                                color: white;
+                                text-align: left;
+                                font-size: 12px;
+                                padding: 8px 0;
+                                font-style: italic;
+                                border-radius: 5px;
+                                border-top:none;
+                            }
 
                         /* Watermark logo samar di background */
                         .watermark {
                             position: fixed;
-                            top: 35%;
-                            left: 50%;
-                            transform: translate(-50%, -50%);
-                            opacity: 0.05;
+                            bottom: 10px;
+                            left: 0;
+                            width: 100%;
+                            height: 0%;
+                            pointer-events: none;
+                            opacity: 0.11; /* agar tidak ganggu konten utama */
                             z-index: 0;
-                            width: 600px;
-                        }
+                            }
+
+                            .watermark-row {
+                            position: absolute;
+                            }
+
+                            .watermark-row img {
+                            width: 45rem;
+                            height: auto;
+                            }
+
+                            /* Baris 1 - kiri bawah */
+                            .watermark-left {
+                            bottom: 0;
+                            left: -230px;
+                            margin-bottom: -180px;
+                            }
+
+                            /* Baris 2 - tengah */
+                            .watermark-center {
+                            bottom: 10px; /* sedikit lebih tinggi dari baris bawah */
+                            left: 30px;
+                            transform: translateX(-50%);
+                            }
+
+                            /* Baris 3 - kanan atas */
+                            .watermark-right {
+                            bottom: 240px; /* di atas baris tengah */
+                            right: -230px;
+                            }
+
+                            /* Rotasi zig-zag */
+                            .rotate-left {
+                            transform: rotate(0deg);
+                            }
+                            .rotate-pusat {
+                            transform: rotate(0deg);
+                            }
+
+                            .rotate-right {
+                            transform: rotate(180deg);
+                            }
                     </style>
                 </head>
                 <body>
-                    <img src="'. public_path('assets/images/Invoice Permit_20251008_233910_0002.png') .'" class="watermark" alt="Watermark">
+                    <div class="watermark">
+                    
+                    <div class="watermark-row watermark-left rotate-pusat">
+                        <img src="'. public_path('assets/images/LOGO PT DAPOER POESAT NUSANTARA-08.png') .'" alt="Logo">
+                    </div>
+                        <div class="watermark-row watermark-center rotate-right">
+                        <img src="'. public_path('assets/images/LOGO PT DAPOER POESAT NUSANTARA-08.png') .'" alt="Logo">
+                    </div>
+                    <div class="watermark-row watermark-right rotate-left">
+                        <img src="'. public_path('assets/images/LOGO PT DAPOER POESAT NUSANTARA-08.png') .'" alt="Logo">
+                    </div>
+                    </div>
                     <div class="header">
                         <table>
-                            <td>
-                                <img src="'. public_path('assets/images/Invoice Permit_20251008_233910_0002.png') .'" class="logo" alt="Logo">
-                            </td>
-                            <td class="invoice-title">
-                                <div center >INVOICE</div>
-                            </td>
-                            
-                        <table>
+                            <tr>
+                                <td>
+                                    <img src="'. public_path('assets/images/Invoice Permit_20251008_233910_0002.png') .'" class="logo" alt="Logo">
+                                </td>
+                                <td class="invoice-title">
+                                    INVOICE
+                                </td>
+                            </tr>
+                        </table>
                     </div>
-
-                    <table class="invoice-info">
-                        <td class="number">01.51/DPNG/INV/STARLITE-PRM/2025</td>
-                        <td class="date">DATE: 12/04/2025</td>
-                    </table>
+                        <table class="invoice-info">
+                            <tr>
+                                <td class="number"><b> '. $record->invoice_number . '/NXN/INV/STARLITE-PRM/2025</b></td>
+                                <td class="date">DATE: ' . $record->created_at->format('d/m/Y') . '</td>
+                            </tr>
+                        </table>
+                    
                     <div class="to-section">
-                        <div class="left">
-                            Kepada<br>
-                            <strong>PT Integrasi Jaringan Ekosistem</strong>
-                        </div>
-                        <div class="right">
-                            No PO : PO.2025.03.00149<br>
-                            <strong>Project FTTH (Segment Poris)</strong>
-                        </div>
+                        <table class="">
+                            <tr>
+                                <td class="left"><b> Kepada :</b></td>
+                                <td class="right">No. PO :</td>
+                            </tr>
+                            <tr>
+                                <td><b>' . $record->customer->customer_name . '</b> </td>
+                            </tr>
+                            <tr>
+                                <td><b>' . $record->customer->address . '</b> </td>
+                            </tr>
+                            <tr>
+                                <td>' . $record->customer->email . ' </td>
+                            </tr>
+                            <tr>
+                                <td>' . $record->customer->phone . ' </td>
+                            </tr>
+                        </table>
                     </div>
                     <table>
-                        <thead>
-                            <tr>
+                        <thead style="text-align:center;">
+                            <tr >
                                 <th>ITEM DESCRIPTION</th>
-                                <th>QTY</th>
-                                <th>PRICE</th>
-                                <th>TOTAL</th>
+                                <th style="text-align:right;">QTY</th>
+                                <th style="text-align:right;">PRICE</th>
+                                <th style="text-align:right;">TOTAL</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr>
-                                <td>Pekerjaan Penarikan Kabel Fiber</td>
-                                <td>1</td>
-                                <td>Rp 10.000.000</td>
-                                <td>Rp 10.000.000</td>
-                            </tr>
-                            <tr>
-                                <td>Instalasi ODP</td>
-                                <td>2</td>
-                                <td>Rp 5.000.000</td>
-                                <td>Rp 10.000.000</td>
-                            </tr>
-                        </tbody>
+                        <tbody>';
+                           foreach ($record->items as $index => $item) {
+                                // $rowColor = $index % 2 === 0 ? '#f9f9f9' : '#eaeaea'; 
+                                $rowColor = $index % 2 === 0 
+                                        ? 'rgba(0, 0, 0, 0.03)'   
+                                        : 'rgba(0, 0, 0, 0.07)';
+
+                                    $html .= '<tr style="background-color: ' . $rowColor . ';">
+                                                <td>' . $item->service->service_name . '</td>
+                                                <td style="text-align:right;">' . $item->qty . '</td>
+                                                <td style="text-align:right;">Rp ' . number_format($item->unit_price, 0, ',', '.') . '</td>
+                                                <td style="text-align:right;">Rp ' . number_format($item->subtotal, 0, ',', '.') . '</td>
+                                            </tr>';
+                                }
+
+            $html .= '</tbody>
                     </table>
 
                     <div class="total-box">
-                        <div>TOTAL</div>
-                        <div>DP 20%</div>
-                        <div>PPN (11%)</div>
-                        <div>TOTAL DP INC. PPN</div>
+                         <table class="">
+                            <tr>
+                                <td class="left"><b>TOTAL</b></td>
+                                 <td>Rp </td>
+                                <td style="text-align:right;"><b>' . number_format($total, 0, ',', '.') . '</b></td>
+                            </tr>
+                            <tr>
+                                 <td class="left"><b>DP 20%</b></td>
+                                 <td>Rp </td>
+                                <td style="text-align:right;"><b>' . number_format($dpteper, 0, ',', '.') . '</b> </td>
+                            </tr>
+                            
+                            <tr>
+                            
+                                 <td class="left"><b>PPN (11%)</b></td>
+                                 <td>Rp </td>
+                                <td style="text-align:right;"><b>' . number_format($tax, 0, ',', '.') . ' </b></td>
+                            </tr>
+                            
+                            <tr>
+                            
+                                 <td class="left"><b>TOTAL DP INC. PPN</b></td>
+                                 <td>Rp </td>
+                                <td style="text-align:right;"><b>' . number_format($totaldp, 0, ',', '.') . ' </b></td>
+                            </tr>
+                             <tr>
+                            
+                                 <td class="left"><b>TOTAL</b></td>
+                                 <td>Rp </td>
+                                <td style="text-align:right;"><b>' . number_format($grandTotal, 0, ',', '.') . ' </b></td>
+                            </tr>
+                        </table>
+                        <table>
+                        <tr>
+                            <td colspan="3" style="text-align:right; font-style:italic; font-size:12px;">
+                                (** ' . trim($spellNumber ($grandTotal)) . ' Rupiah **)
+                            </td>
+                            </tr>
+                        </table>
                     </div>
+                     <table class="total-box-footer">
+                            <tr>
+                                <td class="number"><b>BANK MANDIRI - 1180014213705 PT DAPOER POESAT NOESANTARA GROUP</b></td>
+                            </tr>
+                        </table>
 
                 </body>
+               
                 </html>';
 
         $pdf = \PDF::loadHTML($html)->setPaper('A4', 'portrait');
 
         return response()->streamDownload(
-            fn () => print($pdf->output()),
+            fn () => print($pdf->output()), 
             "Invoice-{$record->id}.pdf"
         );
     }

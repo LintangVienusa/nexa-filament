@@ -9,4 +9,8 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateInvoice extends CreateRecord
 {
     protected static string $resource = InvoiceResource::class;
+    public function mount(): void
+    {
+        $this->redirect('/admin/invoice-items/create');
+    }
 }

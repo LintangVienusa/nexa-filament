@@ -161,7 +161,8 @@ class InvoiceItemResource extends Resource
                         ->sortable(),
 
                     
-                ]),
+                ])
+                ->columnSpanFull(),
                 Panel::make([
                 TextColumn::make('items')
                         ->label('Invoice Items')
@@ -170,6 +171,7 @@ class InvoiceItemResource extends Resource
                         })
                         ->html()
                 ])
+                
                 ->collapsible()
                 ->collapsed(true)
                 ->columnSpanFull()

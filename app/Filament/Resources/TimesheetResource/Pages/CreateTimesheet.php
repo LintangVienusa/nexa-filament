@@ -44,4 +44,9 @@ class CreateTimesheet extends CreateRecord
                 : '❌ Tidak ditemukan attendance hari ini.',
         ]);
     }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
 }
