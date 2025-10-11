@@ -23,4 +23,8 @@ class EditEmployee extends EditRecord
         $data['updated_at'] = now();
         return $data;
     }
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
 }

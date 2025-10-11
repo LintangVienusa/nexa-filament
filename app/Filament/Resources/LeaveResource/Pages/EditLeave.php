@@ -24,4 +24,9 @@ class EditLeave extends EditRecord
     {
         return parent::edit($record);
     }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
 }
