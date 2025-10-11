@@ -13,6 +13,8 @@ use Filament\Tables\Table;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Forms\Components\Section;
+use Filament\Tables\Columns\TextColumn;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class CustomerResource extends Resource
@@ -29,21 +31,47 @@ class CustomerResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('customer_name')
-                    ->required()
-                    ->maxLength(255),
-                Forms\Components\Textarea::make('address')
-                    ->required()
-                    ->rows(3)
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('email')
-                    ->required()
-                    ->email()
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('phone')
-                    ->required()
-                    ->tel()
-                    ->maxLength(255),
+                Section::make('Customer Info')
+                    ->schema([
+                        TextInput::make('customer_name')
+                            ->required()
+                            ->maxLength(255)
+                            ->afterStateUpdated(function ($state, callable $set) {
+                                // otomatis buat inisial
+                                $words = explode(' ', $state);
+                                $initials = '';
+                                foreach ($words as $word) {
+                                    $initials .= strtoupper(substr($word, 0, 1));
+                                }
+                                $set('initial', $initials);
+                            }),
+
+                        TextInput::make('initial')
+                            ->label('Initial')
+                            ->required()
+                            ->maxLength(10),
+                        
+                        Textarea::make('address')
+                            ->required()
+                            ->rows(3)
+                            ->maxLength(255),
+                    ]),
+
+                Section::make('Contact Info')
+                    ->schema([
+                        TextInput::make('email')
+                            ->required()
+                            ->email()
+                            ->maxLength(255),
+
+                        TextInput::make('phone')
+                            ->label('Nomor phone')
+                            ->tel()
+                            ->numeric()
+                            ->maxLength(16)
+                            // ->helperText('Masukan 08xxxxxxxxxx')
+                            ->required(),
+                    ]),
             ]);
     }
 
@@ -51,19 +79,19 @@ class CustomerResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('customer_name')
+                TextColumn::make('customer_name')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('address')
+                TextColumn::make('address')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('email')
+                TextColumn::make('email')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('phone')
+                TextColumn::make('phone')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -73,6 +101,7 @@ class CustomerResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

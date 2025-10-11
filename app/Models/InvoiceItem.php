@@ -16,6 +16,8 @@ class InvoiceItem extends Model
     protected $table = 'InvoiceItems';
     protected $primaryKey = 'id';
     protected $fillable = [
+        'po_number',
+        'po_description',
         'customer_id',
         'invoice_id',
         'service_id',
@@ -32,23 +34,28 @@ class InvoiceItem extends Model
 
         static::creating(function ($item) {
             $item->subtotal = (int)$item->qty * (int)$item->unit_price;
-
+            
+            $po_number = $item->po_number ?? null;
             $invoiceid = $item->invoice_id ?? null;
             $customer_id = $item->customer_id ?? null;
+            $now = Carbon::now();
             $periodeCarbon = Carbon::parse($item->invoice_date ?? now());
             $periodeString = $periodeCarbon->format('F Y');
+            $invoiceNumber = str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT).'/NXN/INV/' . strtoupper($periodeCarbon->format('Ym'));
+
 
             $invoice = Invoice::when($invoiceid, function ($q) use ($customer_id, $invoiceid) {
                     $q->where('customer_id', $customer_id);
                 })
                 ->where('invoice_date', $periodeCarbon)
+                ->where('created_at', '>=', $now->copy()->startOfSecond())
+                ->where('created_at', '<=', $now->copy()->endOfSecond())
                 ->first();
 
             if ($invoice) {
                 $item->invoice_id = $invoice->id;
             } else {
-                $invoiceNumber = 'INV-' . strtoupper($periodeCarbon->format('Ym')) . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
-
+                
                 $invoice = Invoice::create([
                     'invoice_number' => $invoiceNumber,
                     'invoice_date'   => now(),
@@ -66,7 +73,7 @@ class InvoiceItem extends Model
             $invoice = $item->invoice;
             if ($invoice) {
                 $total = $invoice->items()->sum(DB::raw('qty * unit_price'));
-                $taxRate = "0.12";
+                $taxRate = "0.11";
                 $tax = $total * $taxRate;
                 $amount = $total - $tax;
 

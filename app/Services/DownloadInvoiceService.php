@@ -22,6 +22,19 @@ class DownloadInvoiceService
         $totaldp = $tax + $dpteper;
         $grandTotal = ($total ) - $dpteper;
 
+        $addressLines = explode("\n", str_replace(',', "\n", $record->customer->address));
+        $addressLines = array_map(function ($line) {
+            $line = preg_replace('/\x{00A0}/u', '', $line);
+            return trim($line);
+        }, $addressLines);
+        $formattedAddress = '';
+        if (!empty($addressLines)) {
+            $formattedAddress .= '<b>' . e(array_shift($addressLines)) . '</b>';
+        }
+        if (!empty($addressLines)) {
+            $formattedAddress .= "\n" . e(implode("\n", $addressLines));
+        }
+
 
         $spellNumber  = null;
         $spellNumber  = function ($number) use (&$spellNumber )  {
@@ -84,7 +97,7 @@ class DownloadInvoiceService
                             margin: 0;
                             padding: 0;
                             font-family: Arial, sans-serif;
-                            background-color: #e8d1ad; /* coklat muda */
+                            background-color: #f9e1bbff; 
                         }
 
                         body {
@@ -129,6 +142,21 @@ class DownloadInvoiceService
                             font-style:italic;
                         }
 
+                        .footer-inner-table td {
+                            font-size: 10px;  
+                            vertical-align: middle;
+                            padding: 2px 5px;
+                        }
+
+                        .footer-icon {
+                            width: 12px;   
+                            height: 12px;
+                            margin-right: 3px;
+                            vertical-align: middle;
+                            display: inline-block;
+                        }
+
+
                         .invoice-info {
                             justify-content: space-between; 
                             align-items: center;            
@@ -146,14 +174,15 @@ class DownloadInvoiceService
                         .invoice-info .number,
                         .invoice-info .date {
                             white-space: nowrap; 
-                            text-decoration: none; /* hilangkan underline jika ada */
+                            text-decoration: none;
                             border: none;  
                         }
 
                         .to-section {
-                            margin-top: 5px;
-                            justify-content: space-between;
+                            margin-top: 0;
+                            flex-wrap: nowrap;
                             font-size: 14px;
+                            line-height: 1.0;
                         }
 
                         .to-section .left strong {
@@ -221,7 +250,19 @@ class DownloadInvoiceService
                                 border-top:none;
                             }
 
-                        /* Watermark logo samar di background */
+                        .total-box-footer td.footer-item {
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            gap: 5px;  
+                            padding: 4px 0;
+                        }
+
+                        .total-box-footer td.footer-item img {
+                            width: 14px;
+                            height: 14px;
+                        }
+
                         .watermark {
                             position: fixed;
                             bottom: 10px;
@@ -229,7 +270,7 @@ class DownloadInvoiceService
                             width: 100%;
                             height: 0%;
                             pointer-events: none;
-                            opacity: 0.11; /* agar tidak ganggu konten utama */
+                            opacity: 0.11; 
                             z-index: 0;
                             }
 
@@ -242,27 +283,27 @@ class DownloadInvoiceService
                             height: auto;
                             }
 
-                            /* Baris 1 - kiri bawah */
+                            
                             .watermark-left {
                             bottom: 0;
                             left: -230px;
                             margin-bottom: -180px;
                             }
 
-                            /* Baris 2 - tengah */
+                           
                             .watermark-center {
-                            bottom: 10px; /* sedikit lebih tinggi dari baris bawah */
+                            bottom: 10px; 
                             left: 30px;
                             transform: translateX(-50%);
                             }
 
-                            /* Baris 3 - kanan atas */
+                            
                             .watermark-right {
-                            bottom: 240px; /* di atas baris tengah */
+                            bottom: 240px;
                             right: -230px;
                             }
 
-                            /* Rotasi zig-zag */
+                            
                             .rotate-left {
                             transform: rotate(0deg);
                             }
@@ -302,7 +343,7 @@ class DownloadInvoiceService
                     </div>
                         <table class="invoice-info">
                             <tr>
-                                <td class="number"><b> '. $record->invoice_number . '/NXN/INV/STARLITE-PRM/2025</b></td>
+                                <td class="number"><b> '. $record->invoice_number . '</b></td>
                                 <td class="date">DATE: ' . $record->created_at->format('d/m/Y') . '</td>
                             </tr>
                         </table>
@@ -311,13 +352,17 @@ class DownloadInvoiceService
                         <table class="">
                             <tr>
                                 <td class="left"><b> Kepada :</b></td>
-                                <td class="right">No. PO :</td>
+                                <td class="right">No. PO : ' . $record->items->first()?->po_number . '</td>
                             </tr>
                             <tr>
-                                <td><b>' . $record->customer->customer_name . '</b> </td>
+                                <td colspan="1"><b>' . $record->customer->customer_name . '</b> </td>
+                                <td colspan="1"><b>' . $record->items->first()?->po_description . '</b> </td>
                             </tr>
                             <tr>
-                                <td><b>' . $record->customer->address . '</b> </td>
+                                <td colspan="2" style="white-space: normal; line-height: 1.0; text-align: left;">
+                                   '. nl2br($formattedAddress) .'
+                                </td>
+
                             </tr>
                             <tr>
                                 <td>' . $record->customer->email . ' </td>
@@ -397,7 +442,21 @@ class DownloadInvoiceService
                     </div>
                      <table class="total-box-footer">
                             <tr>
-                                <td class="number"><b>BANK MANDIRI - 1180014213705 PT DAPOER POESAT NOESANTARA GROUP</b></td>
+                                <td colspan="3" class="number"><b>BANK MANDIRI - 1180014213705 PT DAPOER POESAT NOESANTARA GROUP</b></td>
+                            </tr>
+                             <tr>
+                                <td>
+                                    <img src="'. public_path('assets/icons/worldwide-white.png') .'" class="footer-icon" alt="Website Icon">
+                                    <span>www.example.com</span>
+                                </td>
+                                <td>
+                                    <img src="'. public_path('assets/icons/telephone-white.png') .'" class="footer-icon" alt="Phone Icon">
+                                    <span>+62 812 3456 7890</span>
+                                </td>
+                                <td>
+                                    <img src="'. public_path('assets/icons/email-white.png') .'" class="footer-icon" alt="Email Icon">
+                                    <span>info@example.com</span>
+                                </td>
                             </tr>
                         </table>
 

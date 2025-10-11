@@ -25,6 +25,7 @@ use Filament\Tables\Columns\TextColumn\Badge;
 use Filament\Notifications\Notification;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\HasManyRepeater;
+use Filament\Forms\Components\Textarea;
 use Carbon\Carbon;
 
 class InvoiceItemResource extends Resource
@@ -39,17 +40,33 @@ class InvoiceItemResource extends Resource
     {
         return $form
             ->schema([
-               Section::make('Invoice')
-                    ->description('Select or confirm the invoice date.')
+               Section::make('PO')
+                    ->description('Pilih atau konfirmasi PO.')
                     ->schema([
+                        TextInput::make('po_number')
+                            ->label('PO Nomor')
+                            ->default(fn () => 'PO.' . now()->format('Ymd-His') . '.' . rand(100,999))
+                            ->required()
+                            ->reactive()
+                            ->dehydrateStateUsing(fn ($state) => $state ?? 'PO.' . now()->format('Ymd-His') . '.' . rand(100,999))
+                            ->readonly(),
+
+                        Textarea::make('po_description')
+                            ->label('PO Pekerjaan')
+                            ->rows(3)
+                            ->maxLength(255)
+                            ->reactive()
+                            ->required(),
+
                        DatePicker::make('invoice_date')
-                            ->label('Invoice Date')
+                            ->label('Tgl PO')
                             ->default(now())
+                            ->readonly()
                             ->required(),
                     ])
-                    ->columns(1),
+                    ->columns(2),
                Section::make('Customer')
-                    ->description('Select the customer for this invoice item.')
+                    ->description('Pilih Customer untuk item PO ini.')
                     ->schema([
                        Select::make('customer_id')
                             ->label('Customer')
@@ -62,17 +79,17 @@ class InvoiceItemResource extends Resource
                     ])
                     ->columns(1),
                 
-               Section::make('Invoice Items')
-                    ->description('Add items for this invoice')
+               Section::make('PO Items')
+                    ->description('Tambahkan item untuk PO ini.')
                     ->schema([
                        Repeater::make('items')
                             ->schema([
 
-                               Section::make('Service Details')
-                                    ->description('Select a service and provide additional details.')
+                               Section::make('Detail Layanan')
+                                    ->description('Pilih layanan dan isi detail tambahan.')
                                     ->schema([
                                        Select::make('service_id')
-                                            ->label('Service')
+                                            ->label('Layanan')
                                             ->relationship('service', 'service_name')
                                             ->searchable()
                                             ->preload()
@@ -90,12 +107,12 @@ class InvoiceItemResource extends Resource
                                                 }),
 
                                        TextInput::make('description')
-                                            ->label('Description')
+                                            ->label('Deskripsi')
                                             ->maxLength(255),
                                     ])
                                     ->columns(2),
                                TextInput::make('price')
-                                    ->label('Unit Price')
+                                    ->label('Harga Satuan')
                                     ->prefix('Rp')
                                     ->formatStateUsing(fn($state) => $state !== null ? number_format((int)$state, 0, ',', '.') : '0')
                                     ->afterStateUpdated(function ($state, callable $set) {
@@ -141,8 +158,8 @@ class InvoiceItemResource extends Resource
         ->query(InvoiceItem::UniqueInvoiceItem())
             ->columns([
                 Split::make([
-                    TextColumn::make('invoice_id')
-                        ->label('Invoice ID')
+                    TextColumn::make('po_number')
+                        ->label('PO Number')
                         ->numeric()
                         ->sortable(),
                     TextColumn::make('invoice.invoice_number')

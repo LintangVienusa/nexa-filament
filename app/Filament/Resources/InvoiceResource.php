@@ -21,6 +21,7 @@ use Filament\Forms\Components\Section;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\BadgeColumn;
 use Filament\Forms\Components\Select;
+use Filament\Notifications\Notification;
 use App\Services\DownloadInvoiceService;
 
 class InvoiceResource extends Resource
@@ -166,6 +167,13 @@ class InvoiceResource extends Resource
 
         return $table
             ->columns([
+                TextColumn::make('items.po_number')
+                    ->label('PO Number')
+                    ->sortable(),
+
+                TextColumn::make('items.po_description')
+                    ->label('PO Description')
+                    ->sortable(),
                 TextColumn::make('invoice_number')->label('Invoice Number')->sortable(),
                 TextColumn::make('customer.customer_name')->label('Customer')->sortable(),
                 TextColumn::make('subtotal')
@@ -196,6 +204,19 @@ class InvoiceResource extends Resource
                 //
             ])
             ->actions([
+                Action::make('approve')
+                        ->label('Approve')
+                        ->icon('heroicon-o-check')
+                        ->visible(fn ($record) => (int)$record->status === 0) 
+                        ->requiresConfirmation()
+                        ->action(function ($record) {
+                            $record->update(['status' => 1]);
+                            Notification::make()
+                                ->title('Payroll Approved')
+                                ->success()
+                                ->send();
+                                return $record->fresh();
+                        }),
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
 
