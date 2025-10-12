@@ -32,12 +32,12 @@ class AuthController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => 'Login successful',
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
+            'data' => [
+                'user_id' => $user->id,
+                'username' => $user->name,
                 'email' => $user->email,
+                'token' => $token,
             ],
-            'token' => $token,
         ]);
     }
 
