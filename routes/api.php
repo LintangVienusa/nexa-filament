@@ -13,5 +13,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/attendance/checkin', [AttendanceController::class, 'checkin']);
     Route::post('/attendance/checkout', [AttendanceController::class, 'checkout']);
+    Route::post('/attendance', [AttendanceController::class, 'checkabsen']);
     Route::post('/timesheets', [TimesheetController::class, 'store']);
 });

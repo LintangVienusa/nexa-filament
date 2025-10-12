@@ -144,4 +144,38 @@ class AttendanceController extends Controller
             'data' => $attendance
         ]);
     }
+
+     public function checkabsen(Request $request)
+    {
+        $user = Auth::user();
+
+        if (! $user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthorized',
+            ], 401);
+        }
+        $email = $request->email;
+        $user = User::where('email', $email)->first();
+        $employee = Employee::where('email', $email)->first();
+        $employee_id = $employee->employee_id;
+        $today = Carbon::today()->format('Y-m-d');
+
+        $attendance = Attendance::where('employee_id', $employee_id)
+            ->whereDate('attendance_date', $today)
+            ->first();
+
+        if (!$attendance) {
+            return response()->json([
+                'message' => 'Belum melakukan check-in hari ini',
+            'data' => $attendance,
+            ], 404);
+        }else{
+            return response()->json([
+                'message' => 'Sudah melakukan check-in hari ini',
+            'data' => $attendance,
+            ], 404);
+        }
+
+    }
 }
