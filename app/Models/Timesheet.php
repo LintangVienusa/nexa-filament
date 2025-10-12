@@ -39,11 +39,13 @@ class Timesheet extends Model
     protected static function booted()
     {
         static::creating(function ($timesheet) {
-            $timesheet->created_by = auth()->user()->email;
+            $user = auth()->user();
+            $timesheet->created_by = $user ? $user->email : 'system';
         });
 
         static::updating(function ($timesheet) {
-            $timesheet->updated_by = auth()->user()->email;
+            $user = auth()->user();
+            $timesheet->updated_by = $user ? $user->email : 'system';
         });
 
         static::created(function (Timesheet $timesheet) {

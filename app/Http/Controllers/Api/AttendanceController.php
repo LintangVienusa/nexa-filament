@@ -13,10 +13,6 @@ use Carbon\Carbon;
 
 class AttendanceController extends Controller
 {
-    // public function checkin(Request $request)
-    // {
-    //     return response()->json(['message' => 'Check-in OK']);
-    // }
     public function Checkin(Request $request)
     {
         $email = $request->email;
@@ -28,39 +24,35 @@ class AttendanceController extends Controller
 
         $user = User::where('email', $email)->first();
         $employee = Employee::where('email', $email)->first();
-        
+
         $info = "OK";
 
         if (!$employee) {
-            
+
             $info = "NOK";
             return response()->json([
                 'message' => 'User tidak terhubung dengan employee'
             ], 400);
         }
-        
+
         $employee_id = $employee->employee_id;
-        // dd($employee_id);
-        
+
         $today = \Carbon\Carbon::today();
 
         $todayCheckin = Attendance::where('employee_id', $employee_id)
             ->where('attendance_date', $date)
             ->first();
-            // dd($todayCheckin->toSql(), $todayCheckin->getBindings());s
-            // dd($employee_id);s
-            // dd($todayCheckin);
         if ($todayCheckin) {
             $attendance = Attendance::where('employee_id', $employee_id)
                 ->where('attendance_date', $date)
                 ->first();
-            
+
             $info = "NOK";
             return response()->json([
                 'message' => 'Anda sudah check-in hari ini',
                 'data' => $attendance
             ], 400);
-            
+
         }
 
         $date_time = $date . " " . $check_in_time;
@@ -76,18 +68,10 @@ class AttendanceController extends Controller
             ]);
         }
 
-       
-        
-
-
         return response()->json([
             'message' => 'Check-in berhasil',
             'data' => $attendance
         ]);
-
-        
-
-        
     }
 
     public function checkout(Request $request)
@@ -106,13 +90,11 @@ class AttendanceController extends Controller
         $user = User::where('email', $email)->first();
         $employee = Employee::where('email', $email)->first();
         $today = Carbon::today();
-        
+
         $employee_id = $employee->employee_id;
-        // dd($employee);
         $attendance = Attendance::where('employee_id', $employee_id)
             ->whereDate('attendance_date', $date)
             ->first();
-            // dd($attendance);
         if (!$attendance) {
             return response()->json([
                 'message' => 'Belum melakukan check-in hari ini',
@@ -125,8 +107,6 @@ class AttendanceController extends Controller
             'data' => $attendance,
             ], 404);
         }
-
-        
 
         $cek_in =$attendance->check_in_time;
         $time_in = \Carbon\Carbon::parse($cek_in);
