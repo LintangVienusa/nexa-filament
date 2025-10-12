@@ -1,6 +1,6 @@
 <?php
 
-namespace app\Traits;
+namespace App\Traits;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -17,6 +17,10 @@ trait HasOwnRecordPolicy
         $user = Auth::user();
         $model = new static::$model;
         $table = $model->getTable();
+
+        if ($user->hasRole('superadmin') || $user->hasRole('admin')) {
+            return $query;
+        }
 
         if ($model instanceof \App\Models\Employee) {
             return $query;
@@ -69,10 +73,6 @@ trait HasOwnRecordPolicy
 
         if ($record instanceof \App\Models\Employee) {
             return $user->hasAnyRole(['admin', 'manager']);
-        }
-
-        if ($user->hasRole('employee')) {
-            return $record->employee?->email === $user->email;
         }
 
         return $user->hasAnyRole(['admin', 'manager']);
