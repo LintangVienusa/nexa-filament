@@ -4,6 +4,7 @@ namespace App\Http\Livewire;
 
 use Livewire\Component;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class TakePhoto extends Component
 {
@@ -19,17 +20,29 @@ class TakePhoto extends Component
         $this->count++;
         $this->dispatch('counterUpdated', $this->count);
     }
+    protected $listeners = ['savePhoto']; // Listener untuk JS emit
 
-    public function savePhoto($imageData)
+    public function savePhoto($photoData)
     {
-        $imageData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $imageData));
-        $filename = 'attendances/' . uniqid('checkin_') . '.png';
+
+        if (!$photoData) return;
+       
+        // Pastikan folder ada
+        if (!Storage::disk('public')->exists('attendances')) {
+            Storage::disk('public')->makeDirectory('attendances');
+        }
+
+        // Decode base64
+        $imageData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $photoData));
+        $filename = 'attendances/checkin_' . uniqid() . '.png';
         Storage::disk('public')->put($filename, $imageData);
 
         $this->photoPath = $filename;
 
-        // Kirim event ke browser untuk hidden input
-        $this->dispatchBrowserEvent('photoTaken', ['path' => $filename]);
+        // Kirim path ke hidden input
+        $this->dispatchBrowserEvent('photoSaved', ['path' => $filename]);
+
+        $this->photo = null; // reset preview
     }
 
     public function render()

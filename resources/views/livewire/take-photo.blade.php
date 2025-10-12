@@ -5,7 +5,13 @@
     <div class="flex gap-2">
         <button type="button" @click="startCamera()" class="px-3 py-1 bg-blue-600 text-white rounded">Buka Kamera</button>
         <button type="button" @click="capturePhoto()" class="px-3 py-1 bg-green-600 text-white rounded">Ambil Foto</button>
-        <button type="button" @click="savePhotoToLivewire()" class="px-3 py-1 bg-indigo-600 text-white rounded" x-show="photo">Simpan Foto</button>
+        {{-- <button type="button" @click="savePhotoToLivewire()" class="px-3 py-1 bg-indigo-600 text-white rounded" x-show="photo">Simpan Foto</button> --}}
+        <button type="button"
+    x-on:click="$wire.savePhoto(photo)"
+    class="px-3 py-1 bg-indigo-600 text-white rounded"
+    x-show="photo">
+    Simpan Foto
+</button>
     </div>
 
     <div x-show="photo" class="flex justify-center mt-2">
@@ -18,7 +24,10 @@
         window.addEventListener('photoTaken', event => {
             const input = document.querySelector('input[name="check_in_evidence"]');
             if(input) input.value = event.detail.path;
+            
         });
+        
+       
 
         function photoCapture() {
             return {
@@ -37,7 +46,8 @@
                     this.canvas.width = this.video.videoWidth;
                     this.canvas.height = this.video.videoHeight;
                     ctx.drawImage(this.video, 0, 0);
-                    this.photo = this.canvas.toDataURL('image/png');
+                    this.photo = this.canvas.toDataURL('image/jpg');
+                    console.log('[JS] Photo captured:', this.photo);
                 },
                 savePhotoToLivewire() {
                     // Panggil method Livewire
@@ -51,5 +61,6 @@
             Livewire.find(document.querySelector('[wire\\:id]').getAttribute('wire:id'))
                 .call('savePhoto', photoData);
         });
+
     </script>
 </div>
