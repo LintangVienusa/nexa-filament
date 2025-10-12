@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Organization;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
@@ -29,14 +30,20 @@ class AuthController extends Controller
 
         $token = $user->createToken('mobile')->plainTextToken;
 
+        $employee = $user->employee()->with('organization')->first();
+
         return response()->json([
             'status' => 'success',
             'message' => 'Login successful',
             'data' => [
-                'user_id' => $user->id,
-                'username' => $user->name,
-                'email' => $user->email,
-                'token' => $token,
+                'user_id'      => $user->id,
+                'username'     => $user->name,
+                'email'        => $user->email,
+                'employee_id'  => $employee->employee_id ?? null,
+                'full_name'    => $employee->full_name ?? null,
+                'division'     => optional(optional($employee)->organization)->divisi_name ?? null,
+                'job_title'    => $employee->job_title ?? null,
+                'token'        => $token,
             ],
         ]);
     }
