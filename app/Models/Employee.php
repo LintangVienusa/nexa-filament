@@ -51,7 +51,7 @@ class Employee extends Model
     }
     public function organization(): BelongsTo
     {
-        return $this->belongsTo(Organization::class, 'org_id');
+        return $this->belongsTo(Organization::class, 'org_id', 'id');
     }
 
     public function user(): BelongsTo
@@ -83,7 +83,7 @@ class Employee extends Model
             }else{
                  $fullname = $employee->first_name.' '.$employee->middle_name.' '.$employee->last_name;
             }
-            
+
             $job_title = $employee->job_title;
             if($job_title == 'Staff'){
                 $role = 'employee';
@@ -98,5 +98,5 @@ class Employee extends Model
             $createuser->assignRole($role);
         });
     }
-    
+
 }
