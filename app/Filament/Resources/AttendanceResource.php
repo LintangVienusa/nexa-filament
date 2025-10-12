@@ -18,6 +18,11 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Table;
 use Spatie\Permission\Traits\HasPermissions;
+use Carbon\Carbon;
+use Filament\Forms\Components\View;
+use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Placeholder;
 
 class AttendanceResource extends Resource
 {
@@ -35,39 +40,41 @@ class AttendanceResource extends Resource
         return $form
             ->schema([
                 Select::make('employee_id')
-                    ->Label('NIK / ID Karyawan')
-                    ->relationship('employee', 'employee_id')
+                    ->label('Nama')
+                    ->relationship('employee', 'full_name')
                     ->searchable()
-                    ->required(),
+                    ->required()
+                    ->disabled()
+                    ->dehydrated(true)
+                    ->default(fn() => auth()->user()->employee?->employee_id),
+                TextInput::make('employee_nik')
+                    ->label('NIK')
+                    ->required()
+                    ->default(fn ($record) => 
+                        $record?->employee_id 
+                        ?? auth()->user()->employee?->employee_id
+                    )
+                    ->dehydrated(true)
+                    ->readonly(),
+
                 DatePicker::make('attendance_date')
-                    ->Label('Tanggal Attendance')
-                    ->default(now())
-                    ->required(),
-                DateTimePicker::make('check_in_time')
-                    ->Label('Waktu Check In')
-                    ->default(now())
-                    ->required(),
-                DateTimePicker::make('check_out_time')
-                    ->Label('Waktu Check Out')
-                    ->default(now()),
-                TextInput::make('working_hours')
-                    ->label('Waktu Kerja (Jam)')
+                    ->label('Tanggal Attendance')
+                    ->default(Carbon::now('Asia/Jakarta'))
                     ->disabled()
-                    ->dehydrated(false)
-                    ->formatStateUsing(fn ($record) => $record?->working_hours),
-                FileUpload::make('check_in_evidence')
-                    ->Label('Evidence Check In')
-                    ->directory('attendances/checkin')
-                    ->maxSize(1024)
-                    ->preserveFilenames(),
-                TextInput::make('check_in_latitude')->numeric(),
+                    ->required(),
+                Section::make('Bukti Kehadiran')
+                    ->schema([
+                        View::make('livewire.take-photo') // Blade wrapper Livewire
+                            ->label('Bukti Check-in')
+                            ->columnSpanFull(),
+
+                        Hidden::make('check_in_evidence') // Field untuk database
+                            ->dehydrated(true)
+                            ->required(),
+                    ]),
+                    TextInput::make('check_in_latitude')->numeric(),
                 TextInput::make('check_in_longitude')->numeric(),
-                TextInput::make('check_out_latitude')->numeric(),
-                TextInput::make('check_out_longitude')->numeric(),
                 TextInput::make('created_by')
-                    ->disabled()
-                    ->default(auth()->user()->email ?? null),
-                TextInput::make('updated_by')
                     ->disabled()
                     ->default(auth()->user()->email ?? null),
             ]);
