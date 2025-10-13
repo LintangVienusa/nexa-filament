@@ -96,8 +96,7 @@ class AttendanceResource extends Resource
                     ->query(fn ($query) => $query->whereDate('attendance_date', now()->toDateString())),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\ViewAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),
