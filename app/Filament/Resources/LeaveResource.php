@@ -281,23 +281,27 @@ class LeaveResource extends Resource
                         default => 'primary',
                     })
                     ->sortable(),
+                 Tables\Columns\ImageColumn::make('leave_evidence')
+                    ->label('Lampiran')
+                    ->disk('public') 
+                    ->height(50),
+                
+                Tables\Columns\TextColumn::make('created_by')
+                    ->label('Dibuat oleh')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->dateTime()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('approved_by')
                     ->label('Disetujui oleh')
                     ->searchable(),
                 // Tables\Columns\TextColumn::make('leave_evidence')
                 //     ->searchable(),
-                    Tables\Columns\ImageColumn::make('leave_evidence')
-                    ->label('Lampiran')
-                    ->disk('public') 
-                    ->height(50),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                
                 Tables\Columns\TextColumn::make('updated_at')
+                    ->label('Approved at')
                     ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable(),
             ])
             ->filters([
                 //

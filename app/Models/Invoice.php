@@ -18,6 +18,8 @@ class Invoice extends Model
         'subtotal',
         'tax_rate',
         'tax_amount',
+        'dp_rate',
+        'dp',
         'amount',
         'status',
         'create_by',

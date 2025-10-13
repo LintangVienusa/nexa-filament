@@ -12,13 +12,7 @@ class EditLeave extends EditRecord
 {
     protected static string $resource = LeaveResource::class;
 
-    protected function getHeaderActions(): array
-    {
-        return [
-            
-            Actions\DeleteAction::make(),
-        ];
-    }
+    
 
     public static function edit(Leave $record): static
     {
