@@ -22,8 +22,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::connection('mysql')->table('Customers', function (Blueprint $table) {
-            $table->string('initial');
-        });
+        // Schema::connection('mysql')->table('Customers', function (Blueprint $table) {
+        //     $table->string('initial');
+        // });
     }
 };
