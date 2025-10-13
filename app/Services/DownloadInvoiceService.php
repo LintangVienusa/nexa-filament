@@ -97,7 +97,7 @@ class DownloadInvoiceService
                             margin: 0;
                             padding: 0;
                             font-family: Arial, sans-serif;
-                            background-color: #f9e1bbff; 
+                            background-color: #e9d0a9ff;  
                         }
 
                         body {
@@ -183,6 +183,7 @@ class DownloadInvoiceService
                             flex-wrap: nowrap;
                             font-size: 14px;
                             line-height: 1.0;
+                            width: 100%;
                         }
 
                         .to-section .left strong {
@@ -343,20 +344,20 @@ class DownloadInvoiceService
                     </div>
                         <table class="invoice-info">
                             <tr>
-                                <td class="number"><b> '. $record->invoice_number . '</b></td>
-                                <td class="date">DATE: ' . $record->created_at->format('d/m/Y') . '</td>
+                                <td colspan="2" class="number"><b> '. $record->invoice_number . '</b></td>
+                                <td class="date" style="text-align:right">DATE: ' . $record->created_at->format('d/m/Y') . '</td>
                             </tr>
                         </table>
                     
                     <div class="to-section">
-                        <table class="">
+                        <table class="width=100%">
                             <tr>
-                                <td class="left"><b> Kepada :</b></td>
-                                <td class="right">No. PO : ' . $record->items->first()?->po_number . '</td>
+                                <td colspan="2" class="left"><b> Kepada :</b></td>
+                                <td style="text-align:right">No. PO : ' . $record->items->first()?->po_number . '</td>
                             </tr>
                             <tr>
-                                <td colspan="1"><b>' . $record->customer->customer_name . '</b> </td>
-                                <td colspan="1"><b>' . $record->items->first()?->po_description . '</b> </td>
+                                <td colspan="2"><b>' . $record->customer->customer_name . '</b> </td>
+                                <td colspan="1" style="text-align:right"><b>' . $record->items->first()?->po_description . '</b> </td>
                             </tr>
                             <tr>
                                 <td colspan="2" style="white-space: normal; line-height: 1.0; text-align: left;">
@@ -425,17 +426,11 @@ class DownloadInvoiceService
                                  <td>Rp </td>
                                 <td style="text-align:right;"><b>' . number_format($totaldp, 0, ',', '.') . ' </b></td>
                             </tr>
-                             <tr>
-                            
-                                 <td class="left"><b>TOTAL</b></td>
-                                 <td>Rp </td>
-                                <td style="text-align:right;"><b>' . number_format($grandTotal, 0, ',', '.') . ' </b></td>
-                            </tr>
                         </table>
                         <table>
                         <tr>
                             <td colspan="3" style="text-align:right; font-style:italic; font-size:12px;">
-                                (** ' . trim($spellNumber ($grandTotal)) . ' Rupiah **)
+                                (** ' . trim($spellNumber ($total)) . ' Rupiah **)
                             </td>
                             </tr>
                         </table>
@@ -447,15 +442,15 @@ class DownloadInvoiceService
                              <tr>
                                 <td>
                                     <img src="'. public_path('assets/icons/worldwide-white.png') .'" class="footer-icon" alt="Website Icon">
-                                    <span>www.example.com</span>
+                                    <span style="color:#f4d9adff;">Dapoerpoesatnoesantara.co.id</span>
                                 </td>
                                 <td>
                                     <img src="'. public_path('assets/icons/telephone-white.png') .'" class="footer-icon" alt="Phone Icon">
-                                    <span>+62 812 3456 7890</span>
+                                    <span style="color:#f4d9adff;">+6221 55 77 9999</span>
                                 </td>
                                 <td>
                                     <img src="'. public_path('assets/icons/email-white.png') .'" class="footer-icon" alt="Email Icon">
-                                    <span>info@example.com</span>
+                                    <span style="color:#f4d9adff;">corporate@dapoerpoesatnoesantara.co.id</span>
                                 </td>
                             </tr>
                         </table>
