@@ -71,18 +71,21 @@ class EmployeeResource extends Resource
                             ->label('Nama Depan')
                             ->required()
                             ->extraInputAttributes(['style' => 'text-transform: uppercase;'])
+                            ->dehydrateStateUsing(fn ($state) => strtoupper($state))
                             ->reactive()
                             ->maxLength(50),
 
                         TextInput::make('middle_name')
                             ->label('Nama Tengah')
                             ->extraInputAttributes(['style' => 'text-transform: uppercase;'])
+                            ->dehydrateStateUsing(fn ($state) => strtoupper($state))
                             ->reactive()
                             ->maxLength(50),
 
                         TextInput::make('last_name')
                             ->label('Nama Belakang')
                             ->extraInputAttributes(['style' => 'text-transform: uppercase;'])
+                            ->dehydrateStateUsing(fn ($state) => strtoupper($state))
                             ->required()
                             ->reactive()
                             ->maxLength(50),
