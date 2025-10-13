@@ -56,7 +56,27 @@ class Overtime extends Model
 
     protected static function booted()
     {
+        static::saving(function ($leave) {
+            $user = auth()->user();
+            
+            if ($leave->leave_type === '2' && empty($leave->leave_evidence)) {
+                throw new \Exception('Evidence wajib diisi untuk cuti sakit.');
+            }else{
+                if ($leave->status == 2 && $leave->exists) {
+                    $leave->approved_by = $user->employee?->email;
+                    $leave->updated_at = now(); 
+                }
+            }
+
+            if ($leave->status == 3) { 
+                $leave->approved_by = $user->employee?->email;
+                $leave->note_rejected = $leave->note_rejected; 
+                $leave->updated_at = now(); 
+            }
+        });
         static::saving(function ($overtime) {
+            
+            $user = auth()->user();
             if ($overtime->start_time && $overtime->end_time) {
                 $start = Carbon::parse($overtime->start_time);
                 $end   = Carbon::parse($overtime->end_time);
@@ -67,7 +87,9 @@ class Overtime extends Model
 
                 $minutes = $start->diffInMinutes($end);
                 $hours = round($minutes / 60, 2);
-
+                if ($overtime->status ==1) { 
+                    $overtime->updated_by = $user->employee?->email;
+                }
                 $overtime->working_hours = $hours;
             }
         });
