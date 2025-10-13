@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
          Schema::connection('mysql_employees')->table('Leaves', function (Blueprint $table) {
-            $table->integer('status')->default(0)->after('reason');
+            $table->integer('status')->default(0)->comment('0=submit,1=pending,2=approved,3=rejected')->change();
         });
     }
 
@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::connection('mysql_employees')->table('Leaves', function (Blueprint $table) {
-            $table->dropColumn(['status']);
+            $table->dropColumn(['status'])->change();
         });
     }
 };
