@@ -20,6 +20,8 @@ return new class extends Migration
             $table->unsignedBigInteger('category_id'); 
             $table->text('description')->nullable();
             $table->integer('status')->default(0)->comment('0=IN_WAREHOUSE,1=OUT_DEPLOYED,2=LOST,3=DAMAGED,4=RETURNED');
+            $table->unsignedBigInteger('created_by')->nullable();
+            $table->timestamps();
 
             $table->foreign('category_id')
                 ->references('id')->on('CategoryAsset')

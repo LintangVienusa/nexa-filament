@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('category_code')->unique(); // misal: ELEC, FURN
             $table->string('category_name');           // misal: Electronics, Furniture
             $table->text('description')->nullable();
+            $table->timestamps();
         });
     }
 

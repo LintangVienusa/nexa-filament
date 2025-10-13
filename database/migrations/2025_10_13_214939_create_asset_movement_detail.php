@@ -23,6 +23,9 @@ return new class extends Migration
             $table->string('recipient')->nullable()->comment('OUT'); 
             $table->string('sender')->nullable()->comment('IN');
             $table->integer('status')->default(0)->comment('0=submit,1=pending,2=approved,3=rejected');
+            $table->unsignedBigInteger('created_by')->nullable();
+            $table->unsignedBigInteger('approved_by')->nullable();
+            $table->timestamps();
         });
     }
 
