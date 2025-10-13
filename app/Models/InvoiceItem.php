@@ -74,12 +74,16 @@ class InvoiceItem extends Model
             if ($invoice) {
                 $total = $invoice->items()->sum(DB::raw('qty * unit_price'));
                 $taxRate = "0.11";
+                $dprate = "0.20";
                 $tax = $total * $taxRate;
                 $amount = $total - $tax;
+                $dp = $total * $dprate;
 
                 $invoice->subtotal = $total;
                 $invoice->tax_rate = $taxRate;
                 $invoice->tax_amount = $tax;
+                $invoice->dp_rate = $dprate;
+                $invoice->dp = $dp;
                 $invoice->amount = $amount;
                 $invoice->save();
             }

@@ -78,12 +78,14 @@ class OvertimeResource extends Resource
                 Forms\Components\TimePicker::make('start_time')
                     ->label('Start Time')
                     ->reactive()
+                    ->format('H:i')
+                    ->seconds(false)
                     ->required()
                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
                         $end = $get('end_time');
                         if ($state && $end) {
-                            $start = Carbon::createFromFormat('H:i:s', $state);
-                            $e = Carbon::createFromFormat('H:i:s',$end);
+                            $start = Carbon::createFromFormat('H:i', $state);
+                            $e = Carbon::createFromFormat('H:i',$end);
                             if ($e->lessThan($start)) $e->addDay();
                             $minutes = $start->diffInMinutes($e);
                             $set('working_hours', round($minutes / 60, 2));
@@ -93,12 +95,14 @@ class OvertimeResource extends Resource
                 Forms\Components\TimePicker::make('end_time')
                     ->label('End Time')
                     ->reactive()
+                    ->format('H:i')
+                    ->seconds(false)
                     ->required()
                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
                         $start = $get('start_time');
                         if ($start && $state) {
-                            $s = Carbon::createFromFormat('H:i:s',$start);
-                            $end = Carbon::createFromFormat('H:i:s',$state);
+                            $s = Carbon::createFromFormat('H:i',$start);
+                            $end = Carbon::createFromFormat('H:i',$state);
                             if ($end->lessThan($s)) $end->addDay();
                             $minutes = $s->diffInMinutes($end);
                             $set('working_hours', round($minutes / 60, 2));
@@ -122,7 +126,7 @@ class OvertimeResource extends Resource
                     ->searchable(),
 
                 Forms\Components\Hidden::make('created_by')
-                    ->default(fn() => auth()->id())
+                    ->default(fn() => auth()->user()->email)
                     ->required(),
             ]);
     }
@@ -131,12 +135,13 @@ class OvertimeResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('employee.full_name')->label('Employee')->sortable()->searchable(),
-                Tables\Columns\TextColumn::make('job.job_description')->label('Job')->sortable(),
-                Tables\Columns\TextColumn::make('description'),
-                Tables\Columns\TextColumn::make('working_hours')->label('Hours'),
-                Tables\Columns\TextColumn::make('start_time')->time(),
-                Tables\Columns\TextColumn::make('end_time')->time(),
+                Tables\Columns\TextColumn::make('employee.full_name')->label('Nama')->sortable()->searchable(),
+                Tables\Columns\TextColumn::make('employee.employee_id')->label('NIK')->sortable()->searchable(),
+                Tables\Columns\TextColumn::make('job.job_description')->label('Pekerjaan')->sortable(),
+                Tables\Columns\TextColumn::make('description')->label('keterangan')->sortable(),
+                Tables\Columns\TextColumn::make('working_hours')->label('Jam')->sortable(),
+                Tables\Columns\TextColumn::make('start_time')->time()->sortable(),
+                Tables\Columns\TextColumn::make('end_time')->time()->sortable(),
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->formatStateUsing(fn ($state) => match ($state) {
@@ -150,7 +155,10 @@ class OvertimeResource extends Resource
                         default => 'primary',
                     })
                     ->sortable(),
-                Tables\Columns\TextColumn::make('created_at')->dateTime()->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('created_by')->label('dibuat oleh')->sortable(),
+                Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable(),
+                Tables\Columns\TextColumn::make('updated_by')->label('disetujui oleh')->sortable(),
+                Tables\Columns\TextColumn::make('updated_at')->label('updated at')->dateTime()->sortable(),
             ])
             ->actions([
                Actions\Action::make('approved')

@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-         Schema::connection('mysql')->table('Customers', function (Blueprint $table) {
+        Schema::connection('mysql')->table('Invoices', function (Blueprint $table) {
             
-            $table->string('initial')->nullable()->after('customer_name');
+            $table->decimal('dp_rate', 5, 2)->default(0)->after('tax_amount');
+            $table->integer('dp')->default(0)->after('dp_rate');
+            
         });
     }
 
@@ -22,8 +24,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::connection('mysql')->table('Customers', function (Blueprint $table) {
-            $table->dropColumn('initial');
+        Schema::connection('mysql')->table('Invoices', function (Blueprint $table) {
+            $table->dropColumn(['dp_rate','dp']);
         });
     }
 };

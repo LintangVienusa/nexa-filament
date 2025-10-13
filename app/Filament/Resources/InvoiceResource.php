@@ -180,6 +180,14 @@ class InvoiceResource extends Resource
                     ->label('subtotal')
                     ->formatStateUsing(fn ($state) => 'Rp ' . number_format($state, 0, ',', '.'))
                     ->sortable(),
+                TextColumn::make('dp')
+                    ->label('DP 20%')
+                    ->formatStateUsing(fn ($state) => 'Rp ' . number_format($state, 0, ',', '.'))
+                    ->sortable(),
+                TextColumn::make('tax_amount')
+                    ->label('tax 11%')
+                    ->formatStateUsing(fn ($state) => 'Rp ' . number_format($state, 0, ',', '.'))
+                    ->sortable(),
                 BadgeColumn::make('status')
                     ->label('Status')
                     ->getStateUsing(fn ($record) => match($record->status) {
