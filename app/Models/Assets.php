@@ -37,9 +37,35 @@ class Assets extends Model
             if ($category) {
                 $nextId = $asset->id;
                 $formattedId = str_pad($nextId, 4, '0', STR_PAD_LEFT);
-                $asset->item_code = $category->category_code . '-' . $formattedId;
+                $asset->item_code = $category->category_code . $formattedId;
                 $asset->saveQuietly(); 
             }
+
+            $inventory = InventoryAsset::firstOrNew([
+                'categoryasset_id' => $asset->category_id
+            ]);
+
+            if (is_null($inventory->categoryasset_id)) {
+                
+                $inventory->created_by = $asset->created_by ?? auth()->user()?->email;
+            }
+
+            $inventory->categoryasset_id = $asset->category_id;
+
+            $inventory->total = ($inventory->total ?? 0) + 1;
+
+            if ($asset->status === 0) {
+                $inventory->inWarehouse = ($inventory->inWarehouse ?? 0) + 1;
+            } else {
+                $inventory->outWarehouse = ($inventory->outWarehouse ?? 0) + 1;
+            }
+
+            
+            $inventory->updated_by = $asset->created_by ?? auth()->user()?->email;
+            $inventory->save();
+
         });
+
+
     }
 }

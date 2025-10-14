@@ -38,10 +38,13 @@ class InvoiceItem extends Model
             $po_number = $item->po_number ?? null;
             $invoiceid = $item->invoice_id ?? null;
             $customer_id = $item->customer_id ?? null;
+            // $customer_initial = $customer->initial ?? null;
+            $customer = Customer::find($customer_id);
+            $customer_initial = $customer->initial ?? '';
             $now = Carbon::now();
             $periodeCarbon = Carbon::parse($item->invoice_date ?? now());
             $periodeString = $periodeCarbon->format('F Y');
-            $invoiceNumber = str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT).'/NXN/INV/' . strtoupper($periodeCarbon->format('Ym'));
+            $invoiceNumber = str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT).'/DPNG/INV/'.$customer_initial.'/'. strtoupper($periodeCarbon->format('Y'));
 
 
             $invoice = Invoice::when($invoiceid, function ($q) use ($customer_id, $invoiceid) {

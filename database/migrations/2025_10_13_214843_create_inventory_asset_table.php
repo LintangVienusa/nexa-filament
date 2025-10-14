@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::connection('mysql_inventory')->create('InventoryAsset', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('categoryAsset_id')->constrained('CategoryAsset')->onDelete('cascade');
+            $table->foreignId('categoryasset_id')->constrained('CategoryAsset')->onDelete('cascade');
             $table->text('total');
             $table->integer('inWarehouse')->nullable();
             $table->integer('outWarehouse')->nullable();

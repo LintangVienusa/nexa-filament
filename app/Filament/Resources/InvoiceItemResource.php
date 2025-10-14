@@ -45,10 +45,12 @@ class InvoiceItemResource extends Resource
                     ->schema([
                         TextInput::make('po_number')
                             ->label('PO Nomor')
-                            ->default(fn () => 'PO.' . now()->format('Ymd-His') . '.' . rand(100,999))
+                            // ->default(fn () => 'PO.' . now()->format('Ymd-His') . '.' . rand(100,999))
+                            ->default(fn () => 'PO.' . now()->format('Y.m') . '.' . rand(10000,99999))
                             ->required()
                             ->reactive()
-                            ->dehydrateStateUsing(fn ($state) => $state ?? 'PO.' . now()->format('Ymd-His') . '.' . rand(100,999))
+                            // ->dehydrateStateUsing(fn ($state) => $state ?? 'PO.' . now()->format('Ymd-His') . '.' . rand(100,999))
+                            ->dehydrateStateUsing(fn ($state) => $state ?? 'PO.' . now()->format('Y.m') . '.' . rand(10000,99999))
                             ->readonly(),
 
                         Textarea::make('po_description')

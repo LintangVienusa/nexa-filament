@@ -96,7 +96,7 @@ class DownloadInvoiceService
                         html, body {
                             margin: 0;
                             padding: 0;
-                            font-family: Arial, sans-serif;
+                            font-family:  sans-serif;
                             background-color: #e9d0a9ff;  
                         }
 
@@ -119,7 +119,7 @@ class DownloadInvoiceService
                         }
 
                         .invoice-title {
-                            font-family: Times New Roman, serif;
+                            font-family:  sans-serif;
                             font-size: 40px;
                             font-weight: bold;
                             text-align: center;

@@ -19,7 +19,7 @@ class CreateInvoiceItem extends CreateRecord
 
     protected function handleRecordCreation(array $data): InvoiceItem
     {
-        $poNumber = $data['po_number'] ?? 'PO.' . now()->format('Ymd-His') . '.' . rand(100,999);
+        $poNumber = $data['po_number'] ?? 'PO.' . now()->format('Y.m') . '.' . rand(10000,99999);
         foreach ($data['items'] as $component) {
             // $poNumber = 'PO-'.date('Ymd-His').'-'.rand(100,999);
             InvoiceItem::create([
