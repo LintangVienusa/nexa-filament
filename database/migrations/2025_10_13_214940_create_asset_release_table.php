@@ -24,9 +24,9 @@ return new class extends Migration
             $table->text('ba_description')->nullable();
             $table->string('file_path')->nullable();
             $table->integer('status')->default(0)->comment('0=submit,1=pending,2=approved,3=rejected');
-            $table->unsignedBigInteger('created_by')->nullable();
+            $table->string('created_by')->nullable();
             $table->dateTime('created_at')->nullable();
-            $table->unsignedBigInteger('approved_by')->nullable();
+            $table->string('approved_by')->nullable();
             $table->dateTime('approved_at')->nullable();
             $table->dateTime('updated_at')->nullable();
 

@@ -17,7 +17,7 @@ return new class extends Migration
             $table->text('total');
             $table->integer('inWarehouse')->nullable();
             $table->integer('outWarehouse')->nullable();
-            $table->unsignedBigInteger('created_by')->nullable();
+            $table->string('created_by')->nullable();
             $table->timestamps();
         });
     }
