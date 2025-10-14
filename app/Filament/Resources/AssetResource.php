@@ -21,6 +21,7 @@ class AssetResource extends Resource
      protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static ?string $navigationGroup = 'Inventory';
     protected static ?string $navigationLabel = 'Assets';
+    protected static ?int $navigationSort = 0;
 
     public static function form(Form $form): Form
     {
@@ -29,6 +30,7 @@ class AssetResource extends Resource
 
                 Forms\Components\Section::make('General Info')
                     ->schema([
+                        
                         Forms\Components\Select::make('category_id')
                             ->label('Category')
                             ->options(CategoryAsset::query()->pluck('category_name', 'id'))
@@ -40,7 +42,7 @@ class AssetResource extends Resource
                                         if ($category) {
                                             $nextId = (Assets::max('id') ?? 0) + 1;
                                             $formattedId = str_pad($nextId, 4, '0', STR_PAD_LEFT);
-                                            $set('item_code', $category->category_code . '-' . $formattedId);
+                                            $set('item_code', $category->category_code . $formattedId);
                                 
                                         } else {
                                             $set('item_code', null);
@@ -59,6 +61,11 @@ class AssetResource extends Resource
                         Forms\Components\TextInput::make('name')
                             ->label('Asset Name')
                             ->required(),
+
+                        
+                        Forms\Components\TextInput::make('merk')
+                            ->label('Merk')
+                            ->nullable(),
 
                         Forms\Components\TextInput::make('type')
                             ->label('Type')
