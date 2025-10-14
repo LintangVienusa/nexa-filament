@@ -17,7 +17,11 @@ class CategoryAssetResource extends Resource
 {
     protected static ?string $model = CategoryAsset::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    
+    protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-check';
+    protected static ?string $navigationGroup = 'Inventory';
+    protected static ?string $navigationLabel = 'Category Assets';
+    protected static ?string $pluralLabel = 'Category Assets';
 
     public static function form(Form $form): Form
     {
@@ -42,14 +46,20 @@ class CategoryAssetResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('category_name')
                     ->searchable(),
+                Tables\Columns\TextColumn::make('category_name')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('description')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('created_by')
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('updated_by')
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable(),
             ])
             ->filters([
                 //
