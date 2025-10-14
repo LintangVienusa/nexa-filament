@@ -42,6 +42,8 @@ class InvoiceResource extends Resource
         return $data;
     }
 
+    
+
     public static function form(Form $form): Form
     {
         return $form
