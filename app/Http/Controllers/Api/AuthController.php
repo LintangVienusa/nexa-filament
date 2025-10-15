@@ -58,10 +58,17 @@ class AuthController extends Controller
         ]);
     }
 
-    public function me(Request $request)
+    public function user_information(Request $request)
     {
+        $user = User::where('id', $request->user_id)->first();
+        $employee = $user->employee()->with('organization')->first();
+
         return response()->json([
-            'user' => $request->user(),
+            'employee_id'  => $employee->employee_id ?? null,
+            'full_name'    => $employee->full_name ?? null,
+            'division'     => optional(optional($employee)->organization)->divisi_name ?? null,
+            'unit_name'    => optional(optional($employee)->organization)->unit_name ?? null,
+            'job_title'    => $employee->job_title ?? null
         ]);
     }
 }
