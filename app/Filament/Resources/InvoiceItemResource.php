@@ -204,8 +204,8 @@ class InvoiceItemResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Action::make('activities')
-        ->url(fn ($record) => \App\Filament\Resources\InvoiceItemResource::getUrl('activities', ['record' => $record])),
+        //         Action::make('activities')
+        // ->url(fn ($record) => \App\Filament\Resources\InvoiceItemResource::getUrl('activities', ['record' => $record])),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
