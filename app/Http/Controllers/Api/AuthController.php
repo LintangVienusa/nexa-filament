@@ -42,6 +42,7 @@ class AuthController extends Controller
                 'employee_id'  => $employee->employee_id ?? null,
                 'full_name'    => $employee->full_name ?? null,
                 'division'     => optional(optional($employee)->organization)->divisi_name ?? null,
+                'unit_name'    => optional(optional($employee)->organization)->unit_name ?? null,
                 'job_title'    => $employee->job_title ?? null,
                 'token'        => $token,
             ],
@@ -55,13 +56,6 @@ class AuthController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => 'Logged out successfully',
-        ]);
-    }
-
-    public function me(Request $request)
-    {
-        return response()->json([
-            'user' => $request->user(),
         ]);
     }
 }
