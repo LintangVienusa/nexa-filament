@@ -316,6 +316,22 @@ class LeaveResource extends Resource
                         ->action(function ($record) {
                             $type = $record->leave_type;
                             $record->update(['status' => 2]);
+                            activity('Leaves-action')
+                                ->causedBy(auth()->user())
+                                ->withProperties([
+                                    'ip'    => request()->ip(),
+                                    'menu'  => 'Leaves',
+                                    'email' => auth()->user()?->email,
+                                    'record_id' => $record->id,
+                                    'Leaves' => $record->id,
+                                    'action' => 'Approve',
+                                ])
+                                ->tap(function ($activity) {
+                                        $activity->email = auth()->user()?->email;
+                                        $activity->menu = 'Leaves';
+                                    })
+                                ->log('Leaves disetujui');
+
                             Notification::make()
                                 ->title( $type .' Approve')
                                 ->success()
@@ -332,6 +348,22 @@ class LeaveResource extends Resource
                             
                             $type = $record->leave_type;
                               $record->update(['status' => 3]);
+
+                              activity('Leaves-action')
+                                ->causedBy(auth()->user())
+                                ->withProperties([
+                                    'ip'    => request()->ip(),
+                                    'menu'  => 'Leaves',
+                                    'email' => auth()->user()?->email,
+                                    'record_id' => $record->id,
+                                    'Leaves' => $record->id,
+                                    'action' => 'Approve',
+                                ])
+                                ->tap(function ($activity) {
+                                        $activity->email = auth()->user()?->email;
+                                        $activity->menu = 'Leaves';
+                                    })
+                                ->log('Leaves tidak disetujui');
                             Notification::make()
                                 ->title( $type .' Reject')
                                 ->success()
