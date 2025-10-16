@@ -13,13 +13,11 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Actions\Action;
-use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Section;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\BadgeColumn;
 use Filament\Forms\Components\Select;
 use Filament\Notifications\Notification;
 use App\Services\DownloadInvoiceService;
@@ -31,6 +29,8 @@ class InvoiceResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
     protected static ?string $navigationGroup = 'Transactions';
     protected static ?int $navigationSort = 3;
+
+    
 
     public static function mutateFormDataBeforeFill(array $data): array
     {
@@ -190,19 +190,21 @@ class InvoiceResource extends Resource
                     ->label('tax 11%')
                     ->formatStateUsing(fn ($state) => 'Rp ' . number_format($state, 0, ',', '.'))
                     ->sortable(),
-                BadgeColumn::make('status')
+                TextColumn::make('status')
                     ->label('Status')
+                    ->badge()
                     ->getStateUsing(fn ($record) => match($record->status) {
-                        '0' => 'Draft ⏱️',
-                        '1' => 'Approved ✅',
-                        '2' => 'Paid 💵',
-                        default => 'Unknown ❓',
+                        '0' => 'Draft',
+                        '1' => 'Approved',
+                        '2' => 'Paid',
+                        default => 'Unknown',
                     })
-                    ->colors([
-                        '0' => 'secondary',
-                        '1' => 'success',
-                        '2' => 'primary',
-                    ]),
+                    ->color(fn ($state): string => match ($state) {
+                        0 => 'warning',
+                        1 => 'success',
+                        2 => 'info',
+                        default => 'primary',
+                    }),
                 TextColumn::make('create_by')->label('Created By')->sortable(),
                 TextColumn::make('created_at')->date()->label('Created At')->sortable(),
                 TextColumn::make('approval_by')->label('Approval By')->sortable(),
@@ -221,20 +223,87 @@ class InvoiceResource extends Resource
                         ->requiresConfirmation()
                         ->action(function ($record) {
                             $record->update(['status' => 1]);
+
+                            activity('invoice-action')
+                                ->causedBy(auth()->user())
+                                ->withProperties([
+                                    'ip'    => request()->ip(),
+                                    'menu'  => 'Invoice',
+                                    'email' => auth()->user()?->email,
+                                    'record_id' => $record->id,
+                                    'invoice_number' => $record->invoice_number,
+                                    'action' => 'Approve',
+                                ])
+                                ->tap(function ($activity) {
+                                        $activity->email = auth()->user()?->email;
+                                        $activity->menu = 'Invoice';
+                                    })
+                                ->log('Invoice disetujui');
+
                             Notification::make()
                                 ->title('Payroll Approved')
                                 ->success()
                                 ->send();
                                 return $record->fresh();
                         }),
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make()
+                    ->mountUsing(function ($record) {
+                        activity('invoice-action')
+                            ->causedBy(auth()->user())
+                            ->withProperties([
+                                'ip'              => request()->ip(),
+                                'menu'            => 'Invoice',
+                                'email'           => auth()->user()?->email,
+                                'record_id'       => $record->id,
+                                'invoice_number'  => $record->invoice_number,
+                                'action'          => 'View',
+                            ])
+                            ->tap(function ($activity) {
+                                $activity->email = auth()->user()?->email;
+                                $activity->menu  = 'Invoice';
+                            })
+                            ->log('Invoice dilihat');
+                    }),
+                Tables\Actions\EditAction::make()
+                        ->visible(fn ($record) => (int)$record->status === 0) // 👈 hanya tampil jika belum approve
+                        ->after(function ($record) {
+                            activity('invoice-action')
+                                ->causedBy(auth()->user())
+                                ->withProperties([
+                                    'ip'              => request()->ip(),
+                                    'menu'            => 'Invoice',
+                                    'email'           => auth()->user()?->email,
+                                    'record_id'       => $record->id,
+                                    'invoice_number'  => $record->invoice_number,
+                                    'action'          => 'Edit',
+                                ])
+                                ->tap(function ($activity) {
+                                    $activity->email = auth()->user()?->email;
+                                    $activity->menu  = 'Invoice';
+                                })
+                                ->log('Invoice diedit');
+                        }),
 
                 
                 Action::make('download')
                 ->label('Download Invoice')
                 ->icon('heroicon-o-arrow-down-tray')
                 ->action(function ($record, DownloadInvoiceService $service) {
+                     activity('invoice-action')
+                        ->causedBy(auth()->user())
+                        ->withProperties([
+                            'ip'              => request()->ip(),
+                            'menu'            => 'Invoice',
+                            'email'           => auth()->user()?->email,
+                            'record_id'       => $record->id,
+                            'invoice_number'  => $record->invoice_number,
+                            'action'          => 'Download',
+                        ])
+                        ->tap(function ($activity) {
+                            $activity->email = auth()->user()?->email;
+                            $activity->menu  = 'Invoice';
+                        })
+                        ->log('Invoice diunduh');
                     return $service->downloadInvoice($record);
                 }),
             ])

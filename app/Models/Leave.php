@@ -6,15 +6,51 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Models\Activity;
 
 class Leave extends Model
 {
 
     
-    use HasFactory;
+    use HasFactory, LogsActivity;
     
     protected $connection = 'mysql_employees';
     protected $table = 'Leaves';
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly([
+                'id',
+                'leave_type',
+                'start_date',
+                'end_date',
+                'leave_duration',
+                'reason',
+                'created_by',
+                'status',
+            ])
+            ->logOnlyDirty()
+            ->useLogName('Leaves');
+    }
+
+    public function tapActivity(Activity $activity, string $eventName)
+    {
+        $user = auth()->user();
+        $activity->properties = $activity->properties->merge([
+            'ip'    => request()->ip(),
+            'menu'  => 'Leaves',
+            'email' => $user?->email,
+            'record_id' => $this->id,
+            'Leaves' => $this->id,
+            'status' => $this->status,
+        ]);
+
+        $activity->email = $user?->email;
+        $activity->menu  = 'Leaves';
+    }
 
     public function user()
     {

@@ -6,15 +6,37 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Models\Activity;
 
 
 use Carbon\Carbon;
 
 class InvoiceItem extends Model
 {
-    use HasFactory;
+    use HasFactory,LogsActivity;
     protected $table = 'InvoiceItems';
     protected $primaryKey = 'id';
+    
+     public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['po_number', 'po_description','invoice_id']) 
+            ->logOnlyDirty()     
+            ->useLogName('invoice_item');
+    }
+    public function tapActivity(Activity $activity, string $eventName)
+    {
+        $user = auth()->user();
+        $activity->properties = array_merge($activity->properties->toArray(), [
+            'record_id' => $this->id,
+            'name' => $this->description ?? null,
+        ]);
+        $activity->email = $user?->email;
+        $activity->menu = 'Invoice Items';
+    }
+
     protected $fillable = [
         'po_number',
         'po_description',
@@ -90,6 +112,25 @@ class InvoiceItem extends Model
                 $invoice->amount = $amount;
                 $invoice->save();
             }
+        });
+
+        static::created(function ($record) {
+            $user = auth()->user();
+
+            $activity = activity('InvoiceItems-action')
+                ->causedBy($user)
+                ->withProperties([
+                    'ip' =>  request()->ip(),
+                    'menu' => 'Invoice Items',
+                    'email' => $user?->email,
+                    'record_id' => $record->id,
+                    'name' => $record->name ?? null,
+                ])
+                ->log('Membuat record InvoiceItem baru');
+                Activity::latest()->first()->update([
+                    'email' => auth()->user()?->email,
+                    'menu' => 'Invoice Item',
+                ]);
         });
     }
 

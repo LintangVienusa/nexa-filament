@@ -26,6 +26,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'throttle:api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ]);
+
+        // $middleware->group('web', [
+        //         \Illuminate\Session\Middleware\StartSession::class,
+        //         \App\Http\Middleware\ActivityLogMiddleware::class,
+        //     ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
