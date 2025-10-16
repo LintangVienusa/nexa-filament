@@ -9,7 +9,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::connection('mysql_activitylog')->create('activity_log', function (Blueprint $table) {
+        Schema::connection('mysql_activitylog')->create('Activity_Log', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->string('log_name')->nullable();
             $table->text('description');
@@ -23,7 +23,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::connection('mysql_activitylog')->dropIfExists('activity_log');
+        Schema::connection('mysql_activitylog')->dropIfExists('Activity_Log');
     }
 
 };
