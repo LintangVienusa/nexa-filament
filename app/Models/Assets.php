@@ -16,6 +16,7 @@ class Assets extends Model
         'item_code',
         'name',
         'type',
+        'merk',
         'serialNumber',
         'category_id',
         'description',

@@ -12,6 +12,10 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
 
 class AssetReleaseResource extends Resource
 {
@@ -26,7 +30,7 @@ class AssetReleaseResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('asset_release_id')
+                TextInput::make('asset_release_id')
                     ->label('Asset Release ID')
                     ->disabled() 
                     ->reactive()
@@ -56,11 +60,11 @@ class AssetReleaseResource extends Resource
                     ->afterStateUpdated(function ($state, $set) {
                         if ($state) {
                             $employee = \App\Models\Employee::find($state);
-                            $set('employee_nik', $employee?->employee_id);
+                            $set('employee_id', $employee?->employee_id);
                         }
                     })->dehydrated(true),
                 
-                Forms\Components\Textarea::make('notes')
+                Textarea::make('notes')
                     ->columnSpanFull(),
                 Forms\Components\Select::make('category_id')
                     ->label('Category')
@@ -79,44 +83,86 @@ class AssetReleaseResource extends Resource
                                 $set('asset_qty_now', 0);
                             }
                         }),
-                Forms\Components\TextInput::make('asset_qty_now')
+                TextInput::make('asset_qty_now')
                     ->label('Jumlah Stock')
                     ->required()
                     ->disabled()
                     ->numeric()
                     ->default(0),
-                Forms\Components\TextInput::make('request_asset_qty')
+                TextInput::make('request_asset_qty')
                     ->label('Jumlah Request')
                     ->numeric()
                     ->required()
-                    ->reactive() // supaya trigger repeater
+                    ->reactive() 
+                    ->default(0)
                     ->afterStateUpdated(function (callable $set, $state) {
                         // Set jumlah repeater sesuai request qty
                         $set('requested_items', array_fill(0, $state ?? 0, ['detail' => '']));
                     }),
-                Forms\Components\Repeater::make('requested_items')
+                Repeater::make('requested_items')
                     ->label('Detail Request Items')
                     ->schema([
-                        Forms\Components\TextInput::make('detail')
-                            ->label('Detail Item')
-                            ->required(),
+                       Select::make('asset_id')
+                            ->label('Asset Name')
+                            ->options(function (callable $get) {
+                                $categoryId = $get('../../category_id'); 
+                                if (!$categoryId) {
+                                    return [];
+                                }
+
+                                return \App\Models\Assets::where('category_id', $categoryId)
+                                    ->where('status', 0)
+                                    ->get()
+                                    ->mapWithKeys(function ($asset) {
+                                        return [
+                                            $asset->id => "{$asset->name} | {$asset->merk} | {$asset->type} | {$asset->serialNumber}",
+                                        ];
+                                    });
+                            })
+                            ->searchable()
+                            ->required()
+                            ->reactive()
+                            ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                
+                                        dd(\App\Models\Assets::find($state));
+                                    if ($state) {
+                                        $asset = \App\Models\Assets::find($state);
+                                        if ($asset) {
+                                            $set('item_code', $asset->item_code);
+                                            $set('merk', $asset->merk);
+                                            $set('type', $asset->type);
+                                            $set('serialNumber', $asset->serialNumber);
+                                        }
+                                    } else {
+                                        $set('item_code', "OFF");
+                                        $set('merk', null);
+                                        $set('type', null);
+                                        $set('serialNumber', null);
+                                        return;
+                                    }
+                                }),
+                        TextInput::make('item_code')
+                            ->label('Item Code')
+                            ->disabled()
+                            ->reactive()
+                            ->dehydrated(false)
                     ])
-                    ->columns(1)
+                    ->columns(2)
                     ->disableItemCreation() // supaya user tidak menambah sendiri, dikontrol oleh request_asset_qty
                     ->disableItemDeletion(),
-                Forms\Components\TextInput::make('ba_number')
+                TextInput::make('ba_number')
                     ->maxLength(255),
-                Forms\Components\Textarea::make('ba_description')
+                Textarea::make('ba_description')
                     ->columnSpanFull(),
-                Forms\Components\TextInput::make('file_path')
+                TextInput::make('file_path')
                     ->maxLength(255),
-                Forms\Components\TextInput::make('status')
+                TextInput::make('status')
                     ->required()
                     ->numeric()
                     ->default(0),
-                Forms\Components\TextInput::make('created_by')
+                TextInput::make('created_by')
                     ->maxLength(255),
-                Forms\Components\TextInput::make('approved_by')
+                TextInput::make('approved_by')
                     ->maxLength(255),
                 Forms\Components\DateTimePicker::make('approved_at'),
             ]);
