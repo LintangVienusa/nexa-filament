@@ -28,10 +28,11 @@ class EditInvoiceItem extends EditRecord
             // Redirect user ke halaman index agar tidak tetap di form edit
             $this->redirect($this->getResource()::getUrl('index'));
 
-            $activity = activity('filament-action')
+            $activity = activity('InvoiceItems-action')
             ->causedBy(auth()->user())
             ->withProperties([
-                    'ip' =>  request()->ip(),
+                'ip' =>  request()->ip(),
+                'menu' => 'Invoice Items',
                 'email' => auth()->user()->email,
                 'record_id' => $record->id,
                 'record_name' => $record->name ?? null,
@@ -40,6 +41,7 @@ class EditInvoiceItem extends EditRecord
 
             Activity::latest()->first()->update([
                 'email' => auth()->user()?->email,
+                'menu' => 'Invoice Items',
             ]);
         }
     }
@@ -137,10 +139,11 @@ class EditInvoiceItem extends EditRecord
 
         $record = $this->record; // record yang baru diupdate
 
-        $activity = activity('filament-action')
+        $activity = activity('InvoiceItems-action')
             ->causedBy(auth()->user())
             ->withProperties([
-                    'ip' =>  request()->ip(),
+                'ip' =>  request()->ip(),
+                'menu' => 'Invoice Items',
                 'email' => auth()->user()->email,
                 'record_id' => $record->id,
                 'record_name' => $record->name ?? null,
@@ -149,6 +152,7 @@ class EditInvoiceItem extends EditRecord
 
             Activity::latest()->first()->update([
                 'email' => auth()->user()?->email,
+                'menu' => 'Invoice Items',
             ]);
     }
 

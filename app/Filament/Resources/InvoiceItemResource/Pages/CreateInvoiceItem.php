@@ -64,18 +64,20 @@ class CreateInvoiceItem extends CreateRecord
         $user = auth()->user();
 
         // Log aktivitas saat halaman Create dibuka
-        $activity = activity('filament-access')
+        $activity = activity('InvoiceItems-access')
             ->causedBy(auth()->user())
             ->withProperties([
-                    'ip' =>  request()->ip(),
-               'email' => $user?->email,
-               'url' => request()->fullUrl(),
+                'ip' =>  request()->ip(),
+                'menu' => 'Invoice Items',
+                'email' => $user?->email,
+                'url' => request()->fullUrl(),
                 'method' => request()->method(),
             ])
             ->log('Membuka halaman Create InvoiceItem');
 
             Activity::latest()->first()->update([
                 'email' => auth()->user()?->email,
+                'menu' => 'Invoice Items',
             ]);
     }
     

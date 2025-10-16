@@ -22,9 +22,19 @@ class InvoiceItem extends Model
      public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['name', 'price'])
-            ->logOnlyDirty()       // hanya catat perubahan kolom yang berubah
+            ->logOnly(['po_number', 'po_description','invoice_id']) 
+            ->logOnlyDirty()     
             ->useLogName('invoice_item');
+    }
+    public function tapActivity(Activity $activity, string $eventName)
+    {
+        $user = auth()->user();
+        $activity->properties = array_merge($activity->properties->toArray(), [
+            'record_id' => $this->id,
+            'name' => $this->description ?? null,
+        ]);
+        $activity->email = $user?->email;
+        $activity->menu = 'Invoice Items';
     }
 
     protected $fillable = [
@@ -107,10 +117,11 @@ class InvoiceItem extends Model
         static::created(function ($record) {
             $user = auth()->user();
 
-            $activity = activity('filament-action')
+            $activity = activity('InvoiceItems-action')
                 ->causedBy($user)
                 ->withProperties([
                     'ip' =>  request()->ip(),
+                    'menu' => 'Invoice Items',
                     'email' => $user?->email,
                     'record_id' => $record->id,
                     'name' => $record->name ?? null,
@@ -118,6 +129,7 @@ class InvoiceItem extends Model
                 ->log('Membuat record InvoiceItem baru');
                 Activity::latest()->first()->update([
                     'email' => auth()->user()?->email,
+                    'menu' => 'Invoice Item',
                 ]);
         });
     }

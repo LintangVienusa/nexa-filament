@@ -277,7 +277,6 @@ class InvoiceItemResource extends Resource
             'create' => Pages\CreateInvoiceItem::route('/create'),
             'edit' => Pages\EditInvoiceItem::route('/{record}/edit'),
             
-        'activities' => Pages\ListInvoiceItems::route('/{record}/activities'),
     
         ];
     }

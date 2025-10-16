@@ -21,18 +21,20 @@ class ListInvoiceItems extends ListRecords
     protected function getHeaderWidgets(): array
     {
         // Catat aktivitas user saat membuka halaman
-        $activity = activity('filament-action')
+        $activity = activity('InvoiceItems-access')
             ->causedBy(auth()->user())
             ->withProperties([
-                    'ip' =>  request()->ip(),
+                'ip' =>  request()->ip(),
+                'menu' => 'Invoice Items',
                 'email' => auth()->user()->email,
                 'url' => request()->fullUrl(),
                 'method' => request()->method(),
             ])
-            ->log('Mengakses halaman ListInvoices');
+            ->log('Mengakses halaman ListInvoicesItems');
 
             Activity::latest()->first()->update([
                 'email' => auth()->user()?->email,
+                'menu' => 'Invoice Items',
             ]);
 
         return [];
