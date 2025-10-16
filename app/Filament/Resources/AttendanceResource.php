@@ -54,7 +54,22 @@ class AttendanceResource extends Resource
                     ->label('Waktu Kerja (Jam)')
                     ->disabled()
                     ->dehydrated(false)
-                    ->formatStateUsing(fn ($record) => $record?->working_hours),
+                    ->formatStateUsing(function ($state) {
+                        if ($state === null) {
+                            return '-';
+                        }
+
+                        $hours = floor($state);
+                        $minutes = round(($state - $hours) * 60);
+
+                        if ($hours > 0 && $minutes > 0) {
+                            return "{$hours} jam {$minutes} menit";
+                        } elseif ($hours > 0) {
+                            return "{$hours} jam";
+                        } else {
+                            return "{$minutes} menit";
+                        }
+                    }),
                 FileUpload::make('check_in_evidence')
                     ->Label('Evidence Check In')
                     ->directory('attendances/checkin')
@@ -86,9 +101,18 @@ class AttendanceResource extends Resource
                 TextColumn::make('check_in_time')->dateTime(),
                 TextColumn::make('check_out_time')->dateTime(),
                 TextColumn::make('working_hours')
-                    ->getStateUsing(fn ($record) => $record->working_hours)
-                    ->numeric(2)
-                    ->suffix(' hrs')
+                    ->getStateUsing(function ($record) {
+                        $hours = floor($record->working_hours);
+                        $minutes = round(($record->working_hours - $hours) * 60);
+
+                        if ($hours > 0 && $minutes > 0) {
+                            return "{$hours} jam {$minutes} menit";
+                        } elseif ($hours > 0) {
+                            return "{$hours} jam";
+                        } else {
+                            return "{$minutes} menit";
+                        }
+                    })
                     ->sortable(),
             ])
             ->filters([

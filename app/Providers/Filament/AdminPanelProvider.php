@@ -34,7 +34,7 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->brandName('HRMS - DPNG')
             ->profile()
-            ->font('Sans-serif')
+            ->font('Roboto')
             ->userMenuItems([
                 'profile' => UserMenuItem::make()
                     ->label('Profil Saya')
