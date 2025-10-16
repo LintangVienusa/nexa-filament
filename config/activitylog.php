@@ -42,5 +42,5 @@ return [
      * used by the Activity model shipped with this package.
      */
     'table_name' => env('DB_LOG_TABLE', 'activity_log'),
-'database_connection' => env('DB_LOG_CONNECTION', null), // null = pakai default
+    'database_connection' => env('DB_LOG_CONNECTION', null), // null = pakai default
 ];
