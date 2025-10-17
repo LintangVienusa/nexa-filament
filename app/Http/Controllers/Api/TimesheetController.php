@@ -119,13 +119,21 @@ class TimesheetController extends Controller
         $pendingTimesheets = Timesheet::where('created_by', $user->email)
             ->where('status', 1) 
             ->get();
+        
+        $completeTimesheets = Timesheet::where('created_by', $user->email)
+            ->where('status', 2) 
+            ->get();
 
         return response()->json([
             'status' => 'success',
             'message' => 'list timesheet',
             'data' => [
-                'today' => $todayTimesheets,
-                'pending' => $pendingTimesheets,
+                'today' =>[
+                    'pending' => $pendingTimesheets,
+                    'In Progress' => $todayTimesheets,
+                    'Complete' => $completeTimesheets,
+                ]
+                
             ],
             
         ], 201);
