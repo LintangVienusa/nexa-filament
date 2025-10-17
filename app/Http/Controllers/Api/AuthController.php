@@ -32,6 +32,15 @@ class AuthController extends Controller
 
         $employee = $user->employee()->with('organization')->first();
 
+        // $filePath = $employee->file_photo;
+        $filePath = storage_path('app/public/' . $employee->file_photo);
+        if (file_exists($filePath)) {
+            $fileData = file_get_contents($filePath);
+            $base64 = base64_encode($fileData);
+        } else {
+             $base64="a";
+        }
+
         return response()->json([
             'status' => 'success',
             'message' => 'Login successful',
@@ -44,6 +53,8 @@ class AuthController extends Controller
                 'division'     => optional(optional($employee)->organization)->divisi_name ?? null,
                 'unit_name'    => optional(optional($employee)->organization)->unit_name ?? null,
                 'job_title'    => $employee->job_title ?? null,
+                // 'file_photoa'    => $filePath ?? null,
+                'file_photo'    => $base64 ?? null,
                 'token'        => $token,
             ],
         ]);
