@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use Filament\Http\Responses\Auth\Contracts\LoginResponse;
+use App\Http\Responses\LoginResponse as CustomLoginResponse;
 use Illuminate\Support\ServiceProvider;
 use Filament\Support\Facades\FilamentView;
 use Filament\View\PanelsRenderHook;
@@ -15,10 +17,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(LoginResponse::class, CustomLoginResponse::class);
     }
 
-    
 
     /**
      * Bootstrap any application services.
@@ -27,13 +28,13 @@ class AppServiceProvider extends ServiceProvider
     {
 
         Filament::serving(function () {
-            
+
             FilamentView::registerRenderHook(
-                    
+
                 PanelsRenderHook::USER_MENU_PROFILE_BEFORE,
                 function () {
                     $user = auth()->user();
-                    
+
                     $employee = $user?->employee;
                     $organization = $employee?->organization;
                     $avatarUrl = $user?->getFilamentAvatarUrl() ?? asset('images/default-avatar.png');
@@ -48,7 +49,7 @@ class AppServiceProvider extends ServiceProvider
                                 <img
                                     src="{$avatarUrl}"
                                     alt="Avatar"
-                                    
+
                                     style="width: 10rem; height: 10rem;"
                                     class=" object-cover border border-gray-300"
                                     onerror="this.src='" . asset('images/default-avatar.png') . "'"

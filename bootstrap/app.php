@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\Auth;
+use App\Http\Middleware\RestrictSession;
 use Illuminate\Http\Request;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Foundation\Application;
@@ -20,17 +21,13 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'auth' => Auth::class,
             'auth.sanctum' => \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+            'restrict.session' => RestrictSession::class
         ]);
 
         $middleware->group('api', [
             'throttle:api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ]);
-
-        // $middleware->group('web', [
-        //         \Illuminate\Session\Middleware\StartSession::class,
-        //         \App\Http\Middleware\ActivityLogMiddleware::class,
-        //     ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

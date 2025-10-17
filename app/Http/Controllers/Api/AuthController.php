@@ -7,6 +7,7 @@ use App\Models\Organization;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -27,19 +28,19 @@ class AuthController extends Controller
         }
 
         $user->tokens()->delete();
+        \DB::table('sessions')->where('user_id', $user->id)->delete();
+
+        $sessionToken = Str::random(60);
+        $user->forceFill(['current_session_token' => $sessionToken])->save();
 
         $token = $user->createToken('mobile')->plainTextToken;
 
         $employee = $user->employee()->with('organization')->first();
 
-        // $filePath = $employee->file_photo;
         $filePath = storage_path('app/public/' . $employee->file_photo);
-        if (file_exists($filePath)) {
-            $fileData = file_get_contents($filePath);
-            $base64 = base64_encode($fileData);
-        } else {
-             $base64="a";
-        }
+        $base64 = file_exists($filePath)
+            ? base64_encode(file_get_contents($filePath))
+            : null;
 
         return response()->json([
             'status' => 'success',
@@ -53,7 +54,6 @@ class AuthController extends Controller
                 'division'     => optional(optional($employee)->organization)->divisi_name ?? null,
                 'unit_name'    => optional(optional($employee)->organization)->unit_name ?? null,
                 'job_title'    => $employee->job_title ?? null,
-                // 'file_photoa'    => $filePath ?? null,
                 'file_photo'    => $base64 ?? null,
                 'token'        => $token,
             ],
