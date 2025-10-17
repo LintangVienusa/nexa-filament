@@ -13,9 +13,6 @@ class AssetRelease extends Model
     protected $table = 'AssetRelease';
 
     protected $fillable = [
-        'asset_id',
-        'inventory_id',
-        'movement_id',
         'PIC',
         'asset_qty_now',
         'request_asset_qty',
@@ -24,6 +21,12 @@ class AssetRelease extends Model
         'ba_description',
         'file_path',
         'status',
+        'usage_type',
+         'assigned_type',
+        'assigned_id',
+        'province_code',
+        'regency_code',
+        'village_code',
         'created_by',
         'approved_by',
         'approved_at',
@@ -84,5 +87,20 @@ class AssetRelease extends Model
             3 => 'Rejected',
             default => 'Unknown',
         };
+    }
+
+    protected static function generateBANumber()
+    {
+        $month = now()->format('m');
+        $year = now()->format('Y');
+
+        // Hitung jumlah BA yang sudah dibuat bulan ini
+        $count = self::whereMonth('created_at', $month)
+                     ->whereYear('created_at', $year)
+                     ->count() + 1;
+
+        $number = str_pad($count, 3, '0', STR_PAD_LEFT); // 001, 002, ...
+
+        return "DPG/BA/{$number}/{$month}/{$year}";
     }
 }
