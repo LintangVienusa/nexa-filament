@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Attendance;
 use App\Models\User;
 use App\Models\Employee;
+use App\Models\Timesheet;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
@@ -109,20 +110,64 @@ class AttendanceController extends Controller
         $today = Carbon::today();
 
         $employee_id = $employee->employee_id;
+
+    
+        
         $attendance = Attendance::where('employee_id', $employee_id)
             ->whereDate('attendance_date', $date)
             ->first();
+
+            
+
         if (!$attendance) {
             return response()->json([
                 'message' => 'Belum melakukan check-in hari ini',
             'data' => $attendance,
             ], 404);
         }
-        if($attendance->check_out_time !=''){
+        
+        if($attendance->check_out_evidence !=''){
             return response()->json([
                 'message' => 'Sudah melakukan check-out hari ini',
             'data' => $attendance,
             ], 404);
+        }
+
+        $atid = $attendance->id;
+        $activeTimesheet = Timesheet::where('attendance_id', $atid)
+            ->where('status', 0)
+            ->get()
+            ->map(function ($item) {
+                if ($item->status == 0 && $item->created_at) {
+                    $createdAt = Carbon::parse($item->created_at);
+                    $now = Carbon::now();
+
+                    $diffInMinutes = (int) $createdAt->diffInMinutes($now);
+
+                    if ($diffInMinutes < 60) {
+                        $item->job_duration = $diffInMinutes . ' menit';
+                    } else {
+                        $hours = floor($diffInMinutes / 60);
+                        $minutes = $diffInMinutes % 60;
+
+                        if ($minutes > 0) {
+                            $item->job_duration = $hours . ' jam ' . $minutes . ' menit';
+                        } else {
+                            $item->job_duration = $hours . ' jam';
+                        }
+                    }
+                } else {
+                    $item->job_duration = null;
+                }
+
+                return $item;
+            });
+
+        if ($activeTimesheet) {
+            return response()->json([
+                'message' => 'Masih ada pekerjaan yang sedang berlangsung, selesaikan atau pending terlebih dahulu',
+                'data'    =>$activeTimesheet->toArray(),
+            ], 400);
         }
 
         $cek_in =$attendance->check_in_time;
