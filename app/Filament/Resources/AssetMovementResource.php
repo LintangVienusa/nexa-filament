@@ -18,13 +18,13 @@ class AssetMovementResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-arrows-right-left';
     protected static ?string $navigationGroup = 'Inventory';
     protected static ?string $navigationLabel = 'Asset Movements';
+    protected static ?int $navigationSort = 0;
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
 
-                // 📌 SECTION 1: Informasi Dasar
                 Forms\Components\Section::make('Informasi Dasar')
                     ->schema([
                         Forms\Components\Select::make('asset_id')
@@ -45,7 +45,6 @@ class AssetMovementResource extends Resource
                     ])
                     ->columns(3),
 
-                // 📦 SECTION 2: Detail Pergerakan Asset
                 Forms\Components\Section::make('Detail Pergerakan Asset')
                     ->schema([
                         Forms\Components\TextInput::make('PIC')
@@ -82,7 +81,6 @@ class AssetMovementResource extends Resource
                     ])
                     ->columns(3),
 
-                // 📝 SECTION 3: BA & Evidence
                 Forms\Components\Section::make('BA & Evidence')
                     ->schema([
                         Forms\Components\TextInput::make('ba_number')
@@ -103,7 +101,6 @@ class AssetMovementResource extends Resource
                     ])
                     ->columns(2),
 
-                // 👤 SECTION 4: Pihak Terkait
                 Forms\Components\Section::make('Pihak Terkait')
                     ->schema([
                         Forms\Components\TextInput::make('handover_by')
