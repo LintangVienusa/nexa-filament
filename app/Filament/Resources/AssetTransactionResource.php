@@ -303,19 +303,22 @@ class AssetTransactionResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('asset_transaction_id')
+                Tables\Columns\TextColumn::make('transaction_code')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('asset_id')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('inventory_id')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('movement_id')
-                    ->numeric()
+                Tables\Columns\TextColumn::make('transaction_type')
+                    ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('PIC')
-                    ->numeric()
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('usage_type')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('assigned_type')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('assigned_id')
+                    ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('asset_qty_now')
                     ->numeric()
@@ -324,8 +327,6 @@ class AssetTransactionResource extends Resource
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('ba_number')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('file_path')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('status')
                     ->numeric()
