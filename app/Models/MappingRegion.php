@@ -22,6 +22,6 @@ class MappingWilayah extends Model
         'village_code',
     ];
 
-    public $timestamps = true;
+    public $timestamps = true; 
 
 }
