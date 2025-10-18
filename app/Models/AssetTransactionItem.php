@@ -13,7 +13,7 @@ class AssetTransactionItem extends Model
     protected $table = 'AssetTransactionItems';
 
     protected $fillable = [
-        'asset_release_id',
+        'asset_transaction_id',
         'asset_id',
         'release_date', 
         'item_code',
@@ -27,7 +27,7 @@ class AssetTransactionItem extends Model
 
     public function release()
     {
-        return $this->belongsTo(AssetRelease::class, 'asset_release_id');
+        return $this->belongsTo(AssetRelease::class, 'asset_transaction_id');
     }
 
     public function asset()
@@ -44,6 +44,4 @@ class AssetTransactionItem extends Model
     {
         return $this->belongsTo(AssetMovement::class, 'movement_id');
     }
-
-    
 }

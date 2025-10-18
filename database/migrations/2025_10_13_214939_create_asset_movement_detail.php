@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('asset_id')->constrained('Assets')->onDelete('cascade');
             $table->enum('movementType', ['IN', 'OUT']);
             $table->date('movementDate');
-            $table->string('serialNumber')->unique(); 
+            $table->string('serialNumber')->nullable(); 
             $table->string('evidencePath')->nullable(); 
             $table->string('PIC');
             $table->text('notes')->nullable();

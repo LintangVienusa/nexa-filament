@@ -2,9 +2,10 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\AssetReleaseResource\Pages;
-use App\Filament\Resources\AssetReleaseResource\RelationManagers;
-use App\Models\AssetRelease;
+
+use App\Filament\Resources\AssettransactionResource\Pages;
+use App\Filament\Resources\AssettransactionResource\RelationManagers;
+use App\Models\Assettransaction;
 use App\Models\Assets;
 use App\Models\Employee;
 use App\Models\MappingRegion;
@@ -26,10 +27,9 @@ use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Hidden;
 use Illuminate\Support\Facades\Auth;
 
-
-class AssetReleaseResource extends Resource
+class AssetTransactionResource extends Resource
 {
-    protected static ?string $model = AssetRelease::class;
+    protected static ?string $model = AssetTransaction::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
     protected static ?string $navigationLabel = 'Asset Transaction';
@@ -43,23 +43,30 @@ class AssetReleaseResource extends Resource
                     Hidden::make('created_by')
                         ->default(fn () => Auth::user()->email) 
                         ->dehydrated(true),
-                    Section::make('Release Information')
+                    Section::make('transaction Information')
                         ->schema([
-                            TextInput::make('asset_release_id')
-                                ->label('Asset Release ID')
+                            TextInput::make('transaction_code')
+                                ->label('Asset transaction ID')
                                 ->disabled()
                                 ->reactive()
                                 ->default(function ($record) {
-                                    if ($record?->asset_release_id) {
-                                        return $record->asset_release_id;
+                                    if ($record?->transaction_code) {
+                                        return $record->transaction_code;
                                     } else {
-                                        $last = AssetRelease::latest('id')->first();
+                                        $last = Assettransaction::latest('id')->first();
                                         $nextId = $last ? $last->id + 1 : 1;
                                         return 'ASR' . str_pad($nextId, 5, '0', STR_PAD_LEFT);
                                     }
                                 })
                                 ->dehydrated(true)
                                 ->required(),
+                            Select::make('transaction_type')
+                                    ->label('Transaction Type')
+                                    ->options([
+                                        'RELEASE' => 'Release',
+                                        'RECEIVE' => 'Receive',
+                                    ])
+                                    ->required(),
 
                             Select::make('PIC')
                                 ->label('PIC Request')
@@ -110,7 +117,7 @@ class AssetReleaseResource extends Resource
                                             $month = now()->format('m');
                                             $year = now()->format('Y');
 
-                                            $count = AssetRelease::whereMonth('created_at', $month)
+                                            $count = Assettransaction::whereMonth('created_at', $month)
                                                 ->whereYear('created_at', $year)
                                                 ->count() + 1;
 
@@ -138,6 +145,13 @@ class AssetReleaseResource extends Resource
                                 ->required()
                                 ->reactive()
                                 ->default(0)
+                                ->validationMessages([
+                                    'max' => 'Jumlah request tidak boleh melebihi jumlah stock yang tersedia.',
+                                ])
+                                ->rule(function (callable $get) {
+                                    $max = (int) $get('asset_qty_now');
+                                    return 'max:' . $max;
+                                })
                                 ->afterStateUpdated(function (callable $set, $state) {
                                     $items = [];
                                     for ($i = 0; $i < ($state ?? 0); $i++) {
@@ -289,7 +303,7 @@ class AssetReleaseResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('asset_release_id')
+                Tables\Columns\TextColumn::make('asset_transaction_id')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('asset_id')
                     ->numeric()
@@ -355,9 +369,9 @@ class AssetReleaseResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListAssetReleases::route('/'),
-            'create' => Pages\CreateAssetRelease::route('/create'),
-            'edit' => Pages\EditAssetRelease::route('/{record}/edit'),
+            'index' => Pages\ListAssetTransactions::route('/'),
+            'create' => Pages\CreateAssetTransaction::route('/create'),
+            'edit' => Pages\EditAssetTransaction::route('/{record}/edit'),
         ];
     }
 }

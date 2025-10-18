@@ -1,19 +1,19 @@
 <?php
 
-namespace App\Filament\Resources\AssetReleaseResource\Pages;
+namespace App\Filament\Resources\AssetTransactionResource\Pages;
 
-use App\Filament\Resources\AssetReleaseResource;
+use App\Filament\Resources\AssetTransactionResource;
 use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\DB;
 use App\Models\AssetMovement;
-use App\Models\AssetReleaseItem;
+use App\Models\AssetTransactionItem;
 use App\Models\Assets;
+use App\Models\InventoryAsset;
 
-
-class CreateAssetRelease extends CreateRecord
+class CreateAssetTransaction extends CreateRecord
 {
-    protected static string $resource = AssetReleaseResource::class;
+    protected static string $resource = AssetTransactionResource::class;
 
      protected function getRedirectUrl(): string
     {
@@ -23,17 +23,15 @@ class CreateAssetRelease extends CreateRecord
     protected function handleRecordCreation(array $data): \Illuminate\Database\Eloquent\Model
     {
         return DB::transaction(function () use ($data) {
-            // 1️⃣ Simpan record utama Asset Release
-            $assetRelease = static::getModel()::create($data);
+            $AssetTransactions = static::getModel()::create($data);
 
-            // 2️⃣ Insert setiap requested_items ke tabel assetreleaseitems
             if (!empty($data['requested_items'])) {
                 foreach ($data['requested_items'] as $item) {
 
-                    // 3️⃣ Simpan ke Asset Movement (karena ada kolom movement_id di items)
                     $nextId = (AssetMovement::max('id') ?? 0) + 1;
                     $movement = AssetMovement::create([
-                        'asset_movement_id' => 'MOV' . str_pad($nextId, 5, '0', STR_PAD_LEFT),
+                        'movement_id' => 'MOV' . str_pad($nextId, 5, '0', STR_PAD_LEFT),
+                        'asset_transaction_id' => $AssetTransactions->id,
                         'asset_id'         => $item['asset_id'],
                         'movementType'     => 'OUT',
                         'movementDate'     => now()->toDateString(),
@@ -47,23 +45,43 @@ class CreateAssetRelease extends CreateRecord
                         'status'           => 0,
                     ]);
 
-                    // 4️⃣ Simpan ke Asset Release Items
-                    AssetReleaseItem::create([
-                        'asset_release_id' => $assetRelease->id,
+                    AssetTransactionItem::create([
+                        'asset_transaction_id' => $AssetTransactions->id,
                         'asset_id'        => $item['asset_id'],
                         'item_code'       => $item['item_code'] ?? null,
                         'merk'           => $item['merk'] ?? null,
                         'type'           => $item['type'] ?? null,
                         'serial_number'  => $item['serialNumber'] ?? null,
                         'description'    => $item['description'] ?? null,
-                        'movement_id'    => $movement->id, // relasi ke assetmovement
+                        'movement_id'    => $movement->id, 
                         'created_at'     => now(),
                         'updated_at'     => now(),
                     ]);
+
+                    $inventory = InventoryAsset::where('categoryasset_id', $data['category_id'])->first();
+                    if ($inventory) {
+                        if ($AssetTransactions->transaction_type === 'RELEASE') {
+                            $inventory->inWarehouse = $inventory->inWarehouse - $data['request_asset_qty'];
+                            $inventory->outWarehouse = $inventory->outWarehouse + $data['request_asset_qty'];
+                        } else {
+                            $inventory->inWarehouse = $inventory->inWarehouse + $data['request_asset_qty'];
+                        }
+                        $inventory->save();
+                    }
+
+                    $asset = Assets::find($item['asset_id']);
+                    if ($asset) {
+                        if ($AssetTransactions->transaction_type === 'RELEASE') {
+                            $asset->status = 1; 
+                        } else {
+                            $asset->status = 0; 
+                        }
+                        $asset->save();
+                    }
                 }
             }
 
-            return $assetRelease;
+            return $AssetTransactions;
         });
     }
 
