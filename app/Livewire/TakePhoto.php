@@ -5,44 +5,35 @@ namespace App\Http\Livewire;
 use Livewire\Component;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Livewire\WithFileUploads;
 
 class TakePhoto extends Component
 {
-    // Counter
-    public $count = 0;
 
-    // Webcam Photo
-    public $photo;     // base64 preview
-    public $photoPath; // path untuk DB
+    use WithFileUploads;
 
-    public function increment()
+    public $name;
+    public $photoBase64;
+    public $check_in_evidence;
+
+    public function submit()
     {
-        $this->count++;
-        $this->dispatch('counterUpdated', $this->count);
-    }
-    protected $listeners = ['savePhoto']; // Listener untuk JS emit
+        // Validasi form
+        $this->validate([
+            'name' => 'required|string|max:255',
+            'photoBase64' => 'required|string',
+        ]);
 
-    public function savePhoto($photoData)
-    {
+        // Simpan foto ke storage/public/photos
+        $data = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $this->photoBase64));
+        $fileName = 'photo_' . time() . '.png';
+        file_put_contents(public_path('photos/' . $fileName), $data);
 
-        if (!$photoData) return;
-       
-        // Pastikan folder ada
-        if (!Storage::disk('public')->exists('attendances')) {
-            Storage::disk('public')->makeDirectory('attendances');
-        }
-
-        // Decode base64
-        $imageData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $photoData));
-        $filename = 'attendances/checkin_' . uniqid() . '.png';
-        Storage::disk('public')->put($filename, $imageData);
-
-        $this->photoPath = $filename;
-
-        // Kirim path ke hidden input
-        $this->dispatchBrowserEvent('photoSaved', ['path' => $filename]);
-
-        $this->photo = null; // reset preview
+        session()->flash('message', 'Form berhasil dikirim dan foto tersimpan!');
+        
+        // Reset form
+        $this->name = '';
+        $this->photoBase64 = null;
     }
 
     public function render()

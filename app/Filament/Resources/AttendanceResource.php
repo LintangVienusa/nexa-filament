@@ -23,6 +23,10 @@ use Filament\Forms\Components\View;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Placeholder;
+// use Filament\Forms\Components\Livewire;
+use Filament\Forms\Components\ViewField;
+use Filament\Forms\Components\Textarea;
+use App\Filament\Forms\Components\TakePicture;
 
 class AttendanceResource extends Resource
 {
@@ -44,7 +48,6 @@ class AttendanceResource extends Resource
                     ->relationship('employee', 'full_name')
                     ->searchable()
                     ->required()
-                    ->disabled()
                     ->dehydrated(true)
                     ->default(fn() => auth()->user()->employee?->employee_id),
                 TextInput::make('employee_nik')
@@ -64,13 +67,14 @@ class AttendanceResource extends Resource
                     ->required(),
                 Section::make('Bukti Kehadiran')
                     ->schema([
-                        View::make('livewire.take-photo') // Blade wrapper Livewire
-                            ->label('Bukti Check-in')
-                            ->columnSpanFull(),
+                TakePicture::make('check_in_evidence')
+    ->label('Ambil Foto Check-in')
+    ->disk('public')
+    ->directory('attendance_photos')
+    ->required()
+            //            
 
-                        Hidden::make('check_in_evidence') // Field untuk database
-                            ->dehydrated(true)
-                            ->required(),
+                        
                     ]),
                     TextInput::make('check_in_latitude')->numeric(),
                 TextInput::make('check_in_longitude')->numeric(),
