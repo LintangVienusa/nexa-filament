@@ -10,7 +10,7 @@ class LogActivity extends Model
     use HasFactory;
 
      protected $connection = 'mysql_activitylog';
-    protected $table = 'Activity_Log';
+    protected $table = 'activity_log';
 
     protected $fillable = [
         'email',
