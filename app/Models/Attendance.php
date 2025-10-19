@@ -23,6 +23,7 @@ class Attendance extends Model
         'check_in_longitude',
         'check_out_latitude',
         'check_out_longitude',
+        'check_out_evidence',
         'created_by',
         'updated_by',
     ];
@@ -32,6 +33,8 @@ class Attendance extends Model
         'check_in_time' => 'datetime',
         'check_out_time' => 'datetime',
     ];
+
+    
 
     public function getWorkingHoursAttribute(): ?float
     {

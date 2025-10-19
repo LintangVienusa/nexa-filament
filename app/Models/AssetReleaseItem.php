@@ -5,12 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class AssetReleaseItem extends Model
+class AssetTransactionItem extends Model
 {
     use HasFactory;
 
     protected $connection = 'mysql_inventory';
-    protected $table = 'AssetReleaseItems';
+    protected $table = 'AssetTransactionItems';
 
     protected $fillable = [
         'asset_release_id',
@@ -44,4 +44,6 @@ class AssetReleaseItem extends Model
     {
         return $this->belongsTo(AssetMovement::class, 'movement_id');
     }
+
+    
 }

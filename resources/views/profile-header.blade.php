@@ -4,7 +4,7 @@
         <img
             src="{{ $photo }}"
             alt="Profile Photo"
-            style="width: 25rem; height: 38rem; object-fit: cover; border-radius: 8px; border: 1px solid #d1d5db;"
+            style="width: 20rem; height: 38rem; object-fit: cover; border-radius: 8px; border: 1px solid #d1d5db;"
             onerror="this.src='{{ asset('images/default-avatar.png') }}'">
     </div>
 

@@ -22,6 +22,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Spatie\Permission\Traits\HasPermissions;
+use Filament\Forms\Components\Select;
 
 class TimesheetResource extends Resource
 {
@@ -44,66 +45,93 @@ class TimesheetResource extends Resource
                 ->label('Tanggal')
                 ->required()
                 ->reactive()
+                ->displayFormat('Y-m-d')
                 ->afterStateUpdated(function ($state, callable $set, callable $get) {
-                    static::syncAttendanceInfo($get, $set, $state);
-                }),
+                    $date = $state instanceof \Carbon\Carbon ? $state->format('Y-m-d') : $state;
+                    $employeeId = $get('employee_id');
+
+                    if (! $employeeId || ! $date) {
+                        $set('attendance_id', null);
+                        return;
+                    }
+
+                    $attendance = Attendance::where('employee_id', $employeeId)
+                        ->whereDate('attendance_date', $date)
+                        ->first();
+
+                    $set('attendance_id', $attendance?->id);
+                })
+                ->disabled(fn($get, $record) => $record !== null),
 
             TextInput::make('attendance_id')
                 ->label('ID Attendance')
                 ->disabled()
+                ->reactive()
                 ->dehydrated(true),
 
             Section::make('Informasi Kehadiran')
                 ->schema([
-                    ViewField::make('attendance_info')
+                    ViewField::make('attendance_id')
                         ->label('Attendance Info')
                         ->view('filament.forms.component.attendance-info')
                         ->dehydrated(false)
-                        ->reactive(false),
+                        ->reactive(true),
                 ]),
 
-            Section::make('Durasi Pekerjaan')
-                ->schema([
+            // Section::make('Durasi Pekerjaan')
+            //     ->schema([
 
-                Grid::make(2)
-                    ->schema([
-                        TextInput::make('job_duration_hours')
-                            ->numeric()
-                            ->hiddenLabel()
-                            ->default(0)
-                            ->suffix(' jam')
-                            ->reactive()
-                            ->afterStateUpdated(function ($state, callable $set, $get) {
-                                $hours = (float) $state;
-                                $minutes = (float) $get('job_duration_minutes');
-                                $decimal = $hours + ($minutes / 60);
-                                $set('job_duration', round($decimal, 2));
-                            }),
+            //     Grid::make(2)
+            //         ->schema([
+            //             TextInput::make('job_duration_hours')
+            //                 ->numeric()
+            //                 ->hiddenLabel()
+            //                 ->default(0)
+            //                 ->suffix(' jam')
+            //                 ->reactive()
+            //                 ->afterStateUpdated(function ($state, callable $set, $get) {
+            //                     $hours = (float) $state;
+            //                     $minutes = (float) $get('job_duration_minutes');
+            //                     $decimal = $hours + ($minutes / 60);
+            //                     $set('job_duration', round($decimal, 2));
+            //                 }),
 
-                        TextInput::make('job_duration_minutes')
-                            ->numeric()
-                            ->hiddenLabel()
-                            ->default(0)
-                            ->suffix(' menit')
-                            ->reactive()
-                            ->afterStateUpdated(function ($state, callable $set, $get) {
-                                $hours = (float) $get('job_duration_hours');
-                                $minutes = (float) $state;
-                                $decimal = $hours + ($minutes / 60);
-                                $set('job_duration', round($decimal, 2));
-                            }),
-                    ])
-                ]),
+            //             TextInput::make('job_duration_minutes')
+            //                 ->numeric()
+            //                 ->hiddenLabel()
+            //                 ->default(0)
+            //                 ->suffix(' menit')
+            //                 ->reactive()
+            //                 ->afterStateUpdated(function ($state, callable $set, $get) {
+            //                     $hours = (float) $get('job_duration_hours');
+            //                     $minutes = (float) $state;
+            //                     $decimal = $hours + ($minutes / 60);
+            //                     $set('job_duration', round($decimal, 2));
+            //                 }),
+            //         ])
+            //     ]),
 
-            TextInput::make('job_duration')
-                ->hidden()
+            Hidden::make('job_duration')
                 ->dehydrated(true)
-                ->numeric(),
+                ->default('0'),
 
             Textarea::make('job_description')
+                ->dehydrated(true)
                 ->required()
                 ->columnSpanFull(),
 
+            
+            Select::make('status')
+                ->label('Status')
+                ->dehydrated(true)
+                ->options([
+                    '0' => 'On Progress',
+                    '1' => 'Pending',
+                    '2' => 'Done',
+                    '3' => 'Cancel',
+                ])
+                ->default('0') // default untuk create
+                ->required(),
             Hidden::make('created_by')
                 ->default(fn () => auth()->user()->email ?? null),
         ]);
@@ -120,11 +148,16 @@ class TimesheetResource extends Resource
                     ? AttendanceResource::getUrl('edit', ['record' => $record->attendance_id])
                     : null)
                 ->openUrlInNewTab(),
+             Tables\Columns\TextColumn::make('attendance.employee_id')
+                ->label('NIK')
+                ->sortable()
+                ->searchable(),
 
             Tables\Columns\TextColumn::make('attendance.attendance_date')
                 ->label('Tanggal Attendance')
                 ->date()
                 ->sortable(),
+           
 
             Tables\Columns\TextColumn::make('job_description')
                 ->label('Detail Pekerjaan')
@@ -151,6 +184,18 @@ class TimesheetResource extends Resource
                 ->dateTime()
                 ->sortable()
                 ->toggleable(isToggledHiddenByDefault: true),
+
+             Tables\Columns\TextColumn::make('status')
+                ->label('Stataus')
+                ->sortable()
+                ->searchable()
+                ->formatStateUsing(fn($state) => match((int)$state) {
+                    0 => 'On Progress',
+                    1 => 'Done',
+                    2 => 'Pending',
+                    3 => 'Cancel',
+                    default => 'Unknown',
+                }),
         ])
         ->actions([
             Tables\Actions\EditAction::make(),
@@ -194,8 +239,11 @@ class TimesheetResource extends Resource
             return;
         }
 
+        // pastikan $date format Y-m-d
+        $dateFormatted = $date instanceof \Carbon\Carbon ? $date->format('Y-m-d') : $date;
+
         $attendance = Attendance::where('employee_id', $employeeId)
-            ->whereDate('attendance_date', $date)
+            ->whereDate('attendance_date', $dateFormatted)
             ->first();
 
         if ($attendance) {

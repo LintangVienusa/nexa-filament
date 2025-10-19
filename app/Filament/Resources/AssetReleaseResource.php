@@ -7,8 +7,10 @@ use App\Filament\Resources\AssetReleaseResource\RelationManagers;
 use App\Models\AssetRelease;
 use App\Models\Assets;
 use App\Models\Employee;
+use App\Models\MappingRegion;
 use App\Models\CategoryAsset;
 use App\Models\InventoryAsset;
+use App\Models\Customer;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -21,6 +23,8 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Hidden;
+use Illuminate\Support\Facades\Auth;
 
 
 class AssetReleaseResource extends Resource
@@ -28,7 +32,7 @@ class AssetReleaseResource extends Resource
     protected static ?string $model = AssetRelease::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
-    protected static ?string $navigationLabel = 'Asset Release';
+    protected static ?string $navigationLabel = 'Asset Transaction';
     protected static ?string $navigationGroup = 'Inventory';
     protected static ?int $navigationSort = 0;
 
@@ -36,7 +40,9 @@ class AssetReleaseResource extends Resource
     {
         return $form
                 ->schema([
-
+                    Hidden::make('created_by')
+                        ->default(fn () => Auth::user()->email) 
+                        ->dehydrated(true),
                     Section::make('Release Information')
                         ->schema([
                             TextInput::make('asset_release_id')
@@ -57,11 +63,15 @@ class AssetReleaseResource extends Resource
 
                             Select::make('PIC')
                                 ->label('PIC Request')
-                                ->options(Employee::all()->pluck('full_name', 'employee_id'))
+                                ->options(
+                                    Employee::get()->mapWithKeys(fn ($emp) => [
+                                        $emp->email => $emp->full_name
+                                    ])
+                                )
                                 ->searchable()
                                 ->required()
                                 ->default(fn ($record) => 
-                                    $record?->employee_id ?? auth()->user()->employee?->employee_id
+                                    $record?->email ?? auth()->user()->employee?->email
                                 )
                                 ->disabled(fn ($state, $component, $record) => 
                                     $record !== null || auth()->user()->isStaff()
@@ -69,7 +79,7 @@ class AssetReleaseResource extends Resource
                                 ->afterStateUpdated(function ($state, $set) {
                                     if ($state) {
                                         $employee = Employee::find($state);
-                                        $set('employee_id', $employee?->employee_id);
+                                        $set('email', $employee?->email);
                                     }
                                 })
                                 ->dehydrated(true),
@@ -119,6 +129,7 @@ class AssetReleaseResource extends Resource
                                 ->required()
                                 ->disabled()
                                 ->numeric()
+                                ->dehydrated(true) 
                                 ->default(0),
 
                             TextInput::make('request_asset_qty')
@@ -147,7 +158,8 @@ class AssetReleaseResource extends Resource
                             TextInput::make('ba_number')
                                 ->label('BA Number')
                                 ->maxLength(255)
-                                ->disabled(),
+                                ->disabled()
+                                ->dehydrated(true) ,
 
                             Textarea::make('ba_description')
                                 ->label('BA Description')
@@ -160,11 +172,12 @@ class AssetReleaseResource extends Resource
                             Select::make('usage_type')
                                 ->label('Usage Type')
                                 ->options([
-                                    'OFFICE' => 'Operational Kantor',
+                                    'ASSIGNED_TO_EMPLOYEE' => 'Operational Kantor',
                                     'DEPLOYED_FIELD' => 'Operational Lapangan',
+                                    'WAREHOUSE' => 'Pengembalian ke Gudang',
                                 ])
                                 ->reactive()
-                                ->default('OFFICE'),
+                                ->default('ASSIGNED_TO_EMPLOYEE'),
 
                             // Assigned To
                             Select::make('assigned_type')
@@ -180,14 +193,16 @@ class AssetReleaseResource extends Resource
                                 ->label('Assigned To')
                                 ->options(function(callable $get) {
                                     $type = $get('assigned_type');
-                                    if($type==='employee') return Employee::pluck('full_name','employee_id');
-                                    if($type==='contractor') return Contractor::pluck('name','id');
+                                    if($type==='employee') return Employee::get()->mapWithKeys(fn ($emp) => [
+                                            $emp->employee_id => $emp->full_name,
+                                        ]);
+                                    if($type==='contractor') return Customer::pluck('customer_name','id');
                                     return [];
                                 }),
 
                             Select::make('province_code')
                                 ->label('Kode Provinsi')
-                                ->options(Province::pluck('name','code'))
+                                ->options(MappingRegion::pluck('province_name','province_code'))
                                 ->reactive()
                                 ->visible(fn(callable $get)=> $get('usage_type')==='DEPLOYED_FIELD'),
 
@@ -196,7 +211,7 @@ class AssetReleaseResource extends Resource
                                 ->options(function(callable $get){
                                     $province = $get('province_code');
                                     if(!$province) return [];
-                                    return Regency::where('province_code',$province)->pluck('name','code');
+                                    return MappingRegion::where('province_code',$province)->pluck('regency_name','regency_code');
                                 })
                                 ->reactive()
                                 ->visible(fn(callable $get)=> $get('usage_type')==='DEPLOYED_FIELD'),
@@ -206,7 +221,7 @@ class AssetReleaseResource extends Resource
                                 ->options(function(callable $get){
                                     $regency = $get('regency_code');
                                     if(!$regency) return [];
-                                    return Village::where('regency_code',$regency)->pluck('name','code');
+                                    return MappingRegion::where('regency_code',$regency)->pluck('village_name','village_code');
                                 })
                                 ->visible(fn(callable $get)=> $get('usage_type')==='DEPLOYED_FIELD'),
                         ])
@@ -240,11 +255,26 @@ class AssetReleaseResource extends Resource
                                         })
                                         ->required(),
 
-                                    TextInput::make('item_code')->label('Asset Code')->disabled(),
-                                    TextInput::make('merk')->label('Merk')->disabled(),
-                                    TextInput::make('type')->label('Asset Type')->disabled(),
-                                    TextInput::make('serialNumber')->label('Serial Number')->disabled(),
-                                    Textarea::make('description')->label('Keterangan')->disabled(),
+                                    TextInput::make('item_code')
+                                                ->label('Asset Code')
+                                                ->disabled()
+                                                ->dehydrated(true),
+                                    TextInput::make('merk')
+                                                ->label('Merk')
+                                                ->disabled()
+                                                ->dehydrated(true) ,
+                                    TextInput::make('type')
+                                                ->label('Asset Type')
+                                                ->disabled()
+                                                ->dehydrated(true),
+                                    TextInput::make('serialNumber')
+                                                ->label('Serial Number')
+                                                ->disabled()
+                                                ->dehydrated(true),
+                                    Textarea::make('description')
+                                            ->label('Keterangan')
+                                            ->disabled()
+                                            ->dehydrated(true),
                                 ])
                                 ->columns(2)
                                 ->disableItemCreation()

@@ -3,8 +3,16 @@
 namespace App\Filament\Resources\AttendanceResource\Pages;
 
 use App\Filament\Resources\AttendanceResource;
+use App\Filament\Resources\TimesheetResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
+use Filament\Actions\Action;
+use App\Models\Attendance;
+use App\Models\Employee;
+use App\Models\Timesheet;
+use Illuminate\Support\Facades\Auth;
+use App\Traits\HasOwnRecordPolicy;
+use Carbon\Carbon;
 
 class ListAttendances extends ListRecords
 {
@@ -12,8 +20,54 @@ class ListAttendances extends ListRecords
 
     protected function getHeaderActions(): array
     {
+        $today = Carbon::today()->toDateString();
+        $employee = Employee::where('email',auth()->user()->email)->first();
+         $employeeId = $employee->employee_id;
+
+        $attendance = Attendance::where('employee_id', $employeeId)
+            ->where('attendance_date', $today)
+            ->first();
+
+        
+
+        // Tentukan label, warna, icon tombol
+        if (!$attendance) {
+            $label = 'Check In';
+            $color = 'success';
+            // $icon = 'heroicon-o-login';
+            
+            $route = AttendanceResource::getUrl('create');
+        } elseif (!$attendance->check_out_latitude) {
+
+            $hasOnProgressTimesheet =Timesheet::where('attendance_id', $attendance->id)
+            ->where('status', '0')
+            ->exists();
+
+            $jobTimesheet = Timesheet::where('attendance_id', $attendance->id)->first();
+            $jobTimeId = isset($jobTimesheet->id) ? $jobTimesheet->id : null;
+
+            if(!$hasOnProgressTimesheet && $jobTimeId !=''){
+                        $label = 'Check Out';
+                        $color = 'warning';
+                        // $icon = 'heroicon-o-logout';
+                        $route = AttendanceResource::getUrl('edit', ['record' => $attendance->id]);
+            }else{
+                $label = 'Create Job';
+                $color = 'warning';
+                // $icon = 'heroicon-o-logout';
+                $route = TimesheetResource::getUrl('create');
+            }
+    
+        } else {
+            return []; // Sudah check out hari ini, tidak tampil tombol
+        }
+
         return [
-            Actions\CreateAction::make(),
+            Action::make('today_action')
+                ->label($label)
+                ->color($color)
+                ->url($route)
+                ->requiresConfirmation(), // optional, bisa klik langsung tanpa confirm
         ];
     }
 }

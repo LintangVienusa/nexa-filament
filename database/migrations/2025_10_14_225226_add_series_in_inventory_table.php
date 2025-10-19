@@ -16,12 +16,10 @@ return new class extends Migration
         });
 
         Schema::connection('mysql_inventory')->table('AssetMovement', function (Blueprint $table) {
-            $table->string('asset_movement_id')->unique()->nullable(false)->after('id');
+            $table->string('asset_transaction_id')->unique()->nullable(false)->after('id');
         });
 
-         Schema::connection('mysql_inventory')->table('AssetRelease', function (Blueprint $table) {
-            $table->string('asset_release_id')->unique()->nullable(false)->after('id');
-        });
+        
 
          Schema::connection('mysql_inventory')->table('InventoryAsset', function (Blueprint $table) {
             $table->string('inventory_asset_id')->unique()->nullable(false)->after('id');
@@ -37,10 +35,7 @@ return new class extends Migration
             $table->dropColumn(['category_id']);
         });
         Schema::connection('mysql_inventory')->table('AssetMovement', function (Blueprint $table) {
-            $table->dropColumn(['asset_movement_id']);
-        });
-        Schema::connection('mysql_inventory')->table('AssetRelease', function (Blueprint $table) {
-            $table->dropColumn(['asset_release_id']);
+            $table->dropColumn(['asset_transaction_id']);
         });
         Schema::connection('mysql_inventory')->table('InventoryAsset', function (Blueprint $table) {
             $table->dropColumn(['inventory_asset_id']);

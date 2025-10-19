@@ -126,9 +126,11 @@ class AssetMovementResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('id')->sortable(),
-                Tables\Columns\TextColumn::make('asset.name')->label('Asset'),
-                Tables\Columns\TextColumn::make('inventory.name')->label('Inventory'),
                 Tables\Columns\TextColumn::make('movement_id')->label('Movement ID')->searchable(),
+                Tables\Columns\TextColumn::make('movement_type')->label('Movement Type')->searchable(),
+                Tables\Columns\TextColumn::make('placement_type')->label('Movement Type')->searchable(),
+                Tables\Columns\TextColumn::make('asset.name')->label('Asset'),
+                Tables\Columns\TextColumn::make('inventory.asse')->label('Inventory'),
                 Tables\Columns\TextColumn::make('asset_qty_now')->label('Qty Now'),
                 Tables\Columns\TextColumn::make('status')
                     ->formatStateUsing(fn ($state) => match ($state) {

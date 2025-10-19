@@ -6,7 +6,7 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
-class MappingWilayahSeeder extends Seeder
+class MappingRegionSeeder extends Seeder
 {
     /**
      * Run the database seeds.
@@ -17,8 +17,8 @@ class MappingWilayahSeeder extends Seeder
                     [
                         'province_name' => 'JAWA TENGAH',
                         'province_code' => 'JATENG',
-                        'district_name' => 'BREBES',
-                        'district_code' => 'BRB',
+                        'regency_name' => 'BREBES',
+                        'regency_code' => 'BRB',
                         'station_name' => 'BUMIAYU',
                         'station_code' => 'BMA',
                         'village_name' => 'DUKUH TURI',
@@ -29,8 +29,8 @@ class MappingWilayahSeeder extends Seeder
                     [
                         'province_name' => 'JAWA TENGAH',
                         'province_code' => 'JATENG',
-                        'district_name' => 'BREBES',
-                        'district_code' => 'BRB',
+                        'regency_name' => 'BREBES',
+                        'regency_code' => 'BRB',
                         'station_name' => 'BUMIAYU',
                         'station_code' => 'BMA',
                         'village_name' => 'BUMIAYU',

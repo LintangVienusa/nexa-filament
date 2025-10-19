@@ -16,9 +16,14 @@ class AssetMovement extends Model
     protected $table = 'AssetMovement';
 
     protected $fillable = [
+        'movement_id',
+        'asset_transaction_id',
         'asset_id',
         'inventory_id',
         'movement_id',
+        'movementDate',
+        'movementType',
+        'serialNumber',
         'PIC',
         'asset_qty_now',
         'request_asset_qty',
