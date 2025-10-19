@@ -23,10 +23,8 @@ use Filament\Forms\Components\View;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Placeholder;
-// use Filament\Forms\Components\Livewire;
+use Filament\Forms\Components\Livewire;
 use Filament\Forms\Components\ViewField;
-use Filament\Forms\Components\Textarea;
-use App\Filament\Forms\Components\TakePicture;
 
 class AttendanceResource extends Resource
 {
@@ -38,47 +36,157 @@ class AttendanceResource extends Resource
     protected static ?string $navigationGroup = 'HR Management';
     protected static ?string $navigationLabel = 'Attendances';
 
+ 
+
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Select::make('employee_id')
-                    ->label('Nama')
-                    ->relationship('employee', 'full_name')
-                    ->searchable()
-                    ->required()
-                    ->dehydrated(true)
-                    ->default(fn() => auth()->user()->employee?->employee_id),
-                TextInput::make('employee_nik')
-                    ->label('NIK')
-                    ->required()
-                    ->default(fn ($record) => 
-                        $record?->employee_id 
-                        ?? auth()->user()->employee?->employee_id
-                    )
-                    ->dehydrated(true)
-                    ->readonly(),
+                Section::make('Bukti location')
+                    ->schema([
+                        Select::make('employee_id')
+                            ->label('Nama')
+                            ->relationship('employee', 'full_name')
+                            ->searchable()
+                            ->required()
+                            ->disabled()
+                            ->dehydrated(true)
+                            ->default(fn() => auth()->user()->employee?->employee_id),
+                        TextInput::make('employee_nik')
+                            ->label('NIK')
+                            ->required()
+                            ->default(fn ($record) => 
+                                $record?->employee_id 
+                                ?? auth()->user()->employee?->employee_id
+                            )
+                            ->afterStateHydrated(function ($component, $state, $record) {
+                                if ($record) {
+                                    $component->state($record->employee_id);
+                                } else {
+                                    $component->state(auth()->user()->employee?->employee_id);
+                                }
+                            })
+                            ->dehydrated(true)
+                            ->readonly(),
 
-                DatePicker::make('attendance_date')
-                    ->label('Tanggal Attendance')
-                    ->default(Carbon::now('Asia/Jakarta'))
-                    ->disabled()
-                    ->required(),
+                        DatePicker::make('attendance_date')
+                            ->label('Tanggal Absensi')
+                            ->default(Carbon::now('Asia/Jakarta'))
+                            ->disabled()
+                            ->required()
+                            ->dehydrated(true),
+                        TextInput::make('check_in_time_display')
+                            ->label(fn ($record) => $record ? 'Time Check Out' : 'Time Check In')
+                            ->default(Carbon::now('Asia/Jakarta')->format('H:i'))
+                            ->afterStateHydrated(function ($component, $state, $record) {
+                                // jika sedang edit (record ada)
+                                if ($record) {
+                                    $component->state(Carbon::now('Asia/Jakarta')->format('H:i'));
+                                } else {
+                                    $component->state(Carbon::now('Asia/Jakarta')->format('H:i'));
+                                }
+                            })
+                            ->disabled()
+                            ->required()
+                            ->dehydrated(false),
+                        Hidden::make('check_in_time')
+                            ->default(fn ($record) => $record 
+                                ? $record->check_in_time 
+                                : Carbon::now('Asia/Jakarta')->toDateTimeString()
+                            )->afterStateHydrated(fn ($record) => $record 
+                                ? $record->check_in_time 
+                                : Carbon::now('Asia/Jakarta')->toDateTimeString()
+                            )
+                            ->dehydrated(true)
+                            ->required(),
+                        Hidden::make('check_out_time')
+                            ->default(fn ($record) => $record 
+                                ? Carbon::now('Asia/Jakarta')->toDateTimeString()
+                                : Carbon::now('Asia/Jakarta')->toDateTimeString()
+                            )->afterStateHydrated(function ($component, $state, $record) {
+                                if ($record && $record->check_out_time) {
+                                    $component->state($record->check_out_time); // gunakan value dari DB
+                                } else {
+                                    $component->state(Carbon::now('Asia/Jakarta')->toDateTimeString()); // default jika belum ada
+                                }
+                            })
+                            ->dehydrated(true)
+                            ->required()
+                            ,
+                    
+                    ])->columns(2),
+                Section::make('Evidence')
+                    ->schema([
+                    Section::make('location')
+                        ->schema([
+                            ViewField::make('location_map_in')
+                        ->label('Lokasi Absensi')
+                        ->view('filament.partials.location-capture')
+                        ->visible(fn ($record) => $record && $record->check_in_latitude && $record->check_in_longitude),
+                        ViewField::make('location_map')
+                                ->view('filament.partials.location-map'),
+                        ]),
+                        
+                     Section::make('')
+                        ->schema([
+                        TextInput::make('check_in_latitude')
+                                ->label('Check In Latitude')
+                                ->required()
+                                ->dehydrated()
+                                ->default(fn ($record) => $record  ? $record->check_in_latitude : null)
+                                ->id('check_in_latitude')->visible(fn ($record) => !$record || !$record->check_in_latitude),
+
+                            TextInput::make('check_in_longitude')
+                                ->label('Check In Longitude')
+                                ->required()
+                                ->dehydrated()
+                                ->default(fn ($record) => $record  ? $record->check_in_longitude : null)
+                                ->id('check_in_longitude')->visible(fn ($record) => !$record || !$record->check_in_latitude),
+
+                            TextInput::make('check_out_latitude')
+                                ->label('Check Out Latitude')
+                                ->dehydrated()
+                                ->default(fn ($record) => $record  ? $record->check_out_latitude : null)
+                                ->id('check_out_latitude')
+                                ->visible(fn ($record) => $record && $record->check_in_latitude && !$record->check_out_latitude),
+
+
+                            TextInput::make('check_out_longitude')
+                                ->label('Check Out Longitude')
+                                ->dehydrated()
+                                ->default(fn ($record) => $record  ? $record->check_out_longitude : null)
+                                ->id('check_out_longitude')
+                                ->visible(fn ($record) => $record && $record->check_in_latitude && !$record->check_out_latitude),
+                         ])->columns(2),
+                    ]),
                 Section::make('Bukti Kehadiran')
                     ->schema([
-                TakePicture::make('check_in_evidence')
-    ->label('Ambil Foto Check-in')
-    ->disk('public')
-    ->directory('attendance_photos')
-    ->required()
-            //            
+                        Section::make('')
+                         ->visible(fn($record) => !empty($record?->check_in_evidence) || !empty($record?->check_out_evidence))
+                            ->schema([
+                                ViewField::make('check_in_evidence')
+                                    ->label('Check In Evidence')
+                                    ->view('filament.partials.image-preview') 
+                                    ->visible(fn($record) => $record?->check_in_evidence), // safe navigation operator ?->
 
+                                ViewField::make('check_out_evidence')
+                                    ->label('Check Out Evidence')
+                                    ->view('filament.partials.image-preview') 
+                                    ->visible(fn($record) => $record?->check_out_evidence), // safe navigation
+                            ])->columns(2),
+                         Hidden::make('check_in_evidence')
+                             ->reactive()
+                            ->required(),
+                        Hidden::make('check_out_evidence')
+                        ->reactive()->dehydrated()->dehydrated(),
                         
+                         ViewField::make('camera_capture')
+                            ->view('filament.partials.camera-capture'),
                     ]),
-                    TextInput::make('check_in_latitude')->numeric(),
-                TextInput::make('check_in_longitude')->numeric(),
-                TextInput::make('created_by')
+
+                
+                Hidden::make('created_by')
                     ->disabled()
                     ->default(auth()->user()->email ?? null),
             ]);
@@ -107,8 +215,8 @@ class AttendanceResource extends Resource
                     ->query(fn ($query) => $query->whereDate('attendance_date', now()->toDateString())),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\ViewAction::make(),
+                // Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),

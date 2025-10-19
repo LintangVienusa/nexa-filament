@@ -3,38 +3,26 @@
 namespace App\Http\Livewire;
 
 use Livewire\Component;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Log;
-use Livewire\WithFileUploads;
 
 class TakePhoto extends Component
 {
-
-    use WithFileUploads;
-
-    public $name;
-    public $photoBase64;
+    public $photo;
+    
     public $check_in_evidence;
 
-    public function submit()
+    public function savePhotoDirectly()
     {
-        // Validasi form
-        $this->validate([
-            'name' => 'required|string|max:255',
-            'photoBase64' => 'required|string',
-        ]);
+        $base64 = $this->check_in_evidence; // sudah terisi dari hidden input
+        if (!$base64) return;
 
-        // Simpan foto ke storage/public/photos
-        $data = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $this->photoBase64));
-        $fileName = 'photo_' . time() . '.png';
-        file_put_contents(public_path('photos/' . $fileName), $data);
+        $imgData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $base64));
+        $fileName = 'photo_' . time() . '.jpg';
+        file_put_contents(public_path('photos/' . $fileName), $imgData);
 
-        session()->flash('message', 'Form berhasil dikirim dan foto tersimpan!');
-        
-        // Reset form
-        $this->name = '';
-        $this->photoBase64 = null;
+        // update form state lagi dengan nama file
+        $this->form->fill(['check_in_evidence' => $fileName]);
     }
+
 
     public function render()
     {

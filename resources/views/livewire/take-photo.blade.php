@@ -2,15 +2,16 @@
     <video x-ref="video" autoplay playsinline class="w-64 h-48 border"></video>
     <canvas x-ref="canvas" class="hidden"></canvas>
 
-    <div class="mt-2">
-        <button type="button" @click="takePhoto()" class="px-3 py-1 bg-blue-600 text-white rounded">
-            Ambil Foto
-        </button>
-    </div>
+    <button type="button" @click="takePhoto()">Ambil Foto</button>
 
     <template x-if="photo">
         <img :src="photo" class="w-64 h-48 border mt-2" />
     </template>
+
+    <!-- simpan ke form state -->
+    <input type="hidden" wire:model="{{ $getStatePath() ?? 'check_in_evidence' }}" x-ref="input" />
+
+    <button type="button" wire:click="savePhotoDirectly">Simpan Foto</button>
 
     <script>
         function photoComponent() {
@@ -29,7 +30,9 @@
                     canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
                     this.photo = canvas.toDataURL('image/jpeg', 0.7);
 
-                    Livewire.emit('photoTaken', this.photo);
+                    // update hidden input supaya form state ikut terisi
+                    this.$refs.input.value = this.photo;
+                    this.$refs.input.dispatchEvent(new Event('input'));
                 }
             }
         }
