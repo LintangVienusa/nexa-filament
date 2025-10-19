@@ -36,11 +36,16 @@ class AuthController extends Controller
         $token = $user->createToken('mobile')->plainTextToken;
 
         $employee = $user->employee()->with('organization')->first();
-
-        $filePath = storage_path('app/public/' . $employee->file_photo);
-        $base64 = file_exists($filePath)
+        $file =$employee->file_photo;
+        if($file != '' ){
+            $filePath = storage_path('app/public/' . $employee->file_photo);
+            $base64 = file_exists($filePath)
             ? base64_encode(file_get_contents($filePath))
             : null;
+        }else{
+            $base64 = null;
+        }
+        
 
         return response()->json([
             'status' => 'success',

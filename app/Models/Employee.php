@@ -90,7 +90,9 @@ class Employee extends Model
             }else{
                 $role = 'manager';
             }
-            $createuser = User::firstOrCreate([
+            $createuser = User::firstOrCreate(
+                ['email' => $employee->email],
+                [
                 'name' => $fullname,
                 'email' => $employee->email,
                 'password' => Hash::make('n3x4@1234'),

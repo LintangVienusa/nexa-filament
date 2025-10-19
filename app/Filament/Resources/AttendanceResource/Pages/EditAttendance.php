@@ -94,19 +94,6 @@ class EditAttendance extends EditRecord
             ->where('status', 0)
             ->count();
             
-        
-
-        if ($existingTimesheet > 0) {
-            Notification::make()
-                ->warning()
-                ->title('Ada pekerjaan yang belum selesai')
-                ->body("Terdapat {$existingTimesheet} job/timesheet yang masih On Progress atau Pending.")
-                ->send();
-
-                //    throw new ActionFailedException("Tidak bisa menyimpan karena masih ada job yang On Progress.");
-    
-        }
-
         if ($this->data['check_out_evidence'] ?? false) {
             $cek_out = $cek_out = $data['check_out_evidence'] ?? null;
              $data['check_out_evidence'] = preg_replace('#^data:image/\w+;base64,#i', '', $cek_out);
@@ -116,13 +103,27 @@ class EditAttendance extends EditRecord
             ]);
 
             
-            $data['check_in_evidence'] = $attendance->check_in_evidence;
-            $data['check_out_evidence'] = null;
-            $data['check_out_time'] = null;
-            $data['check_out_latitude'] = null;
-            $data['check_out_longitude'] = null;
+          
             
         }
+
+        if ($existingTimesheet > 0) {
+            Notification::make()
+                ->warning()
+                ->title('Ada pekerjaan yang belum selesai')
+                ->body("Terdapat {$existingTimesheet} job/timesheet yang masih On Progress atau Pending.")
+                ->send();
+
+                    $data['check_in_evidence'] = $attendance->check_in_evidence;
+                    $data['check_out_evidence'] = null;
+                    $data['check_out_time'] = null;
+                    $data['check_out_latitude'] = null;
+                    $data['check_out_longitude'] = null;
+                //    throw new ActionFailedException("Tidak bisa menyimpan karena masih ada job yang On Progress.");
+    
+        }
+
+        
 
         return $data; // jika aman, kembalikan data untuk save
 

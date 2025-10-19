@@ -205,6 +205,19 @@ class InvoiceResource extends Resource
                         2 => 'info',
                         default => 'primary',
                     }),
+                TextColumn::make('keterangan')
+                    ->label('Keterangan')
+                    ->badge()
+                    ->getStateUsing(fn ($record) => match($record->keterangan) {
+                        'Full Payment' => 'Full Payment',
+                        'DP' => 'DP',
+                        default => 'Unknown',
+                    })
+                    ->color(fn ($state): string => match ($state) {
+                        'Full Payment' => 'success',
+                        'DP' => 'warning',
+                        default => 'primary',
+                    }),
                 TextColumn::make('create_by')->label('Created By')->sortable(),
                 TextColumn::make('created_at')->date()->label('Created At')->sortable(),
                 TextColumn::make('approval_by')->label('Approval By')->sortable(),
@@ -216,6 +229,25 @@ class InvoiceResource extends Resource
                 //
             ])
             ->actions([
+                Action::make('keterangan')
+                        ->label('Keterangan')
+                        ->icon('heroicon-o-information-circle')
+                        ->modalHeading('Ubah Keterangan')
+                        ->form([
+                            \Filament\Forms\Components\Select::make('keterangan')
+                                ->label('Keterangan')
+                                ->options([
+                                    'full payment' => 'Full Payment',
+                                    'dp' => 'DP',
+                                ])
+                                ->required(),
+                        ])
+                        ->action(function ($record, array $data) {
+                            $record->update([
+                                'keterangan' => $data['keterangan'],
+                            ]);
+                        })
+                        ->color('primary'),
                 Action::make('approve')
                         ->label('Approve')
                         ->icon('heroicon-o-check')

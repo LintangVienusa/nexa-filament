@@ -58,6 +58,7 @@ class Invoice extends Model
         'dp',
         'amount',
         'status',
+        'keterangan',
         'create_by',
         'approval_by',
         'approval_at',
