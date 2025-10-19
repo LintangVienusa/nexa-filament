@@ -202,7 +202,11 @@ class AttendanceResource extends Resource
                 TextColumn::make('employee.employee_id')->label('Employee ID'),
                 TextColumn::make('employee.full_name')
                     ->label('Employee Name')
-                    ->searchable()
+                    ->searchable(query: function ($query, $search) {
+                        $query->whereHas('employee', function ($q) use ($search) {
+                            $q->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"]);
+                        });
+                    })
                     ->sortable(),
                 TextColumn::make('attendance_date')->date(),
                 TextColumn::make('check_in_time')->dateTime(),

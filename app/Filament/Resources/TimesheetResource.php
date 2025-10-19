@@ -148,11 +148,16 @@ class TimesheetResource extends Resource
                     ? AttendanceResource::getUrl('edit', ['record' => $record->attendance_id])
                     : null)
                 ->openUrlInNewTab(),
+             Tables\Columns\TextColumn::make('attendance.employee_id')
+                ->label('NIK')
+                ->sortable()
+                ->searchable(),
 
             Tables\Columns\TextColumn::make('attendance.attendance_date')
                 ->label('Tanggal Attendance')
                 ->date()
                 ->sortable(),
+           
 
             Tables\Columns\TextColumn::make('job_description')
                 ->label('Detail Pekerjaan')
