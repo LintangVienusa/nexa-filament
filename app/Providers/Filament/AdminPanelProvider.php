@@ -54,9 +54,6 @@ class AdminPanelProvider extends PanelProvider
                 HTML;
             })
             ->login()
-            ->colors([
-                'primary' => '#cccccc',
-            ])
             ->brandLogo(asset('assets/images/LOGO PT DAPOER POESAT NUSANTARA-03.png'))
             ->brandLogoHeight('10rem')
             ->renderHook(PanelsRenderHook::HEAD_END, function () {

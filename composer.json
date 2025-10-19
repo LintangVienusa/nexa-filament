@@ -9,6 +9,7 @@
         "php": "^8.2",
         "azuyalabs/yasumi": "^2.8",
         "barryvdh/laravel-dompdf": "^3.1",
+        "emmanpbarrameda/filament-take-picture-field": "1.1",
         "filament/filament": "^3.2",
         "laravel/framework": "^12.0",
         "laravel/sanctum": "^4.2",
