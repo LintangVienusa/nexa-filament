@@ -114,16 +114,46 @@ class TimesheetController extends Controller
                 $item->job_duration = null;
             }
 
+            $item->status = match($item->status) {
+                0 => 'On Progress',
+                1 => 'Pending',
+                2 => 'Done',
+                3 => 'Cancel',
+                default => 'Unknown',
+            };
+
             return $item;
         });
 
         $pendingTimesheets = Timesheet::where('created_by', $user->email)
             ->where('status', 1) 
-            ->get();
+            ->get()
+            ->map(function ($item) { 
+                 $item->status = match($item->status) {
+                    0 => 'On Progress',
+                    1 => 'Pending',
+                    2 => 'Done',
+                    3 => 'Cancel',
+                    default => 'Unknown',
+                };
+
+                return $item;
+        });
         
         $completeTimesheets = Timesheet::where('created_by', $user->email)
             ->where('status', 2) 
-            ->get();
+            ->get()
+            ->map(function ($item) { 
+                 $item->status = match($item->status) {
+                    0 => 'On Progress',
+                    1 => 'Pending',
+                    2 => 'Done',
+                    3 => 'Cancel',
+                    default => 'Unknown',
+                };
+
+                return $item;
+        });
 
         return response()->json([
             'status' => 'success',

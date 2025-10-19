@@ -163,10 +163,12 @@ class AttendanceController extends Controller
                 return $item;
             });
 
-        if ($activeTimesheet) {
+       $activeTimesheetCount = $activeTimesheet->filter(fn($item) => $item->job_duration !== null)->count();
+
+        if ($activeTimesheetCount>0) {
             return response()->json([
                 'message' => 'Masih ada pekerjaan yang sedang berlangsung, selesaikan atau pending terlebih dahulu',
-                'data'    =>$activeTimesheet->toArray(),
+                'data'    =>$activeTimesheet,
             ], 400);
         }
 
