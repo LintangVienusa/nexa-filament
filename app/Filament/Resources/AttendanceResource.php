@@ -76,6 +76,7 @@ class AttendanceResource extends Resource
                             ->disabled()
                             ->required()
                             ->dehydrated(true),
+                        
                         TextInput::make('check_in_time_display')
                             ->label(fn ($record) => $record ? 'Time Check Out' : 'Time Check In')
                             ->default(Carbon::now('Asia/Jakarta')->format('H:i'))
@@ -205,10 +206,23 @@ class AttendanceResource extends Resource
                 TextColumn::make('check_in_time')->dateTime(),
                 TextColumn::make('check_out_time')->dateTime(),
                 TextColumn::make('working_hours')
-                    ->getStateUsing(fn ($record) => $record->working_hours)
-                    ->numeric(2)
-                    ->suffix(' hrs')
-                    ->sortable(),
+                        ->label('Working Hours')
+                        ->getStateUsing(function ($record) {
+                            // Jika working_hours ada, pakai
+                            if ($record->working_hours) {
+                                $hoursDecimal = $record->working_hours;
+                            } else {
+                                // Jika kosong, hitung dari check_in_time sampai sekarang
+                                $checkIn = $record->check_in_time ? Carbon::parse($record->check_in_time) : now();
+                                $hoursDecimal = round($checkIn->floatDiffInHours(now()), 2); // desimal 2 angka
+                            }
+
+                            $hours = floor($hoursDecimal);
+                            $minutes = round(($hoursDecimal - $hours) * 60);
+
+                            return "{$hours} jam {$minutes} menit";
+                        })
+                        ->sortable(),
             ])
             ->filters([
                 Filter::make('today')
