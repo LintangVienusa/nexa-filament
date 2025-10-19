@@ -20,6 +20,8 @@ class Timesheet extends Model
         'attendance_id',
         'job_description',
         'job_duration',
+        'status',
+        'notes',
         'created_by',
         'created_at',
         'updated_by',

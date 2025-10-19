@@ -119,15 +119,15 @@ class AttendanceResource extends Resource
                     ])->columns(2),
                 Section::make('Evidence')
                     ->schema([
-                    Section::make('location')
-                        ->schema([
-                            ViewField::make('location_map_in')
-                        ->label('Lokasi Absensi')
-                        ->view('filament.partials.location-capture')
-                        ->visible(fn ($record) => $record && $record->check_in_latitude && $record->check_in_longitude),
+                    // Section::make('location')
+                        // ->schema([
+                        //     ViewField::make('location_map_in')
+                        // ->label('Lokasi Absensi')
+                        // ->view('filament.partials.location-capture')
+                        // ->visible(fn ($record) => $record && $record->check_in_latitude && $record->check_in_longitude),
                         ViewField::make('location_map')
                                 ->view('filament.partials.location-map'),
-                        ]),
+                        // ]),s
                         
                      Section::make('')
                         ->schema([
@@ -136,29 +136,31 @@ class AttendanceResource extends Resource
                                 ->required()
                                 ->dehydrated()
                                 ->default(fn ($record) => $record  ? $record->check_in_latitude : null)
-                                ->id('check_in_latitude')->visible(fn ($record) => !$record || !$record->check_in_latitude),
+                                ->id('check_in_latitude'),
+                                // ->visible(fn ($record) => !$record || !$record->check_in_latitude),
 
                             TextInput::make('check_in_longitude')
                                 ->label('Check In Longitude')
                                 ->required()
                                 ->dehydrated()
                                 ->default(fn ($record) => $record  ? $record->check_in_longitude : null)
-                                ->id('check_in_longitude')->visible(fn ($record) => !$record || !$record->check_in_latitude),
+                                ->id('check_in_longitude'),
+                                // ->visible(fn ($record) => !$record || !$record->check_in_latitude),
 
                             TextInput::make('check_out_latitude')
                                 ->label('Check Out Latitude')
                                 ->dehydrated()
                                 ->default(fn ($record) => $record  ? $record->check_out_latitude : null)
-                                ->id('check_out_latitude')
-                                ->visible(fn ($record) => $record && $record->check_in_latitude && !$record->check_out_latitude),
+                                ->id('check_out_latitude'),
+                                // ->visible(fn ($record) => $record && $record->check_in_latitude && !$record->check_out_latitude),
 
 
                             TextInput::make('check_out_longitude')
                                 ->label('Check Out Longitude')
                                 ->dehydrated()
                                 ->default(fn ($record) => $record  ? $record->check_out_longitude : null)
-                                ->id('check_out_longitude')
-                                ->visible(fn ($record) => $record && $record->check_in_latitude && !$record->check_out_latitude),
+                                ->id('check_out_longitude'),
+                                // ->visible(fn ($record) => $record && $record->check_in_latitude && !$record->check_out_latitude),
                          ])->columns(2),
                     ]),
                 Section::make('Bukti Kehadiran')
