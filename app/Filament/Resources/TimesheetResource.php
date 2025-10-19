@@ -22,6 +22,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Spatie\Permission\Traits\HasPermissions;
+use Filament\Forms\Components\Select;
 
 class TimesheetResource extends Resource
 {
@@ -62,48 +63,58 @@ class TimesheetResource extends Resource
                         ->reactive(false),
                 ]),
 
-            Section::make('Durasi Pekerjaan')
-                ->schema([
+            // Section::make('Durasi Pekerjaan')
+            //     ->schema([
 
-                Grid::make(2)
-                    ->schema([
-                        TextInput::make('job_duration_hours')
-                            ->numeric()
-                            ->hiddenLabel()
-                            ->default(0)
-                            ->suffix(' jam')
-                            ->reactive()
-                            ->afterStateUpdated(function ($state, callable $set, $get) {
-                                $hours = (float) $state;
-                                $minutes = (float) $get('job_duration_minutes');
-                                $decimal = $hours + ($minutes / 60);
-                                $set('job_duration', round($decimal, 2));
-                            }),
+            //     Grid::make(2)
+            //         ->schema([
+            //             TextInput::make('job_duration_hours')
+            //                 ->numeric()
+            //                 ->hiddenLabel()
+            //                 ->default(0)
+            //                 ->suffix(' jam')
+            //                 ->reactive()
+            //                 ->afterStateUpdated(function ($state, callable $set, $get) {
+            //                     $hours = (float) $state;
+            //                     $minutes = (float) $get('job_duration_minutes');
+            //                     $decimal = $hours + ($minutes / 60);
+            //                     $set('job_duration', round($decimal, 2));
+            //                 }),
 
-                        TextInput::make('job_duration_minutes')
-                            ->numeric()
-                            ->hiddenLabel()
-                            ->default(0)
-                            ->suffix(' menit')
-                            ->reactive()
-                            ->afterStateUpdated(function ($state, callable $set, $get) {
-                                $hours = (float) $get('job_duration_hours');
-                                $minutes = (float) $state;
-                                $decimal = $hours + ($minutes / 60);
-                                $set('job_duration', round($decimal, 2));
-                            }),
-                    ])
-                ]),
+            //             TextInput::make('job_duration_minutes')
+            //                 ->numeric()
+            //                 ->hiddenLabel()
+            //                 ->default(0)
+            //                 ->suffix(' menit')
+            //                 ->reactive()
+            //                 ->afterStateUpdated(function ($state, callable $set, $get) {
+            //                     $hours = (float) $get('job_duration_hours');
+            //                     $minutes = (float) $state;
+            //                     $decimal = $hours + ($minutes / 60);
+            //                     $set('job_duration', round($decimal, 2));
+            //                 }),
+            //         ])
+            //     ]),
 
-            TextInput::make('job_duration')
-                ->hidden()
+            Hidden::make('job_duration')
                 ->dehydrated(true)
-                ->numeric(),
+                ->default('0'),
 
             Textarea::make('job_description')
                 ->required()
                 ->columnSpanFull(),
 
+            
+            Select::make('status')
+                ->label('Status')
+                ->options([
+                    '0' => 'On Progress',
+                    '1' => 'Pending',
+                    '2' => 'Done',
+                    '3' => 'Cancel',
+                ])
+                ->default('0') // default untuk create
+                ->required(),
             Hidden::make('created_by')
                 ->default(fn () => auth()->user()->email ?? null),
         ]);
