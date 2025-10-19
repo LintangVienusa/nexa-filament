@@ -9,6 +9,7 @@ use App\Models\Timesheet;
 use App\Traits\HasOwnRecordPolicy;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Textarea;
@@ -53,7 +54,6 @@ class TimesheetResource extends Resource
                 ->dehydrated(true),
 
             Section::make('Informasi Kehadiran')
-                ->collapsible()
                 ->schema([
                     ViewField::make('attendance_info')
                         ->label('Attendance Info')
@@ -62,14 +62,47 @@ class TimesheetResource extends Resource
                         ->reactive(false),
                 ]),
 
+            Section::make('Durasi Pekerjaan')
+                ->schema([
+
+                Grid::make(2)
+                    ->schema([
+                        TextInput::make('job_duration_hours')
+                            ->numeric()
+                            ->hiddenLabel()
+                            ->default(0)
+                            ->suffix(' jam')
+                            ->reactive()
+                            ->afterStateUpdated(function ($state, callable $set, $get) {
+                                $hours = (float) $state;
+                                $minutes = (float) $get('job_duration_minutes');
+                                $decimal = $hours + ($minutes / 60);
+                                $set('job_duration', round($decimal, 2));
+                            }),
+
+                        TextInput::make('job_duration_minutes')
+                            ->numeric()
+                            ->hiddenLabel()
+                            ->default(0)
+                            ->suffix(' menit')
+                            ->reactive()
+                            ->afterStateUpdated(function ($state, callable $set, $get) {
+                                $hours = (float) $get('job_duration_hours');
+                                $minutes = (float) $state;
+                                $decimal = $hours + ($minutes / 60);
+                                $set('job_duration', round($decimal, 2));
+                            }),
+                    ])
+                ]),
+
+            TextInput::make('job_duration')
+                ->hidden()
+                ->dehydrated(true)
+                ->numeric(),
+
             Textarea::make('job_description')
                 ->required()
                 ->columnSpanFull(),
-
-            TextInput::make('job_duration')
-                ->numeric()
-                ->required()
-                ->suffix(' jam'),
 
             Hidden::make('created_by')
                 ->default(fn () => auth()->user()->email ?? null),
@@ -99,7 +132,19 @@ class TimesheetResource extends Resource
                 ->searchable(),
 
             Tables\Columns\TextColumn::make('job_duration')
-                ->label('Durasi (Jam)')
+                ->label('Durasi Pekerjaan')
+                ->getStateUsing(function ($record) {
+                    $hours = floor($record->job_duration);
+                    $minutes = round(($record->job_duration - $hours) * 60);
+
+                    if ($hours > 0 && $minutes > 0) {
+                        return "{$hours} jam {$minutes} menit";
+                    } elseif ($hours > 0) {
+                        return "{$hours} jam";
+                    } else {
+                        return "{$minutes} menit";
+                    }
+                })
                 ->sortable(),
 
             Tables\Columns\TextColumn::make('created_at')

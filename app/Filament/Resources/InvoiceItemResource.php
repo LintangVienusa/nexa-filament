@@ -27,6 +27,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\HasManyRepeater;
 use Filament\Forms\Components\Textarea;
 use Carbon\Carbon;
+use Filament\Tables\Actions\Action;
 
 class InvoiceItemResource extends Resource
 {
@@ -35,6 +36,8 @@ class InvoiceItemResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
     protected static ?string $navigationGroup = 'Transactions';
     protected static ?int $navigationSort = 3;
+
+    
 
     public static function form(Form $form): Form
     {
@@ -45,10 +48,12 @@ class InvoiceItemResource extends Resource
                     ->schema([
                         TextInput::make('po_number')
                             ->label('PO Nomor')
-                            ->default(fn () => 'PO.' . now()->format('Ymd-His') . '.' . rand(100,999))
+                            // ->default(fn () => 'PO.' . now()->format('Ymd-His') . '.' . rand(100,999))
+                            ->default(fn () => 'PO.' . now()->format('Y.m') . '.' . rand(10000,99999))
                             ->required()
                             ->reactive()
-                            ->dehydrateStateUsing(fn ($state) => $state ?? 'PO.' . now()->format('Ymd-His') . '.' . rand(100,999))
+                            // ->dehydrateStateUsing(fn ($state) => $state ?? 'PO.' . now()->format('Ymd-His') . '.' . rand(100,999))
+                            ->dehydrateStateUsing(fn ($state) => $state ?? 'PO.' . now()->format('Y.m') . '.' . rand(10000,99999))
                             ->readonly(),
 
                         Textarea::make('po_description')
@@ -199,6 +204,8 @@ class InvoiceItemResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+        //         Action::make('activities')
+        // ->url(fn ($record) => \App\Filament\Resources\InvoiceItemResource::getUrl('activities', ['record' => $record])),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -269,6 +276,8 @@ class InvoiceItemResource extends Resource
             'index' => Pages\ListInvoiceItems::route('/'),
             'create' => Pages\CreateInvoiceItem::route('/create'),
             'edit' => Pages\EditInvoiceItem::route('/{record}/edit'),
+            
+    
         ];
     }
 }

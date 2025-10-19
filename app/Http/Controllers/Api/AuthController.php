@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Organization;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -26,18 +28,35 @@ class AuthController extends Controller
         }
 
         $user->tokens()->delete();
+        \DB::table('sessions')->where('user_id', $user->id)->delete();
+
+        $sessionToken = Str::random(60);
+        $user->forceFill(['current_session_token' => $sessionToken])->save();
 
         $token = $user->createToken('mobile')->plainTextToken;
+
+        $employee = $user->employee()->with('organization')->first();
+
+        $filePath = storage_path('app/public/' . $employee->file_photo);
+        $base64 = file_exists($filePath)
+            ? base64_encode(file_get_contents($filePath))
+            : null;
 
         return response()->json([
             'status' => 'success',
             'message' => 'Login successful',
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
+            'data' => [
+                'user_id'      => $user->id,
+                'username'     => $user->name,
+                'email'        => $user->email,
+                'employee_id'  => $employee->employee_id ?? null,
+                'full_name'    => $employee->full_name ?? null,
+                'division'     => optional(optional($employee)->organization)->divisi_name ?? null,
+                'unit_name'    => optional(optional($employee)->organization)->unit_name ?? null,
+                'job_title'    => $employee->job_title ?? null,
+                'file_photo'    => $base64 ?? null,
+                'token'        => $token,
             ],
-            'token' => $token,
         ]);
     }
 
@@ -48,13 +67,6 @@ class AuthController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => 'Logged out successfully',
-        ]);
-    }
-
-    public function me(Request $request)
-    {
-        return response()->json([
-            'user' => $request->user(),
         ]);
     }
 }

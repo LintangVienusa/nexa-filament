@@ -44,11 +44,18 @@ class CustomerResource extends Resource
                                     $initials .= strtoupper(substr($word, 0, 1));
                                 }
                                 $set('initial', $initials);
-                            }),
+                            })
+                            ->extraInputAttributes(['style' => 'text-transform: uppercase;'])
+                            ->dehydrateStateUsing(fn ($state) => strtoupper($state))
+                            ->required()
+                            ->reactive(),
 
                         TextInput::make('initial')
                             ->label('Initial')
+                            ->extraInputAttributes(['style' => 'text-transform: uppercase;'])
+                            ->dehydrateStateUsing(fn ($state) => strtoupper($state))
                             ->required()
+                            ->reactive()
                             ->maxLength(10),
                         
                         Textarea::make('address')
@@ -80,6 +87,8 @@ class CustomerResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('customer_name')
+                    ->searchable(),
+                TextColumn::make('initial')
                     ->searchable(),
                 TextColumn::make('address')
                     ->searchable(),

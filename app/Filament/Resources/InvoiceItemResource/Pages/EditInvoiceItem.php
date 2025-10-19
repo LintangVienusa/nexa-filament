@@ -7,6 +7,7 @@ use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 use App\Models\InvoiceItem;
 use Filament\Notifications\Notification;
+use Spatie\Activitylog\Models\Activity;
 
 class EditInvoiceItem extends EditRecord
 {
@@ -26,6 +27,22 @@ class EditInvoiceItem extends EditRecord
 
             // Redirect user ke halaman index agar tidak tetap di form edit
             $this->redirect($this->getResource()::getUrl('index'));
+
+            $activity = activity('InvoiceItems-action')
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'ip' =>  request()->ip(),
+                'menu' => 'Invoice Items',
+                'email' => auth()->user()->email,
+                'record_id' => $record->id,
+                'record_name' => $record->name ?? null,
+            ])
+            ->log('Membuka halaman Edit InvoiceItem');
+
+            Activity::latest()->first()->update([
+                'email' => auth()->user()?->email,
+                'menu' => 'Invoice Items',
+            ]);
         }
     }
 
@@ -114,6 +131,29 @@ class EditInvoiceItem extends EditRecord
     protected function getRedirectUrl(): string
     {
         return $this->getResource()::getUrl('index');
+    }
+
+    protected function afterSave(): void
+    {
+        parent::afterSave();
+
+        $record = $this->record; // record yang baru diupdate
+
+        $activity = activity('InvoiceItems-action')
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'ip' =>  request()->ip(),
+                'menu' => 'Invoice Items',
+                'email' => auth()->user()->email,
+                'record_id' => $record->id,
+                'record_name' => $record->name ?? null,
+            ])
+            ->log('Mengedit record InvoiceItem');
+
+            Activity::latest()->first()->update([
+                'email' => auth()->user()?->email,
+                'menu' => 'Invoice Items',
+            ]);
     }
 
    

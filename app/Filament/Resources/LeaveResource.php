@@ -281,23 +281,27 @@ class LeaveResource extends Resource
                         default => 'primary',
                     })
                     ->sortable(),
+                 Tables\Columns\ImageColumn::make('leave_evidence')
+                    ->label('Lampiran')
+                    ->disk('public') 
+                    ->height(50),
+                
+                Tables\Columns\TextColumn::make('created_by')
+                    ->label('Dibuat oleh')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->dateTime()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('approved_by')
                     ->label('Disetujui oleh')
                     ->searchable(),
                 // Tables\Columns\TextColumn::make('leave_evidence')
                 //     ->searchable(),
-                    Tables\Columns\ImageColumn::make('leave_evidence')
-                    ->label('Lampiran')
-                    ->disk('public') 
-                    ->height(50),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                
                 Tables\Columns\TextColumn::make('updated_at')
+                    ->label('Approved at')
                     ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable(),
             ])
             ->filters([
                 //
@@ -312,6 +316,22 @@ class LeaveResource extends Resource
                         ->action(function ($record) {
                             $type = $record->leave_type;
                             $record->update(['status' => 2]);
+                            activity('Leaves-action')
+                                ->causedBy(auth()->user())
+                                ->withProperties([
+                                    'ip'    => request()->ip(),
+                                    'menu'  => 'Leaves',
+                                    'email' => auth()->user()?->email,
+                                    'record_id' => $record->id,
+                                    'Leaves' => $record->id,
+                                    'action' => 'Approve',
+                                ])
+                                ->tap(function ($activity) {
+                                        $activity->email = auth()->user()?->email;
+                                        $activity->menu = 'Leaves';
+                                    })
+                                ->log('Leaves disetujui');
+
                             Notification::make()
                                 ->title( $type .' Approve')
                                 ->success()
@@ -328,6 +348,22 @@ class LeaveResource extends Resource
                             
                             $type = $record->leave_type;
                               $record->update(['status' => 3]);
+
+                              activity('Leaves-action')
+                                ->causedBy(auth()->user())
+                                ->withProperties([
+                                    'ip'    => request()->ip(),
+                                    'menu'  => 'Leaves',
+                                    'email' => auth()->user()?->email,
+                                    'record_id' => $record->id,
+                                    'Leaves' => $record->id,
+                                    'action' => 'Approve',
+                                ])
+                                ->tap(function ($activity) {
+                                        $activity->email = auth()->user()?->email;
+                                        $activity->menu = 'Leaves';
+                                    })
+                                ->log('Leaves tidak disetujui');
                             Notification::make()
                                 ->title( $type .' Reject')
                                 ->success()

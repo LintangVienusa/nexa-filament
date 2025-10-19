@@ -7,6 +7,7 @@ use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
 use Filament\Notifications\Notification;
 use Filament\Forms\Exceptions\PreventAction;
+use Spatie\Activitylog\Models\Activity;
 use Carbon\Carbon;
 
 use App\Models\Leave;
@@ -14,6 +15,8 @@ use App\Models\Leave;
 class CreateLeave extends CreateRecord
 {
     protected static string $resource = LeaveResource::class;
+
+    
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
@@ -57,5 +60,28 @@ class CreateLeave extends CreateRecord
     protected function getRedirectUrl(): string
     {
         return $this->getResource()::getUrl('index'); 
+    }
+
+    public function mount(): void
+    {
+        parent::mount();
+        $user = auth()->user();
+
+        // Log aktivitas saat halaman Create dibuka
+        $activity = activity('Leaves-access')
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'ip' =>  request()->ip(),
+                'menu' => 'Leaves Items',
+                'email' => $user?->email,
+                'url' => request()->fullUrl(),
+                'method' => request()->method(),
+            ])
+            ->log('Membuka halaman Create Leaves');
+
+            Activity::latest()->first()->update([
+                'email' => auth()->user()?->email,
+                'menu' => 'Leaves Items',
+            ]);
     }
 }

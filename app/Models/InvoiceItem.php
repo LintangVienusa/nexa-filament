@@ -6,15 +6,37 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Models\Activity;
 
 
 use Carbon\Carbon;
 
 class InvoiceItem extends Model
 {
-    use HasFactory;
+    use HasFactory,LogsActivity;
     protected $table = 'InvoiceItems';
     protected $primaryKey = 'id';
+    
+     public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['po_number', 'po_description','invoice_id']) 
+            ->logOnlyDirty()     
+            ->useLogName('invoice_item');
+    }
+    public function tapActivity(Activity $activity, string $eventName)
+    {
+        $user = auth()->user();
+        $activity->properties = array_merge($activity->properties->toArray(), [
+            'record_id' => $this->id,
+            'name' => $this->description ?? null,
+        ]);
+        $activity->email = $user?->email;
+        $activity->menu = 'Invoice Items';
+    }
+
     protected $fillable = [
         'po_number',
         'po_description',
@@ -38,10 +60,13 @@ class InvoiceItem extends Model
             $po_number = $item->po_number ?? null;
             $invoiceid = $item->invoice_id ?? null;
             $customer_id = $item->customer_id ?? null;
+            // $customer_initial = $customer->initial ?? null;
+            $customer = Customer::find($customer_id);
+            $customer_initial = $customer->initial ?? '';
             $now = Carbon::now();
             $periodeCarbon = Carbon::parse($item->invoice_date ?? now());
             $periodeString = $periodeCarbon->format('F Y');
-            $invoiceNumber = str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT).'/NXN/INV/' . strtoupper($periodeCarbon->format('Ym'));
+            $invoiceNumber = str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT).'/DPNG/INV/'.$customer_initial.'/'. strtoupper($periodeCarbon->format('Y'));
 
 
             $invoice = Invoice::when($invoiceid, function ($q) use ($customer_id, $invoiceid) {
@@ -74,15 +99,38 @@ class InvoiceItem extends Model
             if ($invoice) {
                 $total = $invoice->items()->sum(DB::raw('qty * unit_price'));
                 $taxRate = "0.11";
+                $dprate = "0.20";
                 $tax = $total * $taxRate;
                 $amount = $total - $tax;
+                $dp = $total * $dprate;
 
                 $invoice->subtotal = $total;
                 $invoice->tax_rate = $taxRate;
                 $invoice->tax_amount = $tax;
+                $invoice->dp_rate = $dprate;
+                $invoice->dp = $dp;
                 $invoice->amount = $amount;
                 $invoice->save();
             }
+        });
+
+        static::created(function ($record) {
+            $user = auth()->user();
+
+            $activity = activity('InvoiceItems-action')
+                ->causedBy($user)
+                ->withProperties([
+                    'ip' =>  request()->ip(),
+                    'menu' => 'Invoice Items',
+                    'email' => $user?->email,
+                    'record_id' => $record->id,
+                    'name' => $record->name ?? null,
+                ])
+                ->log('Membuat record InvoiceItem baru');
+                Activity::latest()->first()->update([
+                    'email' => auth()->user()?->email,
+                    'menu' => 'Invoice Item',
+                ]);
         });
     }
 

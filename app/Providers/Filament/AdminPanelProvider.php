@@ -34,23 +34,17 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->brandName('HRMS - DPNG')
             ->profile()
+            ->font('Roboto')
             ->userMenuItems([
                 'profile' => UserMenuItem::make()
                     ->label('Profil Saya')
                     ->icon('heroicon-o-user')
                     ->url(function () {
-                        $recordId = auth()->user()->email; 
-                        // return ProfileResource::getUrl('edit', ['record' => $recordId]);s
+                        $recordId = auth()->user()->email;
                         return ProfileResource::getUrl('edit', ['record' => $recordId]);
                     }),
-            
-            // 'profile' => UserMenuItem::make()
-            //     ->label('Ganti Password')
-            //     ->url(fn (): string => EditProfile::getUrl())
-            //     ->icon('heroicon-o-user'),
-                
             ])
-            
+
             ->renderHook(PanelsRenderHook::HEAD_END, function () {
                 $favicon = asset('assets/images/LOGO PT DAPOER POESAT NUSANTARA-07.png'); // path ke favicon
                 return <<<HTML
@@ -175,6 +169,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ]);
+            ])
+            ->homeUrl('/admin');
     }
 }

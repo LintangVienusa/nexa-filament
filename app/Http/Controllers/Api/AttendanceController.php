@@ -7,18 +7,24 @@ use Illuminate\Http\Request;
 use App\Models\Attendance;
 use App\Models\User;
 use App\Models\Employee;
+use App\Models\Timesheet;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use Carbon\Carbon;
 
 class AttendanceController extends Controller
 {
-    // public function checkin(Request $request)
-    // {
-    //     return response()->json(['message' => 'Check-in OK']);
-    // }
     public function Checkin(Request $request)
     {
+        $user = Auth::user();
+
+        if (! $user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthorized',
+            ], 401);
+        }
         $email = $request->email;
         $check_in_evidence = $request->check_in_evidence;
         $date = $request->date;
@@ -26,41 +32,37 @@ class AttendanceController extends Controller
         $check_in_latitude = $request->check_in_latitude;
         $check_in_longitude = $request->check_in_longitude;
 
-        $user = User::where('email', $email)->first();
+        // $user = User::where('email', $email)->first();
         $employee = Employee::where('email', $email)->first();
-        
+
         $info = "OK";
 
         if (!$employee) {
-            
+
             $info = "NOK";
             return response()->json([
                 'message' => 'User tidak terhubung dengan employee'
             ], 400);
         }
-        
+
         $employee_id = $employee->employee_id;
-        // dd($employee_id);
-        
+
         $today = \Carbon\Carbon::today();
 
         $todayCheckin = Attendance::where('employee_id', $employee_id)
             ->where('attendance_date', $date)
             ->first();
-            // dd($todayCheckin->toSql(), $todayCheckin->getBindings());s
-            // dd($employee_id);s
-            // dd($todayCheckin);
         if ($todayCheckin) {
             $attendance = Attendance::where('employee_id', $employee_id)
                 ->where('attendance_date', $date)
                 ->first();
-            
+
             $info = "NOK";
             return response()->json([
                 'message' => 'Anda sudah check-in hari ini',
                 'data' => $attendance
             ], 400);
-            
+
         }
 
         $date_time = $date . " " . $check_in_time;
@@ -76,22 +78,22 @@ class AttendanceController extends Controller
             ]);
         }
 
-       
-        
-
-
         return response()->json([
             'message' => 'Check-in berhasil',
             'data' => $attendance
         ]);
-
-        
-
-        
     }
 
     public function checkout(Request $request)
     {
+        $user = Auth::user();
+
+        if (! $user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthorized',
+            ], 401);
+        }
         $request->validate([
             'email' => 'required',
         ]);
@@ -106,27 +108,67 @@ class AttendanceController extends Controller
         $user = User::where('email', $email)->first();
         $employee = Employee::where('email', $email)->first();
         $today = Carbon::today();
-        
+
         $employee_id = $employee->employee_id;
-        // dd($employee);
+
+    
+        
         $attendance = Attendance::where('employee_id', $employee_id)
             ->whereDate('attendance_date', $date)
             ->first();
-            // dd($attendance);
+
+            
+
         if (!$attendance) {
             return response()->json([
                 'message' => 'Belum melakukan check-in hari ini',
             'data' => $attendance,
             ], 404);
         }
-        if($attendance->check_out_time !=''){
+        
+        if($attendance->check_out_evidence !=''){
             return response()->json([
                 'message' => 'Sudah melakukan check-out hari ini',
             'data' => $attendance,
             ], 404);
         }
 
-        
+        $atid = $attendance->id;
+        $activeTimesheet = Timesheet::where('attendance_id', $atid)
+            ->where('status', 0)
+            ->get()
+            ->map(function ($item) {
+                if ($item->status == 0 && $item->created_at) {
+                    $createdAt = Carbon::parse($item->created_at);
+                    $now = Carbon::now();
+
+                    $diffInMinutes = (int) $createdAt->diffInMinutes($now);
+
+                    if ($diffInMinutes < 60) {
+                        $item->job_duration = $diffInMinutes . ' menit';
+                    } else {
+                        $hours = floor($diffInMinutes / 60);
+                        $minutes = $diffInMinutes % 60;
+
+                        if ($minutes > 0) {
+                            $item->job_duration = $hours . ' jam ' . $minutes . ' menit';
+                        } else {
+                            $item->job_duration = $hours . ' jam';
+                        }
+                    }
+                } else {
+                    $item->job_duration = null;
+                }
+
+                return $item;
+            });
+
+        if ($activeTimesheet) {
+            return response()->json([
+                'message' => 'Masih ada pekerjaan yang sedang berlangsung, selesaikan atau pending terlebih dahulu',
+                'data'    =>$activeTimesheet->toArray(),
+            ], 400);
+        }
 
         $cek_in =$attendance->check_in_time;
         $time_in = \Carbon\Carbon::parse($cek_in);
@@ -146,5 +188,39 @@ class AttendanceController extends Controller
             'message' => 'Check-out berhasil',
             'data' => $attendance
         ]);
+    }
+
+     public function checkabsen(Request $request)
+    {
+        $user = Auth::user();
+
+        if (! $user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthorized',
+            ], 401);
+        }
+        $email = $request->email;
+        $user = User::where('email', $email)->first();
+        $employee = Employee::where('email', $email)->first();
+        $employee_id = $employee->employee_id;
+        $today = Carbon::today()->format('Y-m-d');
+
+        $attendance = Attendance::where('employee_id', $employee_id)
+            ->whereDate('attendance_date', $today)
+            ->first();
+
+        if (!$attendance) {
+            return response()->json([
+                'message' => 'Belum melakukan check-in hari ini',
+            'data' => $attendance,
+            ], 404);
+        }else{
+            return response()->json([
+                'message' => 'Sudah melakukan check-in hari ini',
+            'data' => $attendance,
+            ], 404);
+        }
+
     }
 }

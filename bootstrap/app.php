@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\Auth;
+use App\Http\Middleware\RestrictSession;
 use Illuminate\Http\Request;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Foundation\Application;
@@ -16,8 +18,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->api(prepend: [
-            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+        $middleware->alias([
+            'auth' => Auth::class,
+            'auth.sanctum' => \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+            'restrict.session' => RestrictSession::class
         ]);
 
         $middleware->group('api', [

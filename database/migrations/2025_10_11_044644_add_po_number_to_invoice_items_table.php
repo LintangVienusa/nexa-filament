@@ -23,9 +23,9 @@ return new class extends Migration
      */
     public function down(): void
     {
+        
         Schema::connection('mysql')->table('InvoiceItems', function (Blueprint $table) {
-            $table->string('po_number');
-            $table->string('po_description');
+            $table->dropColumn(['po_number','po_description']);
         });
     }
 };

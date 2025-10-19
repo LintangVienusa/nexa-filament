@@ -6,6 +6,7 @@ use App\Filament\Resources\InvoiceItemResource;
 use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
 use App\Models\InvoiceItem;
+use Spatie\Activitylog\Models\Activity;
 
 
 class CreateInvoiceItem extends CreateRecord
@@ -19,7 +20,7 @@ class CreateInvoiceItem extends CreateRecord
 
     protected function handleRecordCreation(array $data): InvoiceItem
     {
-        $poNumber = $data['po_number'] ?? 'PO.' . now()->format('Ymd-His') . '.' . rand(100,999);
+        $poNumber = $data['po_number'] ?? 'PO.' . now()->format('Y.m') . '.' . rand(10000,99999);
         foreach ($data['items'] as $component) {
             // $poNumber = 'PO-'.date('Ymd-His').'-'.rand(100,999);
             InvoiceItem::create([
@@ -37,6 +38,47 @@ class CreateInvoiceItem extends CreateRecord
              
         }
         return new InvoiceItem();
+    }
+    // protected function mutateFormDataBeforeCreate(array $data): array
+    // {
+    //     $record = $this->record; // record yang baru dibuat
+
+    //         $activity =activity('filament-action')
+    //             ->causedBy(auth()->user())
+                
+    //             ->withProperties([
+    //                 'email' => auth()->user()?->email,
+    //                 'record_id' => $record->id,
+    //                 'name' => $record->name ?? null,
+    //             ])
+    //             ->log('Membuat record InvoiceItem baru');
+    //             Activity::latest()->first()->update([
+    //                 'email' => auth()->user()?->email,
+    //             ]);
+    // return $data;
+    // }
+
+    public function mount(): void
+    {
+        parent::mount();
+        $user = auth()->user();
+
+        // Log aktivitas saat halaman Create dibuka
+        $activity = activity('InvoiceItems-access')
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'ip' =>  request()->ip(),
+                'menu' => 'Invoice Items',
+                'email' => $user?->email,
+                'url' => request()->fullUrl(),
+                'method' => request()->method(),
+            ])
+            ->log('Membuka halaman Create InvoiceItem');
+
+            Activity::latest()->first()->update([
+                'email' => auth()->user()?->email,
+                'menu' => 'Invoice Items',
+            ]);
     }
     
 }

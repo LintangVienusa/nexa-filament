@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\EmployeeResource\Pages;
 use App\Filament\Resources\EmployeeResource\RelationManagers;
 use App\Models\Employee;
+use App\Models\Organization;
 use App\Traits\HasOwnRecordPolicy;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Section;
@@ -45,16 +46,19 @@ class EmployeeResource extends Resource
                 Section::make('Informasi Personal')
                     ->schema([
 
+                        // FileUpload::make('file_photo')
+                        //     ->label('Photo')
+                        //     ->image()
+                        //     ->directory('employee-photos')
+                        //     ->acceptedFileTypes(['image/jpeg']) 
+                        //     ->visibility('public')
+                        //     ->required()
+                        //     ->maxSize(2024),
                         FileUpload::make('file_photo')
                             ->label('Photo')
-                            ->image()
-                            ->directory('employee-photos')
-                            ->acceptedFileTypes(['image/jpeg']) 
-                            ->visibility('public')
-                            ->imageResizeTargetWidth(500)
-                            ->imageResizeTargetHeight(900)
-                            ->required()
-                            ->maxSize(1024),
+                            ->directory('employee')
+                            ->maxSize(1024)
+                            ->preserveFilenames(),
 
                         TextInput::make('employee_id')
                             ->label('Nomor Induk Karyawan(NIK)')
@@ -67,18 +71,21 @@ class EmployeeResource extends Resource
                             ->label('Nama Depan')
                             ->required()
                             ->extraInputAttributes(['style' => 'text-transform: uppercase;'])
+                            ->dehydrateStateUsing(fn ($state) => strtoupper($state))
                             ->reactive()
                             ->maxLength(50),
 
                         TextInput::make('middle_name')
                             ->label('Nama Tengah')
                             ->extraInputAttributes(['style' => 'text-transform: uppercase;'])
+                            ->dehydrateStateUsing(fn ($state) => strtoupper($state))
                             ->reactive()
                             ->maxLength(50),
 
                         TextInput::make('last_name')
                             ->label('Nama Belakang')
                             ->extraInputAttributes(['style' => 'text-transform: uppercase;'])
+                            ->dehydrateStateUsing(fn ($state) => strtoupper($state))
                             ->required()
                             ->reactive()
                             ->maxLength(50),
@@ -120,7 +127,14 @@ class EmployeeResource extends Resource
                                     ->pluck('divisi_name', 'divisi_name'))
                                 ->reactive()
                                 ->required()
-                                ->disabled(fn ($record) => $record !== null) 
+                                ->afterStateHydrated(function ($set, $record) {
+                                    if ($record && $record->org_id) {
+                                        $organization = Organization::find($record->org_id);
+                                        if ($organization) {
+                                            $set('divisi_name', $organization->divisi_name);
+                                        }
+                                    }
+                                })
                                 ->afterStateUpdated(function ($state, callable $set) {
                                     $set('unit_id', null);
                                 }),
@@ -134,7 +148,14 @@ class EmployeeResource extends Resource
                                         ->pluck('unit_name', 'id');
                                 })
                                 ->required()
-                                ->disabled(fn ($record) => $record !== null) 
+                                ->afterStateHydrated(function ($set, $record) {
+                                    if ($record && $record->org_id) {
+                                        $organization = Organization::find($record->org_id);
+                                        if ($organization) {
+                                            $set('unit_id', $organization->id);
+                                        }
+                                    }
+                                }) 
                                 ->afterStateUpdated(function ($state, callable $set) {
                                     
                                     $set('org_id', $state);
@@ -261,8 +282,8 @@ class EmployeeResource extends Resource
             ->columns([
                 Tables\Columns\ImageColumn::make('file_photo')->label('Photo'),
                 Tables\Columns\TextColumn::make('employee_id'),
-                Tables\Columns\TextColumn::make('first_name'),
-                Tables\Columns\TextColumn::make('last_name'),
+                Tables\Columns\TextColumn::make('first_name')->formatStateUsing(fn ($state) => strtoupper($state)),
+                Tables\Columns\TextColumn::make('last_name')->formatStateUsing(fn ($state) => strtoupper($state)),
                 Tables\Columns\TextColumn::make('organization.divisi_name')->label('Organization'),
             ])
             ->filters([
