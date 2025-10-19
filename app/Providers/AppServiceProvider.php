@@ -49,8 +49,8 @@ class AppServiceProvider extends ServiceProvider
                                 <img
                                     src="{$avatarUrl}"
                                     alt="Avatar"
-
-                                    style="width: 10rem; height: 10rem;"
+                                    
+                                    style="width: 6rem; height: 7rem;"
                                     class=" object-cover border border-gray-300"
                                     onerror="this.src='" . asset('images/default-avatar.png') . "'"
                                 >
