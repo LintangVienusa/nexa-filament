@@ -49,7 +49,9 @@ class CreateAttendance extends CreateRecord
             $data['check_in_longitude'] = $todayAttendance->check_in_longitude;
         } else {
             if (isset($data['check_in_evidence']) && str_starts_with($data['check_in_evidence'], 'data:image')) {
-                $data['check_in_evidence'] = preg_replace('#^data:image/\w+;base64,#i', '', $data['check_in_evidence']);
+                $data['check_in_evidence'] = Attendance::compressBase64Image($data['check_in_evidence'], 70);
+                 $data['check_in_evidence'] = preg_replace('#^data:image/\w+;base64,#i', '', $data['check_in_evidence']);
+               
             }
             $data['check_out_evidence'] = null;
             $data['check_out_time'] = null;
