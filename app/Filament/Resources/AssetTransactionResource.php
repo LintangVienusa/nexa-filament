@@ -66,15 +66,21 @@ class AssetTransactionResource extends Resource
                                         'RELEASE' => 'Release',
                                         'RECEIVE' => 'Receive',
                                     ])
-                                    ->required(),
+                                    ->required()
+                                    ->reactive(),
 
                             Select::make('PIC')
-                                ->label('PIC Request')
+                                ->label(function (callable $get) {
+                                        return $get('transaction_type') === 'RECEIVE'
+                                            ? 'PIC Receive'
+                                            : 'PIC Request';
+                                    })
                                 ->options(
                                     Employee::get()->mapWithKeys(fn ($emp) => [
                                         $emp->email => $emp->full_name
                                     ])
                                 )
+                                ->reactive()
                                 ->searchable()
                                 ->required()
                                 ->default(fn ($record) => 
@@ -105,8 +111,9 @@ class AssetTransactionResource extends Resource
                                 ->searchable()
                                 ->reactive()
                                 ->required()
-                                ->afterStateUpdated(function (callable $set, $state) {
+                                ->afterStateUpdated(function (callable $set, $state, callable $get) {
                                     if ($state) {
+                                        $alias = $get('transaction_type') === 'RECEIVE' ? 'RC' : 'RL';
                                         $totalQty = InventoryAsset::where('categoryasset_id', $state)
                                             ->sum('inWarehouse');
                                         $set('asset_qty_now', $totalQty);
@@ -122,12 +129,22 @@ class AssetTransactionResource extends Resource
                                                 ->count() + 1;
 
                                             $number = str_pad($count, 3, '0', STR_PAD_LEFT);
-                                            $baNumber = "BA/{$categoryCode}/{$number}/{$month}/{$year}";
+                                            $baNumber = "BA/{$categoryCode}/{$alias}/{$number}/{$month}/{$year}";
 
                                             $set('ba_number', $baNumber);
                                         }
+
+                                        if ($category) {
+                                            $nextId = (Assets::max('id') ?? 0) + 1;
+                                            $formattedId = str_pad($nextId, 4, '0', STR_PAD_LEFT);
+                                            $set('item_code', $category->category_code . $formattedId);
+                                
+                                        } else {
+                                            $set('item_code', null);
+                                        }
                                     } else {
                                         $set('asset_qty_now', 0);
+                                        $set('item_code', null);
                                     }
                                 }),
 
@@ -140,7 +157,11 @@ class AssetTransactionResource extends Resource
                                 ->default(0),
 
                             TextInput::make('request_asset_qty')
-                                ->label('Jumlah Request')
+                                ->label(function (callable $get) {
+                                        return $get('transaction_type') === 'RECEIVE'
+                                            ? 'Jumlah Receive'
+                                            : 'Jumlah Request';
+                                    })
                                 ->numeric()
                                 ->required()
                                 ->reactive()
@@ -149,8 +170,17 @@ class AssetTransactionResource extends Resource
                                     'max' => 'Jumlah request tidak boleh melebihi jumlah stock yang tersedia.',
                                 ])
                                 ->rule(function (callable $get) {
+                                    // Ambil transaction type
+                                    $type = $get('transaction_type');
                                     $max = (int) $get('asset_qty_now');
-                                    return 'max:' . $max;
+
+                                    // Jika RELEASE, gunakan rule max
+                                    if ($type === 'RELEASE') {
+                                        return 'max:' . $max;
+                                    }
+
+                                    // Jika RECEIVE, tidak pakai aturan max (bebas)
+                                    return null;
                                 })
                                 ->afterStateUpdated(function (callable $set, $state) {
                                     $items = [];
@@ -189,6 +219,7 @@ class AssetTransactionResource extends Resource
                                     'ASSIGNED_TO_EMPLOYEE' => 'Operational Kantor',
                                     'DEPLOYED_FIELD' => 'Operational Lapangan',
                                     'WAREHOUSE' => 'Pengembalian ke Gudang',
+                                    'WAREHOUSE' => 'Masuk ke Gudang',
                                 ])
                                 ->reactive()
                                 ->default('ASSIGNED_TO_EMPLOYEE'),
@@ -239,7 +270,49 @@ class AssetTransactionResource extends Resource
                                 })
                                 ->visible(fn(callable $get)=> $get('usage_type')==='DEPLOYED_FIELD'),
                         ])
+                        ->visible(fn (callable $get) => $get('transaction_type') === 'RELEASE')
                         ->columns(2),
+
+                    Section::make('Penerimaan Barang')
+                        ->schema([
+                            Select::make('usage_type_receive')
+                                ->label('Usage Type')
+                                ->options([
+                                    'RETURN' => 'Pengembalian',
+                                    'TRANSFER' => 'Transfer',
+                                ])
+                                ->reactive(),
+
+                            Select::make('receiver')
+                                ->label('Penerima')
+                                ->options(function(callable $get) 
+                                    {return Employee::get()->mapWithKeys(fn ($emp) => [
+                                            $emp->employee_id => $emp->full_name]);
+                                        }),
+
+                            Select::make('sender')
+                                ->label('Pengirim')
+                                ->options(function(callable $get) 
+                                    {return Employee::get()->mapWithKeys(fn ($emp) => [
+                                            $emp->employee_id => $emp->full_name])->toArray() + ['other' => 'Lainnya'];;
+                                        }) 
+                                ->reactive()
+                                ->required(),
+                                
+                            TextInput::make('sender_custom')
+                                ->label('Nama Pengirim (Lainnya)')
+                                ->visible(fn (callable $get) => $get('sender') === 'other') // hanya muncul kalau pilih "Lainnya"
+                                ->required(fn (callable $get) => $get('sender') === 'other'),
+
+                            // Select::make('sender')
+                            //     ->label('Pengirim')
+                            //     ->options(function(callable $get) 
+                            //         {return Customer::pluck('customer_name','id');
+                            //         return [];
+                            //             }),
+                        ])
+                        ->columns(2)
+                        ->visible(fn (callable $get) => $get('transaction_type') === 'RECEIVE'),
 
                     Section::make('Assets Detail')
                         ->schema([
@@ -293,9 +366,63 @@ class AssetTransactionResource extends Resource
                                 ->columns(2)
                                 ->disableItemCreation()
                                 ->disableItemDeletion()
+                                ->visible(fn (callable $get) => $get('transaction_type') === 'RELEASE')
                                 ->maxItems(fn (callable $get) => $get('../../request_asset_qty') ?? null)
                                 ->required(),
-                        ]),
+
+                        Repeater::make('requested_items')
+                                ->label('Assets Detail')
+                                ->schema([
+                                    Section::make('Asset Information')
+                                        ->schema([
+                                             Hidden::make('category_code')
+                                                ->label('categpry code')
+                                                ->required(),
+                                            // TextInput::make('item_code')
+                                            //     ->label('Item Code')
+                                            //     ->readOnly() 
+                                            //     ->dehydrated(true) 
+                                            //     ->helperText('Akan diisi otomatis setelah disimpan'),
+
+                                            TextInput::make('name')
+                                                ->label('Asset Name')
+                                                ->required(),
+
+                                            TextInput::make('merk')
+                                                ->label('Merk')
+                                                ->nullable(),
+
+                                            TextInput::make('type')
+                                                ->label('Type')
+                                                ->nullable(),
+
+                                            TextInput::make('serialNumber')
+                                                ->label('Serial Number')
+                                                ->required()
+                                                ->unique(ignoreRecord: true),
+
+                                            Forms\Components\Select::make('asset_condition')
+                                                ->label('Kondisi Aset')
+                                                ->options([
+                                                    'GOOD' => 'Bagus',
+                                                    'DAMAGED' => 'Rusak',
+                                                    'REPAIR' => 'Perlu Perbaikan',
+                                                ])
+                                                ->reactive()
+                                                ->required(),
+
+                                            Forms\Components\TextArea::make('notes')
+                                                ->label('Keterangan')
+                                                ->required(),
+                                        ])
+                                    ->columns(2)
+                            ])
+                                ->disableItemCreation()
+                                ->disableItemDeletion()
+                                
+                                ->maxItems(fn (callable $get) => $get('../../request_asset_qty') ?? null)
+                                ->visible(fn (callable $get) => $get('transaction_type') === 'RECEIVE'),
+                        ]), 
                 ]);
     }
 

@@ -36,7 +36,7 @@ class EmployeeResource extends Resource
     public static function canCreate(): bool
     {
         // Hanya admin dan manager yang boleh membuat Employee baru
-        return auth()->user()->hasAnyRole(['admin', 'manager']);
+        return auth()->user()->hasAnyRole(['admin', 'manager', 'superadmin', 'Supervisor', 'Admin']);
     }
 
     public static function form(Form $form): Form
