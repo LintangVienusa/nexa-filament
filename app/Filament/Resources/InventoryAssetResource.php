@@ -22,6 +22,11 @@ class InventoryAssetResource extends Resource
     protected static ?string $navigationGroup = 'Inventory';
     protected static ?string $navigationLabel = 'Inventory Asset Summary';
 
+    public static function canCreate(): bool
+    {
+        return false; 
+    }
+
     public static function form(Form $form): Form
     {
         return $form

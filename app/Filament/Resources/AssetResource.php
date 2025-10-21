@@ -88,7 +88,6 @@ class AssetResource extends Resource
                                 ->required(),
                         Forms\Components\TextArea::make('notes')
                             ->label('Keterangan')
-                            ->required()
                     ])
                     ->columns(2),
 

@@ -11,6 +11,8 @@ class AssetTransaction extends Model
 
     protected $connection = 'mysql_inventory';
     protected $table = 'AssetTransactions';
+    
+    protected static ?string $title = 'Transaksi Asset';
 
     protected $fillable = [
         'transaction_type',
@@ -27,6 +29,7 @@ class AssetTransaction extends Model
         'assigned_id',
         'recipient_by',
         'sender_by',
+        'sender_custom',
         'province_code',
         'regency_code',
         'village_code',
@@ -44,11 +47,12 @@ class AssetTransaction extends Model
     protected static function booted()
     {
         static::creating(function ($release) {
-            // Ambil id terakhir
             $last = self::latest('id')->first();
             $number = $last ? $last->id + 1 : 1;
             $release->transaction_code = 'ASR' . str_pad($number, 5, '0', STR_PAD_LEFT);
         });
+
+        
     }
 
     public function asset()
@@ -91,6 +95,7 @@ class AssetTransaction extends Model
             default => 'Unknown',
         };
     }
+    
 
     // protected static function generateBANumber()
     // {
