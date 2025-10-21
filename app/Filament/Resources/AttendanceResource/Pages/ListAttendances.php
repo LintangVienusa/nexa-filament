@@ -17,6 +17,7 @@ use Carbon\Carbon;
 class ListAttendances extends ListRecords
 {
     protected static string $resource = AttendanceResource::class;
+    
 
     protected function getHeaderActions(): array
     {

@@ -11,13 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::connection('mysql_inventory')->create('MappingWilayah', function (Blueprint $table) {
+        Schema::connection('mysql_inventory')->create('MappingRegion', function (Blueprint $table) {
             $table->id();
             $table->string('province_name');
             $table->string('province_code', 10)->nullable();
 
-            $table->string('district_name');
-            $table->string('district_code', 10)->nullable();
+            $table->string('regency_name');
+            $table->string('regency_code', 10)->nullable();
 
             $table->string('station_name')->nullable();
             $table->string('station_code', 10)->nullable();
@@ -26,7 +26,7 @@ return new class extends Migration
             $table->string('village_code', 10)->nullable();
             $table->timestamps();
 
-            $table->index(['province_code', 'district_code', 'station_code', 'village_code'], 'mw_index');
+            $table->index(['province_code', 'regency_code', 'station_code', 'village_code'], 'mw_index');
         
         });
     }
@@ -36,6 +36,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::connection('mysql_inventory')->dropIfExists('MappingWilayah');
+        Schema::connection('mysql_inventory')->dropIfExists('MappingRegion');
     }
 };

@@ -11,10 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::connection('mysql_inventory')->create('AssetReleaseItems', function (Blueprint $table) {
+        Schema::connection('mysql_inventory')->create('AssetTransactionItems', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('asset_release_id')
-                ->constrained('AssetRelease')
+            $table->foreignId('asset_transaction_id')
+                ->constrained('AssetTransactions')
                 ->cascadeOnDelete(); 
             $table->foreignId('asset_id')
                 ->constrained('Assets'); 
@@ -33,8 +33,8 @@ return new class extends Migration
                 ->nullOnDelete();
             $table->timestamps();
 
-            $table->unique(['asset_release_id', 'asset_id']); 
-            $table->index('asset_release_id');
+            $table->unique(['asset_transaction_id', 'asset_id']); 
+            $table->index('asset_transaction_id');
             $table->index('asset_id');
             $table->index('inventory_id');
             $table->index('movement_id');
@@ -43,6 +43,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::connection('mysql_inventory')->dropIfExists('AssetReleaseItems');
+        Schema::connection('mysql_inventory')->dropIfExists('AssetTransactionItems');
     }
 };

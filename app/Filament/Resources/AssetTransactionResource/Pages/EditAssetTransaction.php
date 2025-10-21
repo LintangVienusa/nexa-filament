@@ -1,21 +1,22 @@
 <?php
 
-namespace App\Filament\Resources\AssetResource\Pages;
+namespace App\Filament\Resources\AssetTransactionResource\Pages;
 
-use App\Filament\Resources\AssetResource;
+use App\Filament\Resources\AssetTransactionResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 
-class EditAsset extends EditRecord
+class EditAssetTransaction extends EditRecord
 {
-    protected static string $resource = AssetResource::class;
+    protected static string $resource = AssetTransactionResource::class;
+    
+    protected static ?string $title = 'Transaksi Asset';
 
     protected function getHeaderActions(): array
     {
         return [
             Actions\DeleteAction::make(),
         ];
-        
     }
 
     protected function getRedirectUrl(): string

@@ -20,6 +20,8 @@ class Assets extends Model
         'serialNumber',
         'category_id',
         'description',
+        'asset_condition',
+        'notes',
         'status',
         'created_by',
     ];

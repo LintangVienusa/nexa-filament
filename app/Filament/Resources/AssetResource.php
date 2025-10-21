@@ -13,6 +13,8 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 
 class AssetResource extends Resource
 {
@@ -75,6 +77,17 @@ class AssetResource extends Resource
                             ->label('Serial Number')
                             ->required()
                             ->unique(ignoreRecord: true),
+                        Select::make('asset_condition')
+                                ->label('Kondisi Aset')
+                                ->options([
+                                    'GOOD' => 'Bagus',
+                                    'DAMAGED' => 'Rusak',
+                                    'REPAIR' => 'Perlu Perbaikan',
+                                ])
+                                ->reactive()
+                                ->required(),
+                        Forms\Components\TextArea::make('notes')
+                            ->label('Keterangan')
                     ])
                     ->columns(2),
 
@@ -88,7 +101,6 @@ class AssetResource extends Resource
                                 0 => 'IN WAREHOUSE',
                                 1 => 'OUT DEPLOYED',
                                 2 => 'LOST',
-                                3 => 'DAMAGED',
                                 4 => 'RETURNED',
                             ])
                             ->default(0),
@@ -120,7 +132,6 @@ class AssetResource extends Resource
                         0 => 'IN WAREHOUSE',
                         1 => 'OUT DEPLOYED',
                         2 => 'LOST',
-                        3 => 'DAMAGED',
                         4 => 'RETURNED',
                         default => 'Unknown',
                     }),

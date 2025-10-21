@@ -5,15 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class AssetReleaseItem extends Model
+class AssetTransactionItem extends Model
 {
     use HasFactory;
 
     protected $connection = 'mysql_inventory';
-    protected $table = 'AssetReleaseItems';
+    protected $table = 'AssetTransactionItems';
 
     protected $fillable = [
-        'asset_release_id',
+        'asset_transaction_id',
         'asset_id',
         'release_date', 
         'item_code',
@@ -27,7 +27,7 @@ class AssetReleaseItem extends Model
 
     public function release()
     {
-        return $this->belongsTo(AssetRelease::class, 'asset_release_id');
+        return $this->belongsTo(AssetRelease::class, 'asset_transaction_id');
     }
 
     public function asset()

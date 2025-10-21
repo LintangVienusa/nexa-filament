@@ -18,8 +18,8 @@ return new class extends Migration
             $table->dateTime('check_in_time')->nullable();
             $table->dateTime('check_out_time')->nullable();
             $table->decimal('working_hours', 5, 2)->nullable();
-            $table->string('check_in_evidence', 255)->nullable();
-            $table->string('check_out_evidence', 255)->nullable();
+            $table->longtext('check_in_evidence', 255)->nullable();
+            $table->longtext('check_out_evidence', 255)->nullable();
             $table->decimal('check_in_latitude', 10, 8)->nullable();
             $table->decimal('check_in_longitude', 11, 8)->nullable();
             $table->decimal('check_out_latitude', 10, 8)->nullable();

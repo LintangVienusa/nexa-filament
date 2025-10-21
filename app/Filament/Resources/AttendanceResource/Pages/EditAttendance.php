@@ -96,6 +96,7 @@ class EditAttendance extends EditRecord
             
         if ($this->data['check_out_evidence'] ?? false) {
             $cek_out = $cek_out = $data['check_out_evidence'] ?? null;
+           $data['check_out_evidence'] = Attendance::compressBase64Image($data['check_out_evidence'], 70);
              $data['check_out_evidence'] = preg_replace('#^data:image/\w+;base64,#i', '', $cek_out);
             
             $this->record->update([
