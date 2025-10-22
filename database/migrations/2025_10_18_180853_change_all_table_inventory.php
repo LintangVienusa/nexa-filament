@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -12,27 +13,16 @@ return new class extends Migration
     public function up(): void
     {
          Schema::connection('mysql_employees')->table('Attendances', function (Blueprint $table) {
-            $table->longText('check_in_evidence')->change();
-            $table->longText('check_out_evidence')->change();
+            DB::connection('mysql_employees')->table('Attendances')->whereNull('check_in_evidence')->update(['check_in_evidence' => '']);
+            $table->longText('check_in_evidence')->nullable(false)->change();
+            DB::connection('mysql_employees')->table('Attendances')->whereNull('check_out_evidence')->update(['check_out_evidence' => '']);
+            $table->longText('check_out_evidence')->nullable(false)->change();
         });
 
-        Schema::connection('mysql_inventory')->table('AssetMovement', function (Blueprint $table) {
-            $table->dropForeign(['asset_transaction_id']);
-            $table->dropForeign(['asset_id']);
-            $table->unique(['asset_id', 'asset_transaction_id'], 'asset_id_asset_transaction_id');
-            $table->string('province_code',50)->nullable()->after('location');
-            $table->string('regency_code',50)->nullable()->after('province_code');
-            $table->string('village_code',50)->nullable()->after('regency_code');
-        });
-
-         Schema::connection('mysql_inventory')->table('Assets', function (Blueprint $table) {
-            $table->enum('asset_condition', ['GOOD', 'DAMAGED', 'REPAIR'])
-                  ->default('GOOD')
-                  ->after('description'); 
-            $table->text('notes')->after('asset_condition')->nullable(); 
-        });
         Schema::connection('mysql_inventory')->table('AssetTransactions', function (Blueprint $table) {
-            $table->string('sender_custom')->after('sender_by')->nullable(); 
+            if (!Schema::connection('mysql_inventory')->hasColumn('AssetTransactions', 'sender_custom')) {
+                $table->string('sender_custom')->after('sender_by')->nullable();
+            }
         });
     }
 
@@ -42,7 +32,8 @@ return new class extends Migration
             $table->dropColumn(['check_in_evidence','check_out_evidence'])->change();
         });
         Schema::connection('mysql_inventory')->table('AssetMovement', function (Blueprint $table) {
-            $table->dropUnique('asset_id_asset_transaction_id');
+            $table->dropUnique(['asset_id', 'asset_transaction_id']);
+            $table->dropColumn('asset_transaction_id');
             $table->unique('asset_id');
             $table->dropColumn(['province_code','regency_code','village_code']);
         });
