@@ -5,7 +5,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\AssettransactionResource\Pages;
 use App\Filament\Resources\AssettransactionResource\RelationManagers;
-use App\Models\Assettransaction;
+use App\Models\AssetTransaction;
 use App\Models\Assets;
 use App\Models\Employee;
 use App\Models\MappingRegion;

@@ -36,7 +36,7 @@ class ConvertBase64Attendance extends Command
             }
 
             $fileName = 'check_out_' . now()->format('Ymd_His') . '.jpg';
-            $folder = storage_path('app/public/attendances/check_out_evidence');
+            $folder = storage_path('app/public/check_out_evidence');
 
             if (!file_exists($folder)) {
                 mkdir($folder, 0777, true);
@@ -67,9 +67,9 @@ class ConvertBase64Attendance extends Command
             imagedestroy($tempImage);
             imagedestroy($compressedImage);
 
-            $relativePath = 'attendances/check_out_evidence/' . $fileName;
+            $relativePath = 'check_out_evidence/' . $fileName;
 
-             DB::connection('mysql_employees')->table('attendances') 
+             DB::connection('mysql_employees')->table('Attendances') 
                 ->where('id', $row->id)
                 ->update(['check_out_evidence' => $relativePath]);
 
