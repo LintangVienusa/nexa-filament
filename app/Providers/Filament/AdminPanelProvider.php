@@ -26,8 +26,6 @@ use Illuminate\Support\Facades\Auth;
 
 class AdminPanelProvider extends PanelProvider
 {
-
-    
     public function panel(Panel $panel): Panel
     {
         return $panel
@@ -36,7 +34,7 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->brandName('HRMS - DPNG')
             ->profile()
-            ->font('sans seriff family')
+            ->font('Roboto')
             ->userMenuItems([
                 'profile' => UserMenuItem::make()
                     ->label('Profil Saya')
@@ -46,7 +44,6 @@ class AdminPanelProvider extends PanelProvider
                         return ProfileResource::getUrl('edit', ['record' => $recordId]);
                     }),
             ])
-
             ->renderHook(PanelsRenderHook::HEAD_END, function () {
                 $favicon = asset('assets/images/LOGO PT DAPOER POESAT NUSANTARA-07.png'); // path ke favicon
                 return <<<HTML
@@ -157,7 +154,6 @@ class AdminPanelProvider extends PanelProvider
                 </script>
                 HTML;
             })
-            
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
