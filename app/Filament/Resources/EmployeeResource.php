@@ -213,21 +213,25 @@ class EmployeeResource extends Resource
                         TextInput::make('bpjs_kes_no')
                             ->label('No. BPJS Kesehatan')
                             ->numeric()
-                            ->maxLength(20),
+                            ->maxLength(20)
+                            ->required(),
 
                         TextInput::make('bpjs_tk_no')
                             ->label('No. BPJS Ketenagakerjaan')
                             ->numeric()
-                            ->maxLength(20),
+                            ->maxLength(20)
+                            ->required(),
 
                         TextInput::make('npwp_no')
                             ->label('NPWP No.')
                             ->numeric()
-                            ->maxLength(20),
+                            ->maxLength(20)
+                            ->required(),
 
                         Textarea::make('address')
                             ->label('Alamat')
-                            ->rows(3),
+                            ->rows(3)
+                            ->required(),
                     ])->columns(2),
 
                 Section::make('Info Tambahan')
@@ -249,7 +253,8 @@ class EmployeeResource extends Resource
                                 0 => "Belum Menikah",
                                 1 => "Menikah"
                             ])
-                            ->reactive(),
+                            ->reactive()
+                            ->required(),
 
                         TextInput::make('number_of_children')
                             ->label('Jumlah Anak')
@@ -262,16 +267,19 @@ class EmployeeResource extends Resource
                     ->schema([
                         TextInput::make('bank_account_name')
                             ->label('Bank')
-                            ->maxLength(100),
+                            ->maxLength(100)
+                            ->required(),
 
                         TextInput::make('bank_account_no')
                             ->label('No. Rekening')
                             ->numeric()
-                            ->maxLength(50),
+                            ->maxLength(50)
+                            ->required(),
 
                         TextInput::make('name_in_bank_account')
                             ->label('Nama di Rekening')
-                            ->maxLength(100),
+                            ->maxLength(100)
+                            ->required(),
                     ])->columns(3),
             ]);
     }

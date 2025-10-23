@@ -10,6 +10,7 @@ use Filament\View\PanelsRenderHook;
 use Filament\Navigation\UserMenuItem;
 use Filament\Facades\Filament;
 
+
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -27,7 +28,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
 
+        
+        
         Filament::serving(function () {
+            
 
             FilamentView::registerRenderHook(
 
