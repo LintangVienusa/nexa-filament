@@ -11,10 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-         Schema::connection('mysql_employees')->table('Attendances', function (Blueprint $table) {
-            $table->longText('check_in_evidence')->change();
-            $table->longText('check_out_evidence')->change();
-        });
+        //  Schema::connection('mysql_employees')->table('Attendances', function (Blueprint $table) {
+        //     $table->longText('check_in_evidence')->change();
+        //     $table->longText('check_out_evidence')->change();
+        // });
 
         Schema::connection('mysql_inventory')->table('AssetMovement', function (Blueprint $table) {
             $table->dropForeign(['asset_transaction_id']);
@@ -38,9 +38,9 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::connection('mysql_employees')->table('Attendances', function (Blueprint $table) {
-            $table->dropColumn(['check_in_evidence','check_out_evidence'])->change();
-        });
+        // Schema::connection('mysql_employees')->table('Attendances', function (Blueprint $table) {
+        //     $table->dropColumn(['check_in_evidence','check_out_evidence'])->change();
+        // });
         Schema::connection('mysql_inventory')->table('AssetMovement', function (Blueprint $table) {
             $table->dropUnique('asset_id_asset_transaction_id');
             $table->unique('asset_id');

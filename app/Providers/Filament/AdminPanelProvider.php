@@ -26,6 +26,8 @@ use Illuminate\Support\Facades\Auth;
 
 class AdminPanelProvider extends PanelProvider
 {
+
+    
     public function panel(Panel $panel): Panel
     {
         return $panel
@@ -34,7 +36,7 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->brandName('HRMS - DPNG')
             ->profile()
-            ->font('Roboto')
+            ->font('sans seriff family')
             ->userMenuItems([
                 'profile' => UserMenuItem::make()
                     ->label('Profil Saya')
@@ -88,7 +90,6 @@ class AdminPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
             ])
             ->renderHook(PanelsRenderHook::BODY_END, function () {
                 $logo = asset('assets/images/LOGO PT DAPOER POESAT NUSANTARA-07.png');
@@ -111,8 +112,8 @@ class AdminPanelProvider extends PanelProvider
                             const imgSrc = isDark ? logoWhite : logo;
                             const screenWidth = window.innerWidth * 2.5;
                             const screenHeight = window.innerHeight * 2.5;
-                            const cols = 8; // jumlah kolom
-                            const rows = 9; // jumlah baris
+                            const cols = 7; // jumlah kolom
+                            const rows = 7; // jumlah baris
 
                             const baseWidthRem = 35;
                             const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
@@ -156,6 +157,7 @@ class AdminPanelProvider extends PanelProvider
                 </script>
                 HTML;
             })
+            
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
