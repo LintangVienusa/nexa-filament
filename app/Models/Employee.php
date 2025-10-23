@@ -87,17 +87,45 @@ class Employee extends Model
             $job_title = $employee->job_title;
             if($job_title == 'Staff'){
                 $role = 'employee';
-            }else{
+            }elseif($job_title == 'Manager'){
                 $role = 'manager';
+            }elseif($job_title == 'VP'){
+                $role = 'superadmin';
+            }else{
+                $role = 'Admin';
             }
-            $createuser = User::firstOrCreate(
-                ['email' => $employee->email],
-                [
-                'name' => $fullname,
-                'email' => $employee->email,
-                'password' => Hash::make('n3x4@1234'),
-            ]);
-            $createuser->assignRole($role);
+            // // $createuser = User::firstOrCreate(
+            // //     ['email' => $employee->email],
+            // //     [
+            // //     'name' => $fullname,
+            // //     'email' => $employee->email,
+            // //     'password' => Hash::make('n3x4@1234'),
+            // // ]);
+            // $createuser->assignRole($role);
+
+            $user = User::where('email', $employee->email)->first();
+
+            if (!$user) {
+                // Jika belum ada, buat baru
+                $user = User::create([
+                    'name' => $fullname,
+                    'email' => $employee->email,
+                    'password' => Hash::make('n3x4@1234'),
+                    'role' => $role,
+                ]);
+
+                // Assign role untuk Spatie Permission
+                $user->assignRole($role);
+            } else {
+                // Jika sudah ada, update name & role jika job_title berubah
+                $user->update([
+                    'name' => $fullname,
+                    'role' => $role,
+                ]);
+
+                // Sync role untuk Spatie Permission
+                $user->syncRoles([$role]);
+            }
         });
     }
 
