@@ -3,9 +3,9 @@
 namespace App\Filament\Resources;
 
 
-use App\Filament\Resources\AssettransactionResource\Pages;
-use App\Filament\Resources\AssettransactionResource\RelationManagers;
-use App\Models\Assettransaction;
+use App\Filament\Resources\AssetTransactionResource\Pages;
+use App\Filament\Resources\AssetTransactionResource\RelationManagers;
+use App\Models\AssetTransaction;
 use App\Models\Assets;
 use App\Models\Employee;
 use App\Models\MappingRegion;
@@ -43,7 +43,7 @@ class AssetTransactionResource extends Resource
         return $form
                 ->schema([
                     Hidden::make('created_by')
-                        ->default(fn () => Auth::user()->email) 
+                        ->default(fn () => Auth::user()->email)
                         ->dehydrated(true),
                     Section::make('Informasi Transaksi')
                         ->schema([
@@ -85,10 +85,10 @@ class AssetTransactionResource extends Resource
                                 ->reactive()
                                 ->searchable()
                                 ->required()
-                                ->default(fn ($record) => 
+                                ->default(fn ($record) =>
                                     $record?->email ?? auth()->user()->employee?->email
                                 )
-                                ->disabled(fn ($state, $component, $record) => 
+                                ->disabled(fn ($state, $component, $record) =>
                                     $record !== null || auth()->user()->isStaff()
                                 )
                                 ->afterStateUpdated(function ($state, $set) {
@@ -142,7 +142,7 @@ class AssetTransactionResource extends Resource
                                             $formattedId = str_pad($nextId, 4, '0', STR_PAD_LEFT);
                                             $set('item_code', $category->category_code . $formattedId);
                                             // $set('item_code', null);s
-                                
+
                                         } else {
                                             $set('item_code', null);
                                         }
@@ -157,7 +157,7 @@ class AssetTransactionResource extends Resource
                                 ->required()
                                 ->disabled()
                                 ->numeric()
-                                ->dehydrated(true) 
+                                ->dehydrated(true)
                                 ->default(0),
 
                             TextInput::make('request_asset_qty')
@@ -284,7 +284,7 @@ class AssetTransactionResource extends Resource
                             Select::make('recipient_by')
                                 ->label('Penerima')
                                 ->searchable()
-                                ->options(function(callable $get) 
+                                ->options(function(callable $get)
                                     {return Employee::get()->mapWithKeys(fn ($emp) => [
                                             $emp->employee_id => $emp->full_name]);
                                         }),
@@ -292,19 +292,19 @@ class AssetTransactionResource extends Resource
                             Select::make('sender_by')
                                 ->label('Pengirim')
                                 ->searchable()
-                                ->options(function(callable $get) 
+                                ->options(function(callable $get)
                                     {return Employee::get()->mapWithKeys(fn ($emp) => [
                                             $emp->employee_id => $emp->full_name])->toArray() + ['other' => 'Lainnya'];;
-                                        }) 
+                                        })
                                 ->reactive()
                                 ->required(),
-                                
+
                             TextInput::make('sender_custom')
                                 ->label('Nama Pengirim (Lainnya)')
                                 ->reactive()
-                                ->visible(fn (callable $get) => $get('sender_by') === 'other') 
+                                ->visible(fn (callable $get) => $get('sender_by') === 'other')
                                 ->required(fn (callable $get) => $get('sender_by') === 'other'),
-                            
+
                             Select::make('province_code')
                                 ->label('Kode Provinsi')
                                 ->searchable()
@@ -332,7 +332,7 @@ class AssetTransactionResource extends Resource
 
                             // Select::make('sender')
                             //     ->label('Pengirim')
-                            //     ->options(function(callable $get) 
+                            //     ->options(function(callable $get)
                             //         {return Customer::pluck('customer_name','id');
                             //         return [];
                             //             }),
@@ -420,8 +420,8 @@ class AssetTransactionResource extends Resource
                                             //     ->required()->dehydrated(true),
                                             // TextInput::make('item_code')
                                             //     ->label('Item Code')
-                                            //     ->readOnly() 
-                                            //     ->dehydrated(true) 
+                                            //     ->readOnly()
+                                            //     ->dehydrated(true)
                                             //     ->helperText('Akan diisi otomatis setelah disimpan'),
 
                                             TextInput::make('name')
@@ -440,12 +440,12 @@ class AssetTransactionResource extends Resource
                                                 ->reactive()
                                                 ->live(onBlur: true)
                                                 ->afterStateUpdated(function (callable $set, callable $get, $state) {
-                                                    $allItems = $get('../../requested_items'); 
+                                                    $allItems = $get('../../requested_items');
                                                     $serialNumbers = collect($allItems)
                                                         ->pluck('serialNumber')
                                                         ->filter()
                                                         ->toArray();
-                                                        if (blank($state)) return; 
+                                                        if (blank($state)) return;
 
                                                             $allItems = $get('../../requested_items');
                                                             $serialNumbers = collect($allItems)
@@ -458,7 +458,7 @@ class AssetTransactionResource extends Resource
 
                                                             if ($hasDuplicate) {
                                                                 $set('serialNumber', null);
-                                                                
+
                                                                 Notification::make()
                                                                     ->title('Serial number sudah digunakan di item lain!')
                                                                     ->danger()
@@ -475,8 +475,8 @@ class AssetTransactionResource extends Resource
                                                 })
                                                 ->rule(function (callable $get) {
                                                     return function (string $attribute, $value, $fail) use ($get) {
-                                                        
-                                                        $parent = $get('../../transaction_type'); 
+
+                                                        $parent = $get('../../transaction_type');
                                                         if ($parent === 'RECEIVE') {
                                                             $exists = \App\Models\Assets::where('serialNumber', $value)->exists();
                                                             if ($exists) {
@@ -507,10 +507,10 @@ class AssetTransactionResource extends Resource
                             ])
                                 ->disableItemCreation()
                                 ->disableItemDeletion()
-                                
+
                                 ->maxItems(fn (callable $get) => $get('../../request_asset_qty') ?? null)
                                 ->visible(fn (callable $get) => $get('transaction_type') === 'RECEIVE'),
-                        ]), 
+                        ]),
                 ]);
     }
 
