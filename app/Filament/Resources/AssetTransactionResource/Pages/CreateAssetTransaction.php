@@ -35,6 +35,8 @@ class CreateAssetTransaction extends CreateRecord
 
             if (!empty($data['requested_items'])) {
 
+
+                
                 if ($assetTransaction->transaction_type === 'RELEASE') {
                         $inventory = InventoryAsset::where('categoryasset_id', $data['category_id'])->first();
                                 if ($inventory) {
