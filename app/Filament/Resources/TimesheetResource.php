@@ -161,12 +161,17 @@ class TimesheetResource extends Resource
                     ? AttendanceResource::getUrl('edit', ['record' => $record->attendance_id])
                     : null)
                 ->openUrlInNewTab(),
-             TextColumn::make('attendance.employee_id')
+             TextColumn::make('Attendance.employee_id')
+                ->label('NIK')
+                ->sortable()
+                ->searchable(),
+            
+             TextColumn::make('Employee.employee_id')
                 ->label('NIK')
                 ->sortable()
                 ->searchable(),
 
-            TextColumn::make('attendance.attendance_date')
+            TextColumn::make('Attendance.attendance_date')
                 ->label('Tanggal Attendance')
                 ->date()
                 ->sortable(),
@@ -228,12 +233,12 @@ class TimesheetResource extends Resource
                 ->searchable()
                 ->formatStateUsing(fn($state) => match((int)$state) {
                     0 => 'On Progress',
-                    1 => 'Done',
-                    2 => 'Pending',
+                    1 => 'Pending',
+                    2 => 'Done',
                     3 => 'Cancel',
                     default => 'Unknown',
                 }),
-        ])
+        ])->defaultSort('created_at', 'desc')
         ->actions([
             Tables\Actions\EditAction::make(),
             Tables\Actions\DeleteAction::make(),

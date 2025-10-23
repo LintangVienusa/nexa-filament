@@ -19,7 +19,7 @@
                     lat: null,
                     lng: null,
                     radius: 500,
-                    office: [-6.244446527436399, 106.58591198909295], // Koordinat kantor
+                    office: [-6.173281, 106.663559], // Koordinat kantor
 
                     initMap() {
                         const mapId = 'map-' + id;

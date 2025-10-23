@@ -97,18 +97,18 @@ class AssetTransaction extends Model
     }
     
 
-    // protected static function generateBANumber()
-    // {
-    //     $month = now()->format('m');
-    //     $year = now()->format('Y');
+    protected static function generateBANumber()
+    {
+        $month = now()->format('m');
+        $year = now()->format('Y');
 
-    //     // Hitung jumlah BA yang sudah dibuat bulan ini
-    //     $count = self::whereMonth('created_at', $month)
-    //                  ->whereYear('created_at', $year)
-    //                  ->count() + 1;
+        // Hitung jumlah BA yang sudah dibuat bulan ini
+        $count = self::whereMonth('created_at', $month)
+                     ->whereYear('created_at', $year)
+                     ->count() + 1;
 
-    //     $number = str_pad($count, 3, '0', STR_PAD_LEFT); // 001, 002, ...
+        $number = str_pad($count, 3, '0', STR_PAD_LEFT); // 001, 002, ...
 
-    //     return "DPG/BA/{$number}/{$month}/{$year}";
-    // }
+        return "DPN/BA/{$number}/{$month}/{$year}";
+    }
 }

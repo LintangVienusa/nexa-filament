@@ -107,7 +107,7 @@ class CreateAssetTransaction extends CreateRecord
                             'created_by'      => auth()->user()->email,
                         ]);
 
-                         if($data['sender_by'] === "other"){
+                         if($data['usage_type'] === "STOCK IN WAREHOUSE"){
                             $sender = $data['sender_custom'];
                         }else{
                             $sender =$data['sender_by'];

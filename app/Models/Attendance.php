@@ -52,18 +52,15 @@ class Attendance extends Model
 
      public static function compressBase64Image($base64String, $quality = 70)
     {
-        // Hapus prefix data:image
         $base64String = preg_replace('#^data:image/\w+;base64,#i', '', $base64String);
         $imageData = base64_decode($base64String);
 
-        // Buat image resource dari base64
         $image = imagecreatefromstring($imageData);
         if (!$image) {
-            return null; // jika gagal decode
+            return null; 
         }
 
         ob_start();
-        // Kompres ke JPEG (lebih kecil dari PNG)
         imagejpeg($image, null, $quality);
         $compressedData = ob_get_clean();
 
