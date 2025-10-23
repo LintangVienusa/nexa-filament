@@ -224,7 +224,7 @@ class AttendanceResource extends Resource
                         return "{$hours} jam {$minutes} menit";
                     })
                     ->sortable(),
-            ])
+            ])->defaultSort('attendance_date', 'desc')
             ->filters([
                 Filter::make('today')
                     ->query(fn($query) => $query->whereDate('attendance_date', now()->toDateString())),
@@ -234,7 +234,9 @@ class AttendanceResource extends Resource
                 // Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
+                Tables\Actions\DeleteBulkAction::make()
+                ->visible(fn () => auth()->user()?->hasAnyRole(['super_admin', 'admin']))
+                ->authorize(fn () => auth()->user()?->hasAnyRole(['super_admin', 'admin'])),
             ]);
     }
 

@@ -132,7 +132,7 @@ class AssetTransactionResource extends Resource
                                                 $random = rand(1000, 9999);
 
                                             $number = str_pad($count, 3, '0', STR_PAD_LEFT);
-                                            $baNumber = "DPG/BA/{$categoryCode}/{$alias}/{$number}/{$month}/{$year}/{$random}";
+                                            $baNumber = "DPN/BA/{$categoryCode}/{$alias}/{$number}/{$month}/{$year}/{$random}";
 
                                             $set('ba_number', $baNumber);
                                         }
@@ -174,7 +174,6 @@ class AssetTransactionResource extends Resource
                                     $currentItems = $get('requested_items') ?? [];
                                     $needed = $state ?? 0;
 
-                                    // Jika jumlah item kurang dari requested_qty, tambahkan
                                     while (count($currentItems) < $needed) {
                                         $currentItems[] = [
                                             'asset_id' => null,
@@ -187,12 +186,12 @@ class AssetTransactionResource extends Resource
                                         ];
                                     }
 
-                                    // Jika lebih, potong array
                                     if (count($currentItems) > $needed) {
                                         $currentItems = array_slice($currentItems, 0, $needed);
                                     }
 
                                     $set('requested_items', $currentItems);
+                                    $set('request_asset_qty', $needed-1);
                                 }),
 
                             TextInput::make('ba_number')
@@ -297,13 +296,14 @@ class AssetTransactionResource extends Resource
                                             $emp->employee_id => $emp->full_name])->toArray() + ['other' => 'Lainnya'];;
                                         })
                                 ->reactive()
-                                ->required(),
+                                ->visible(fn (callable $get) => $get('usage_type') !== 'STOCK IN WAREHOUSE') // 👈 tampil jika BUKAN STOCK IN WAREHOUSE
+                                ->required(fn (callable $get) => $get('usage_type') !== 'STOCK IN WAREHOUSE'),
 
                             TextInput::make('sender_custom')
                                 ->label('Nama Pengirim (Lainnya)')
                                 ->reactive()
-                                ->visible(fn (callable $get) => $get('sender_by') === 'other')
-                                ->required(fn (callable $get) => $get('sender_by') === 'other'),
+                                ->visible(fn (callable $get) => $get('usage_type') === 'STOCK IN WAREHOUSE')
+                                ->required(fn (callable $get) => $get('usage_type') === 'STOCK IN WAREHOUSE'),
 
                             Select::make('province_code')
                                 ->label('Kode Provinsi')

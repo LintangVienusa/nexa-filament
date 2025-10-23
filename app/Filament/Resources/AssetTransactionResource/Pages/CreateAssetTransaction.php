@@ -34,6 +34,23 @@ class CreateAssetTransaction extends CreateRecord
             $assetTransaction = static::getModel()::create($data);
 
             if (!empty($data['requested_items'])) {
+
+
+                
+                if ($assetTransaction->transaction_type === 'RELEASE') {
+                        $inventory = InventoryAsset::where('categoryasset_id', $data['category_id'])->first();
+                                if ($inventory) {
+                                    $inventory->inWarehouse -= $data['request_asset_qty'];
+                                    $inventory->outWarehouse += $data['request_asset_qty'];
+                                    $inventory->save();
+                                }
+                    }else{
+                        $inventory = InventoryAsset::where('categoryasset_id', $data['category_id'])->first();
+                        if ($inventory) {
+                            $inventory->inWarehouse += $data['request_asset_qty'];
+                            $inventory->save();
+                        }
+                    }
                  
                 foreach ($data['requested_items'] as $item) {
                     if ($assetTransaction->transaction_type === 'RELEASE') {
@@ -107,7 +124,7 @@ class CreateAssetTransaction extends CreateRecord
                             'created_by'      => auth()->user()->email,
                         ]);
 
-                         if($data['sender_by'] === "other"){
+                         if($data['usage_type'] === "STOCK IN WAREHOUSE"){
                             $sender = $data['sender_custom'];
                         }else{
                             $sender =$data['sender_by'];
@@ -158,20 +175,7 @@ class CreateAssetTransaction extends CreateRecord
                     }
                 }
 
-                if ($assetTransaction->transaction_type === 'RELEASE') {
-                        $inventory = InventoryAsset::where('categoryasset_id', $data['category_id'])->first();
-                                if ($inventory) {
-                                    $inventory->inWarehouse -= $data['request_asset_qty'];
-                                    $inventory->outWarehouse += $data['request_asset_qty'];
-                                    $inventory->save();
-                                }
-                    }else{
-                        $inventory = InventoryAsset::where('categoryasset_id', $data['category_id'])->first();
-                        if ($inventory) {
-                            $inventory->inWarehouse += $data['request_asset_qty'];
-                            $inventory->save();
-                        }
-                    }
+                
             }
 
             return $assetTransaction;

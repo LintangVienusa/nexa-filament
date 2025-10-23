@@ -86,8 +86,8 @@ class AssetResource extends Resource
                                 ])
                                 ->reactive()
                                 ->required(),
-                        Forms\Components\TextArea::make('notes')
-                            ->label('Keterangan')
+                        Forms\Components\Textarea::make('notes')
+                            ->label('Keterangan')->rows(3)
                     ])
                     ->columns(2),
 
@@ -105,8 +105,9 @@ class AssetResource extends Resource
                             ])
                             ->default(0),
                         Forms\Components\Textarea::make('description')
-                            ->label('Description')
+                            ->label('Description')->rows(3)
                             ->nullable(),
+                        
 
                         Forms\Components\Hidden::make('created_by')
                             ->default(fn () => auth()->user()->email),
