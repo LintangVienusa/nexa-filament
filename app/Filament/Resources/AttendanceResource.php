@@ -235,8 +235,8 @@ class AttendanceResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make()
-                ->visible(fn () => auth()->user()?->hasAnyRole(['super_admin', 'admin']))
-                ->authorize(fn () => auth()->user()?->hasAnyRole(['super_admin', 'admin'])),
+                ->visible(fn () => auth()->user()?->hasAnyRole(['superadmin', 'admin', 'manager']))
+                ->authorize(fn () => auth()->user()?->hasAnyRole(['superadmin', 'admin', 'manager'])),
             ]);
     }
 

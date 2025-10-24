@@ -166,10 +166,20 @@ class TimesheetResource extends Resource
                 ->sortable()
                 ->searchable(),
             
-             TextColumn::make('Employee.employee_id')
-                ->label('NIK')
-                ->sortable()
-                ->searchable(),
+             TextColumn::make('attendance.employee.full_name')
+                ->label('Nama Lengkap')
+                ->sortable(query: function ($query, string $direction) {
+                    $query
+                        ->leftJoin('Attendances', 'Timesheets.attendance_id', '=', 'Attendances.id')
+                        ->leftJoin('Employees', 'Attendances.employee_id', '=', 'Employees.employee_id')
+                        ->orderByRaw("CONCAT(Employees.first_name, ' ', Employees.last_name) {$direction}")
+                        ->select('Timesheets.*');
+                })
+                ->searchable(query: function ($query, string $search) {
+                    $query->whereHas('attendance.employee', function ($q) use ($search) {
+                        $q->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"]);
+                    });
+                }),
 
             TextColumn::make('Attendance.attendance_date')
                 ->label('Tanggal Attendance')
