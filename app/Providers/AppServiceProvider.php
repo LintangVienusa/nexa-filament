@@ -62,6 +62,8 @@ class AppServiceProvider extends ServiceProvider
                     HTML;
                 }
             );
+            config(['filament.path' => 'admin']);
+            config(['filesystems.disks.public.url' => env('APP_URL') . '/storage']);
         });
     }
 }
