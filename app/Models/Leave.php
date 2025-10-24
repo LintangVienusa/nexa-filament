@@ -176,6 +176,16 @@ class Leave extends Model
         
     }
 
+    public static function getImportantReasonLeaveBalance($employeeId)
+    {
+        $used = self::where('employee_id', $employeeId)
+            ->where('leave_type', 5) 
+            ->where('status', 2)
+            ->count(); 
+
+        return $used > 0 ? 0 : 2;
+    }
+
     public static function getMarriageLeaveBalance($employeeId)
     {
         $used = self::where('employee_id', $employeeId)

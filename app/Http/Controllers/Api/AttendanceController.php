@@ -19,6 +19,7 @@ class AttendanceController extends Controller
 {
     public function Checkin(Request $request)
     {
+        date_default_timezone_set('Asia/Jakarta');
         $user = Auth::user();
 
         if (! $user) {
@@ -136,6 +137,7 @@ class AttendanceController extends Controller
 
     public function checkout(Request $request)
     {
+        date_default_timezone_set('Asia/Jakarta');
         $user = Auth::user();
 
         if (! $user) {
@@ -293,6 +295,7 @@ class AttendanceController extends Controller
 
      public function checkabsen(Request $request)
     {
+        date_default_timezone_set('Asia/Jakarta');
         $user = Auth::user();
 
         if (! $user) {
@@ -311,6 +314,36 @@ class AttendanceController extends Controller
             ->whereDate('attendance_date', $today)
             ->first();
 
+        $workingHours = null;
+
+        if ($attendance->check_out_time) {
+            $checkIn = Carbon::parse($attendance->check_in_time, 'Asia/Jakarta');
+            $checkOut = Carbon::parse($attendance->check_out_time, 'Asia/Jakarta');
+
+            $diffInSeconds = $checkIn->diffInSeconds($checkOut);
+
+            $hours = floor($diffInSeconds / 3600);
+            $minutes = floor(($diffInSeconds % 3600) / 60);
+
+            if ($hours > 0 && $minutes > 0) {
+                $workingHours = "{$hours} jam {$minutes} menit";
+            } elseif ($hours > 0) {
+                $workingHours = "{$hours} jam";
+            } else {
+                $workingHours = "{$minutes} menit";
+            }
+        } else {
+            // Jika belum checkout, hitung sementara dari jam sekarang
+            $checkIn = Carbon::parse($attendance->check_in_time, 'Asia/Jakarta');
+            $now = Carbon::now('Asia/Jakarta');
+            $diffInSeconds = $checkIn->diffInSeconds($now);
+
+            $hours = floor($diffInSeconds / 3600);
+            $minutes = floor(($diffInSeconds % 3600) / 60);
+
+            $workingHours = "{$hours} jam {$minutes} menit (sementara)";
+        }
+
         if (!$attendance) {
             return response()->json([
                 'message' => 'Belum melakukan check-in hari ini',
@@ -319,7 +352,28 @@ class AttendanceController extends Controller
         }else{
             return response()->json([
                 'message' => 'Sudah melakukan check-in hari ini',
-            'data' => $attendance,
+            'data' => [
+                
+                        'id' => $attendance->id,
+                        'employee_id' => $attendance->employee_id,
+                        'attendance_date' => $attendance->attendance_date
+                            ? $attendance->attendance_date->setTimezone('Asia/Jakarta')->format('Y-m-d H:i:s')
+                            : null,
+                        'check_in_time' => $attendance->check_in_time
+                            ? $attendance->check_in_time->setTimezone('Asia/Jakarta')->format('Y-m-d H:i:s')
+                            : null,
+                        'check_out_time' => $attendance->check_out_time
+                            ? $attendance->check_out_time->setTimezone('Asia/Jakarta')->format('Y-m-d H:i:s')
+                            : null,
+                        'working_hours' => $workingHours,
+                        'check_in_evidence' => $attendance->check_in_evidence,
+                        'check_out_evidence' => $attendance->check_out_evidence,
+                        'check_in_latitude' => $attendance->check_in_latitude,
+                        'check_in_longitude' => $attendance->check_in_longitude,
+                        'check_out_latitude' => $attendance->check_out_latitude,
+                        'check_out_longitude' => $attendance->check_out_longitude
+
+                ],
             ], 404);
         }
 

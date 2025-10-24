@@ -104,6 +104,7 @@ class LeaveResource extends Resource
                                 $balance = match((int) $state) {
                                     1 => Leave::getAnnualLeaveBalance($get('employee_id')),
                                     3 => Leave::getMaternityLeaveBalance($get('employee_id')),
+                                    5 => Leave::getImportantReasonLeaveBalance($get('employee_id')),
                                     7 => Leave::getMarriageLeaveBalance($get('employee_id')),
                                     default => 1,
                                 };
@@ -141,7 +142,7 @@ class LeaveResource extends Resource
                                     
                                 })
                                 ->reactive()
-                                ->visible(fn ($get) => in_array($get('leave_type'), [1,3,7])),
+                                ->visible(fn ($get) => in_array($get('leave_type'), [1,3,5,7])),
                    
                         Forms\Components\DatePicker::make('start_date')
                             ->label('Dari Tgl')
@@ -172,7 +173,7 @@ class LeaveResource extends Resource
                             ->disabled()
                             ->dehydrated(true)
                             ->reactive()
-                            ->afterStateUpdated(function ($state, $set, $get) {
+                            ->dehydrateStateUsing(function ($state, $set, $get) {
                                 if ($get('start_date') && $get('end_date')) {
                                      $startDate = $get('start_date');
                                      $endDate = $get('end_date');
@@ -180,6 +181,9 @@ class LeaveResource extends Resource
                                      $hariKerjaData = $hariKerjaService->hitungHariKerja($state, $startDate, $endDate);
                                      $jml = $hariKerjaData['jumlah_hari_kerja'] ?? 0;
                                     $set('leave_duration', $jml);
+                                    return $hariKerjaData['jumlah_hari_kerja'] ?? 0;
+                                }else{
+                                    return 0;
                                 }
                             }),
                         Forms\Components\Textarea::make('reason')
