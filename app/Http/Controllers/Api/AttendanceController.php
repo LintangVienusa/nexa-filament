@@ -229,7 +229,7 @@ class AttendanceController extends Controller
         $time_in = \Carbon\Carbon::parse($cek_in);
         $timeOut = \Carbon\Carbon::parse($date . ' ' . $check_out_time);
         $date_time_out = $date." ".$check_out_time;
-        $totalHours = $time_in->diffInSeconds($timeOut);
+        $totalHours = $time_in->diffInMinutes($timeOut);
 
          $filePath = null;
 
