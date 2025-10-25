@@ -211,10 +211,25 @@ class AttendanceResource extends Resource
                     ->label('Working Hours')
                     ->getStateUsing(function ($record) {
                         if ($record->working_hours) {
-                            $hoursDecimal = $record->working_hours;
+                            // $hoursDecimal = $record->working_hours;
+                            if($record->check_out_time){
+                                $checkIn = $record->check_in_time ? Carbon::parse($record->check_in_time) : now();
+                                $checkOut = $record->check_out_time ? Carbon::parse($record->check_out_time) : now();
+                                $hoursDecimal = round($checkIn->floatDiffInHours($checkOut), 2); 
+                            }else{
+                                $checkIn = $record->check_in_time ? Carbon::parse($record->check_in_time) : now();
+                                $hoursDecimal = round($checkIn->floatDiffInHours(now()), 2); 
+                            } 
                         } else {
-                            $checkIn = $record->check_in_time ? Carbon::parse($record->check_in_time) : now();
-                            $hoursDecimal = round($checkIn->floatDiffInHours(now()), 2); 
+                            if($record->check_out_time){
+                                $checkIn = $record->check_in_time ? Carbon::parse($record->check_in_time) : now();
+                                $checkOut = $record->check_out_time ? Carbon::parse($record->check_out_time) : now();
+                                $hoursDecimal = round($checkIn->floatDiffInHours($checkOut), 2); 
+                            }else{
+                                $checkIn = $record->check_in_time ? Carbon::parse($record->check_in_time) : now();
+                                $hoursDecimal = round($checkIn->floatDiffInHours(now()), 2); 
+                            }
+                            
                         }
 
                         $hours = floor($hoursDecimal);

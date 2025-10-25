@@ -191,7 +191,7 @@ class AssetTransactionResource extends Resource
                                     }
 
                                     $set('requested_items', $currentItems);
-                                    $set('request_asset_qty', $needed-1);
+                                    $set('request_asset_qty', $needed);
                                 }),
 
                             TextInput::make('ba_number')
