@@ -25,6 +25,11 @@ class AssetResource extends Resource
     protected static ?string $navigationLabel = 'Assets';
     protected static ?int $navigationSort = 0;
 
+    public static function canCreate(): bool
+    {
+        return false;
+    }
+
     public static function form(Form $form): Form
     {
         return $form
@@ -115,7 +120,8 @@ class AssetResource extends Resource
                     ->columns(2),
 
                 
-            ]);
+            ])
+            ->disabled(fn ($livewire) => $livewire instanceof \Filament\Resources\Pages\EditRecord);
     }
 
     public static function table(Table $table): Table

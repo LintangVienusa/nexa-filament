@@ -35,7 +35,6 @@ class EmployeeResource extends Resource
 
     public static function canCreate(): bool
     {
-        // Hanya admin dan manager yang boleh membuat Employee baru
         return auth()->user()->hasAnyRole(['admin', 'manager', 'superadmin', 'Supervisor', 'Admin']);
     }
 
@@ -111,12 +110,22 @@ class EmployeeResource extends Resource
                         
                         Select::make('job_title')
                             ->label('Jabatan')
-                            ->options([
-                                'Staff'     => 'Staff',
-                                'SPV'       => 'SPV',
-                                'Manager'   => 'Manager',
-                                'VP'        => 'VP',
-                            ])
+                            ->options(function () {
+                                $options = [
+                                    'Staff'   => 'Staff',
+                                    'SPV'     => 'SPV',
+                                    'Manager' => 'Manager',
+                                    'VP'      => 'VP',
+                                ];
+
+                                if (auth()->user()->hasRole('superadmin')) {
+                                    $options['CTO'] = 'CTO';
+                                    $options['CEO'] = 'CEO';
+                                }
+
+                                return $options;
+                            })
+
                             ->required(),
 
                         Select::make('divisi_name')
@@ -300,6 +309,7 @@ class EmployeeResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make()
+                    ->visible(fn () => auth()->user()?->hasAnyRole(['superadmin', 'admin', 'manager'])),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

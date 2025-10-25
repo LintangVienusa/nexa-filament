@@ -57,6 +57,14 @@ class SalarySlipResource extends Resource
                                     ->pluck('divisi_name', 'divisi_name'))
                                 ->reactive()
                                 ->required()
+                                ->afterStateHydrated(function ($set, $record) {
+                                    if ($record && $record->employee_id) {
+                                        $employee = \App\Models\Employee::find($record->employee_id);
+                                        if ($employee && $employee->organization) {
+                                            $set('divisi_name', $employee->organization->divisi_name);
+                                        }
+                                    }
+                                })
                                 ->disabled(fn ($record) => $record !== null) 
                                 ->afterStateUpdated(function ($state, callable $set) {
                                     $set('unit_id', null);
@@ -72,6 +80,14 @@ class SalarySlipResource extends Resource
                                                 ->pluck('unit_name', 'id');
                                         })
                                     ->required()
+                                    ->afterStateHydrated(function ($set, $record) {
+                                        if ($record && $record->employee_id) {
+                                            $employee = \App\Models\Employee::find($record->employee_id);
+                                            if ($employee && $employee->organization) {
+                                                $set('unit_id', $employee->organization->id);
+                                            }
+                                        }
+                                    })
                                     ->disabled(fn ($record) => $record !== null) 
                                     ->afterStateUpdated(function ($state, callable $set) {
                                         $set('employee_name', null);
@@ -91,6 +107,15 @@ class SalarySlipResource extends Resource
                                     ->searchable()
                                     ->reactive()
                                     ->required()
+                                    ->afterStateHydrated(function ($set, $record) {
+                                        if ($record && $record->employee_id) {
+                                            $employee = \App\Models\Employee::find($record->employee_id);
+                                            if ($employee) {
+                                                $set('employee_name', $employee->employee_id);
+                                                $set('employee_id', $employee->employee_id);
+                                            }
+                                        }
+                                    })
                                     ->disabled(fn ($record) => $record !== null) 
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                         if (!$state) return;

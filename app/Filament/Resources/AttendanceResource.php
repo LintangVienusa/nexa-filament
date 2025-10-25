@@ -96,7 +96,7 @@ class AttendanceResource extends Resource
                                 ? $record->check_in_time
                                 : Carbon::now('Asia/Jakarta')->toDateTimeString()
                             )
-                            ->dehydrated(true)
+                             ->dehydrated(fn($record) => $record === null)
                             ->required(),
                         Hidden::make('check_out_time')
                             ->default(fn($record) => $record
@@ -177,6 +177,7 @@ class AttendanceResource extends Resource
                             ])->columns(2),
                         Hidden::make('check_in_evidence')
                             ->reactive()
+                             ->dehydrated(fn($record) => $record === null)
                             ->required(),
                         Hidden::make('check_out_evidence')
                             ->reactive()->dehydrated()->dehydrated(),
@@ -209,13 +210,11 @@ class AttendanceResource extends Resource
                 TextColumn::make('working_hours')
                     ->label('Working Hours')
                     ->getStateUsing(function ($record) {
-                        // Jika working_hours ada, pakai
                         if ($record->working_hours) {
                             $hoursDecimal = $record->working_hours;
                         } else {
-                            // Jika kosong, hitung dari check_in_time sampai sekarang
                             $checkIn = $record->check_in_time ? Carbon::parse($record->check_in_time) : now();
-                            $hoursDecimal = round($checkIn->floatDiffInHours(now()), 2); // desimal 2 angka
+                            $hoursDecimal = round($checkIn->floatDiffInHours(now()), 2); 
                         }
 
                         $hours = floor($hoursDecimal);
