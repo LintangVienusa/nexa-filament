@@ -87,9 +87,11 @@ class Employee extends Model
             $job_title = $employee->job_title;
             if($job_title == 'Staff'){
                 $role = 'employee';
-            }elseif($job_title == 'Manager'){
+            }elseif($job_title == 'SPV'){
+                $role = 'Supervisor';
+            } elseif($job_title == 'Manager'){
                 $role = 'manager';
-            }elseif($job_title == 'VP'){
+            } elseif (in_array($job_title, ['VP', 'CTO', 'CEO'])) {
                 $role = 'superadmin';
             }else{
                 $role = 'Admin';

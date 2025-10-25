@@ -134,6 +134,9 @@ class EditAttendance extends EditRecord
           
             
         }
+        $this->record->update([
+                'check_in_time' => $attendance->check_in_time->timezone('Asia/Jakarta')->format('Y-m-d H:i:s'),
+            ]);
 
         if ($existingTimesheet > 0) {
             Notification::make()
@@ -143,12 +146,14 @@ class EditAttendance extends EditRecord
                 ->send();
 
                     $data['check_in_evidence'] = $attendance->check_in_evidence;
+                    $data['check_in_time'] = $attendance->check_in_time->timezone('Asia/Jakarta')->format('Y-m-d H:i:s');
                     $data['check_out_evidence'] = null;
                     $data['check_out_time'] = null;
                     $data['check_out_latitude'] = null;
                     $data['check_out_longitude'] = null;
                 //    throw new ActionFailedException("Tidak bisa menyimpan karena masih ada job yang On Progress.");
-    
+                // \Log::info('Check in (raw): ' . $attendance->getRawOriginal('check_in_time'));
+                // \Log::info('Check in (carbon): ' . $attendance->check_in_time);
         }
 
         

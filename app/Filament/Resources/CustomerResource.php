@@ -87,7 +87,7 @@ class CustomerResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('mitra_name')
+                TextColumn::make('customer_name')
                     ->searchable(),
                 TextColumn::make('initial')
                     ->searchable(),

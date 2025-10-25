@@ -53,7 +53,7 @@ class LeaveResource extends Resource
                                 )
                                 ->disabled(fn ($state, $component, $record) => 
                                     $record !== null || auth()->user()->isStaff()
-                                ) 
+                                )
                                 ->afterStateUpdated(function ($state, $set) {
                                     if ($state) {
                                         $employee = \App\Models\Employee::find($state);
@@ -69,6 +69,9 @@ class LeaveResource extends Resource
                                     $record?->employee_id 
                                     ?? auth()->user()->employee?->employee_id
                                 )
+                                ->formatStateUsing(function ($state, $record) {
+                                    return $record?->employee_id ?? $state ?? auth()->user()->employee?->employee_id;
+                                })
                                 ->dehydrated(true)
                                 ->disabled(fn ($state, $component, $record) => 
                                     $record !== null || auth()->user()->isStaff()
@@ -311,36 +314,77 @@ class LeaveResource extends Resource
                 //
             ])
             ->actions([
-               Actions\Action::make('approved')
+            
+            //    Actions\Action::make('approved')
+            //             ->label('Approve')
+            //             ->color('success')
+            //             ->icon('heroicon-o-check')
+            //             ->visible(fn ($record) => (int)$record->status === 0  && ! auth()->user()->isStaff()) 
+            //             ->requiresConfirmation()
+            //             ->action(function ($record) {
+            //                 $type = $record->leave_type;
+            //                 $record->update(['status' => 2]);
+            //                 activity('Leaves-action')
+            //                     ->causedBy(auth()->user())
+            //                     ->withProperties([
+            //                         'ip'    => request()->ip(),
+            //                         'menu'  => 'Leaves',
+            //                         'email' => auth()->user()?->email,
+            //                         'record_id' => $record->id,
+            //                         'Leaves' => $record->id,
+            //                         'action' => 'Approve',
+            //                     ])
+            //                     ->tap(function ($activity) {
+            //                             $activity->email = auth()->user()?->email;
+            //                             $activity->menu = 'Leaves';
+            //                         })
+            //                     ->log('Leaves disetujui');
+
+            //                 Notification::make()
+            //                     ->title( $type .' Approve')
+            //                     ->success()
+            //                     ->send();
+            //                     return $record->fresh();
+            //             }),
+                Tables\Actions\Action::make('approve')
                         ->label('Approve')
-                        ->color('success')
                         ->icon('heroicon-o-check')
-                        ->visible(fn ($record) => (int)$record->status === 0  && ! auth()->user()->isStaff()) 
+                        ->color('success')
+                        ->visible(fn ($record) => match(auth()->user()->employee?->job_title) {
+                            'Manager' => $record->approval_1 == 0,
+                            'VP' => $record->approval_2 == 0 && $record->approval_1 == 1,
+                            'CEO', 'CTO' => $record->approval_3 == 0 && $record->approval_2 == 1,
+                            default => false,
+                        })
                         ->requiresConfirmation()
                         ->action(function ($record) {
-                            $type = $record->leave_type;
-                            $record->update(['status' => 2]);
-                            activity('Leaves-action')
-                                ->causedBy(auth()->user())
-                                ->withProperties([
-                                    'ip'    => request()->ip(),
-                                    'menu'  => 'Leaves',
-                                    'email' => auth()->user()?->email,
-                                    'record_id' => $record->id,
-                                    'Leaves' => $record->id,
-                                    'action' => 'Approve',
-                                ])
-                                ->tap(function ($activity) {
-                                        $activity->email = auth()->user()?->email;
-                                        $activity->menu = 'Leaves';
-                                    })
-                                ->log('Leaves disetujui');
+                            $job = auth()->user()->employee?->job_title;
+                            $userId = auth()->user()->email;
 
-                            Notification::make()
-                                ->title( $type .' Approve')
-                                ->success()
-                                ->send();
-                                return $record->fresh();
+                            if ($job === 'Manager' && $record->approval_1 == 0) {
+                                $record->update([
+                                    'approval_1' => 1,
+                                    'approved_1_at' => now(),
+                                    'approval_1_by' => $userId,
+                                ]);
+                            } elseif ($job === 'VP' && $record->approval_2 == 0 && $record->approval_1 == 1) {
+                                $record->update([
+                                    'approval_2' => 1,
+                                    'approved_2_at' => now(),
+                                    'approval_2_by' => $userId,
+                                ]);
+                            } elseif (in_array($job, ['CEO','CTO']) && $record->approval_3 == 0 && $record->approval_2 == 1) {
+                                $record->update([
+                                    'approval_3' => 1,
+                                    'approved_3_at' => now(),
+                                    'approval_3_by' => $userId,
+                                    'status' => 2, // final approved
+                                ]);
+                            }
+
+                            Notification::make()->title('Leave Approved')->success()->send();
+
+                            return $record->fresh();
                         }),
                 Actions\Action::make('reject')
                         ->label('Reject')
@@ -378,7 +422,12 @@ class LeaveResource extends Resource
                         }),
                 Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make()
-                        ->visible(fn ($record) => (int)$record->status !== 2) ,
+                        ->visible(fn ($record) => 
+                            $record->created_by === auth()->user()->email // hanya creator
+                            && $record->approval_1 == 0              // belum di-approve level 1
+                            && $record->approval_2 == 0              // belum di-approve level 2
+                            && $record->approval_3 == 0              // belum di-approve level 3
+                        ),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

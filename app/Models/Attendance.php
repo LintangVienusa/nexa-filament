@@ -36,14 +36,14 @@ class Attendance extends Model
 
     
 
-    public function getWorkingHoursAttribute(): ?float
-    {
-        if ($this->check_in_time && $this->check_out_time) {
-            return $this->check_in_time->diffInMinutes($this->check_out_time) / 60;
-        }
+    // public function getWorkingHoursAttribute(): ?float
+    // {
+    //     if ($this->check_in_time && $this->check_out_time) {
+    //         return $this->check_in_time->diffInMinutes($this->check_out_time) / 60;
+    //     }
 
-        return null;
-    }
+    //     return null;
+    // }
 
     public function Employee(): BelongsTo
     {

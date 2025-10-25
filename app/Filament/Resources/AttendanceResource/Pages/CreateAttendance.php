@@ -103,7 +103,6 @@ class CreateAttendance extends CreateRecord
             ->first();
 
         if ($existing) {
-            // Jika sudah check in hari ini, arahkan ke form edit
             $this->redirect(AttendanceResource::getUrl('edit', ['record' => $existing->id]));
         }
     }
