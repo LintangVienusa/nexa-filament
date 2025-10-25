@@ -278,24 +278,24 @@ class InvoiceResource extends Resource
                                 ->send();
                                 return $record->fresh();
                         }),
-                Tables\Actions\ViewAction::make()
-                    ->mountUsing(function ($record) {
-                        activity('invoice-action')
-                            ->causedBy(auth()->user())
-                            ->withProperties([
-                                'ip'              => request()->ip(),
-                                'menu'            => 'Invoice',
-                                'email'           => auth()->user()?->email,
-                                'record_id'       => $record->id,
-                                'invoice_number'  => $record->invoice_number,
-                                'action'          => 'View',
-                            ])
-                            ->tap(function ($activity) {
-                                $activity->email = auth()->user()?->email;
-                                $activity->menu  = 'Invoice';
-                            })
-                            ->log('Invoice dilihat');
-                    }),
+                // Tables\Actions\ViewAction::make()
+                //     ->mountUsing(function ($record) {
+                //         activity('invoice-action')
+                //             ->causedBy(auth()->user())
+                //             ->withProperties([
+                //                 'ip'              => request()->ip(),
+                //                 'menu'            => 'Invoice',
+                //                 'email'           => auth()->user()?->email,
+                //                 'record_id'       => $record->id,
+                //                 'invoice_number'  => $record->invoice_number,
+                //                 'action'          => 'View',
+                //             ])
+                //             ->tap(function ($activity) {
+                //                 $activity->email = auth()->user()?->email;
+                //                 $activity->menu  = 'Invoice';
+                //             })
+                //             ->log('Invoice dilihat');
+                //     }),
                 Tables\Actions\EditAction::make()
                         ->visible(fn ($record) => (int)$record->status === 0) // 👈 hanya tampil jika belum approve
                         ->after(function ($record) {

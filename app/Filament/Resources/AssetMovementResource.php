@@ -25,6 +25,11 @@ class AssetMovementResource extends Resource
         return false; 
     }
 
+    public static function canEdit($record): bool
+    {
+        return false; // atau logika sesuai role
+    }
+
     public static function form(Form $form): Form
     {
         return $form
@@ -160,7 +165,7 @@ class AssetMovementResource extends Resource
                 Tables\Columns\TextColumn::make('created_at')->dateTime()->label('Created At'),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
+                // Tables\Actions\ViewAction::make(),
                 // Tables\Actions\EditAction::make(),
                 // Tables\Actions\DeleteAction::make(),
             ])

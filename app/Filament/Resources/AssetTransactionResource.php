@@ -38,6 +38,11 @@ class AssetTransactionResource extends Resource
     protected static ?string $navigationGroup = 'Inventory';
     protected static ?int $navigationSort = 0;
 
+    public static function canEdit($record): bool
+    {
+        return false; // atau logika sesuai role
+    }
+
     public static function form(Form $form): Form
     {
         return $form

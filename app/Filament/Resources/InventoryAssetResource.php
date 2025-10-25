@@ -27,6 +27,11 @@ class InventoryAssetResource extends Resource
         return false; 
     }
 
+    public static function canEdit($record): bool
+    {
+        return false; // atau logika sesuai role
+    }
+
     public static function form(Form $form): Form
     {
         return $form
