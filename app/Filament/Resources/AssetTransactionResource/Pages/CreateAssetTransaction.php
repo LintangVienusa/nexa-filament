@@ -37,20 +37,20 @@ class CreateAssetTransaction extends CreateRecord
 
 
                 
-                if ($assetTransaction->transaction_type === 'RELEASE') {
-                        $inventory = InventoryAsset::where('categoryasset_id', $data['category_id'])->first();
-                                if ($inventory) {
-                                    $inventory->inWarehouse -= $data['request_asset_qty'];
-                                    $inventory->outWarehouse += $data['request_asset_qty'];
-                                    $inventory->save();
-                                }
-                    }else{
-                        $inventory = InventoryAsset::where('categoryasset_id', $data['category_id'])->first();
-                        if ($inventory) {
-                            $inventory->inWarehouse += $data['request_asset_qty'];
-                            $inventory->save();
-                        }
-                    }
+                // if ($assetTransaction->transaction_type === 'RELEASE') {
+                //         $inventory = InventoryAsset::where('categoryasset_id', $data['category_id'])->first();
+                //                 if ($inventory) {
+                //                     $inventory->inWarehouse -= $data['request_asset_qty'];
+                //                     $inventory->outWarehouse += $data['request_asset_qty'];
+                //                     $inventory->save();
+                //                 }
+                //     }else{
+                //         $inventory = InventoryAsset::where('categoryasset_id', $data['category_id'])->first();
+                //         if ($inventory) {
+                //             $inventory->inWarehouse += $data['request_asset_qty'];
+                //             $inventory->save();
+                //         }
+                //     }
                  
                 foreach ($data['requested_items'] as $item) {
                     if ($assetTransaction->transaction_type === 'RELEASE') {
