@@ -21,6 +21,9 @@ use App\Models\Employee;
 use Filament\Forms\Components\FileUpload;
 use Filament\Notifications\Notification;
 use App\Services\HariKerjaService;
+use Filament\Forms\Components\Placeholder;
+use Illuminate\Support\HtmlString;
+
 
 
 class LeaveResource extends Resource
@@ -198,31 +201,56 @@ class LeaveResource extends Resource
 
                 Forms\Components\Section::make('Status')
                     ->schema([
-                        Forms\Components\Select::make('status')
+                        Placeholder::make('status_display')
                             ->label('Status')
-                            ->options(function () {
-                                $user = auth()->user();
+                            ->content(function ($record) {
+                               $status = $record->status ?? null;
 
-                                if ($user->isManager()) {
-                                    return [
-                                        1 => 'Pending',
-                                        2 => 'Approve',
-                                        3 => 'Reject',
-                                    ];
+                                $levels = [
+                                    2 => ['Approved Manager'],
+                                    3 => ['Reject Manager'],
+                                    4 => ['Approved Manager','Approved VP'],
+                                    5 => ['Reject Manager','Reject VP'],
+                                    6 => ['Approved Manager','Approved VP','Approved CEO/CTO'],
+                                    7 => ['Reject Manager','Reject VP','Reject CEO/CTO'],
+                                ];
+
+                                $approveStatuses = [2,4,6];
+                                $rejectStatuses = [3,5,7];
+
+                                $approvers = $levels[$status] ?? [];
+                                $symbol = '';
+
+                                if (in_array($status, $approveStatuses)) {
+                                    $symbol = '✔️';
+                                } elseif (in_array($status, $rejectStatuses)) {
+                                    $symbol = '❌';
                                 }
 
-                                if ($user->isStaff()) {
-                                    return [
-                                        0 => 'Draft',
-                                    ];
+                                if (empty($approvers)) {
+                                    return $status === 0 ? 'Draft' : ($status === 1 ? 'Pending' : 'Unknown');
+                                }
+
+                                $lines = array_map(fn($level) => "$symbol $level", $approvers);
+
+                                $html = implode('<br>', $lines);
+
+                                return new HtmlString($html);
+                            })
+                            ->extraAttributes(function ($record) {
+                                $approveStatus = [2, 4, 6];
+                                $rejectStatus = [3, 5, 7];
+
+                                $status = $record->status ?? null;
+
+                                if (in_array($status, $approveStatus)) {
+                                    return ['style' => 'color: green; font-weight: bold;'];
+                                } elseif (in_array($status, $rejectStatus)) {
+                                    return ['style' => 'color: red; font-weight: bold;'];
                                 }
 
                                 return [];
-                            })
-                            ->default(fn () => auth()->user()->isStaff() ? 0 : 0)
-                            ->hidden(fn () => auth()->user()->isStaff()) 
-                            ->required()
-                            ->reactive(),
+                            }),
 
                         Forms\Components\Textarea::make('note_rejected')
                             ->label('Keterangan')
@@ -232,7 +260,8 @@ class LeaveResource extends Resource
                     ])
                     ->columns(1)
                     ->hidden(fn (string $operation) => $operation === 'create'),
-            ]);
+            ])
+            ->disabled(fn ($livewire, $record) => $livewire instanceof \Filament\Resources\Pages\EditRecord && $record?->status > 1);
     }
 
     public static function table(Table $table): Table
@@ -243,7 +272,11 @@ class LeaveResource extends Resource
                 Tables\Columns\TextColumn::make('full_name')
                     ->label('Nama')
                     ->sortable()
-                    ->searchable(),
+                     ->searchable(query: function ($query, $search) {
+                        $query->whereHas('employee', function ($q) use ($search) {
+                            $q->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"]);
+                        });
+                    }),
                 Tables\Columns\TextColumn::make('leave_type')
                     ->label('Jenis Cuti')
                     ->formatStateUsing(function ($state, $record) {
@@ -258,7 +291,7 @@ class LeaveResource extends Resource
                             ];
                             return $options[$state] ?? $state;
                         })
-                    ->sortable(),
+                    ->sortable()->searchable(),
                 Tables\Columns\TextColumn::make('start_date')
                     ->label('Dari Tgl')
                     ->date()
@@ -276,8 +309,12 @@ class LeaveResource extends Resource
                     ->formatStateUsing(fn ($state) => match ($state) {
                         0 => 'Draft',
                         1 => 'Pending',
-                        2 => 'Approve',
-                        3 => 'Reject',
+                        2 => 'Approve Manager',
+                        3 => 'Reject Manager',
+                        4 => 'Approve VP',
+                        5 => 'Reject VP',
+                        6 => 'Approve CEO/CTO',
+                        7 => 'Reject CEO/CTO',
                         default => $state,
                     })
                     ->color(fn ($state): string => match ($state) {
@@ -285,6 +322,10 @@ class LeaveResource extends Resource
                         1 => 'warning',
                         2 => 'success',
                         3 => 'danger',
+                        4 => 'success',
+                        5 => 'danger',
+                        6 => 'success',
+                        7 => 'danger',
                         default => 'primary',
                     })
                     ->sortable(),
@@ -301,6 +342,17 @@ class LeaveResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('approved_by')
                     ->label('Disetujui oleh')
+                    ->getStateUsing(function ($record) {
+                        return match ($record->status) {
+                            2 => 'Manager',
+                            4 => 'Manager, VP',
+                            6 => 'Manager, VP, CEO/CTO',
+                            // 3 => 'Reject Manager',
+                            // 5 => 'Reject VP',
+                            // 7 => 'Reject CEO/CTO',
+                            default => '-',
+                        };
+                    })
                     ->searchable(),
                 // Tables\Columns\TextColumn::make('leave_evidence')
                 //     ->searchable(),
@@ -310,8 +362,30 @@ class LeaveResource extends Resource
                     ->dateTime()
                     ->sortable(),
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('leave_type')
+                    ->label('Jenis Cuti')
+                    ->options([
+                        1 => 'Cuti Tahunan',
+                        2 => 'Cuti Sakit',
+                        3 => 'Cuti Melahirkan / Keguguran',
+                        4 => 'Cuti Haid',
+                        5 => 'Cuti Karena Alasan Penting',
+                        6 => 'Cuti Keagamaan',
+                        7 => 'Cuti Menikah',
+                    ]),
+                Tables\Filters\SelectFilter::make('status')
+                    ->options([
+                        0 => 'Draft',
+                        1 => 'Pending',
+                        2 => 'Approve Manager',
+                        3 => 'Reject Manager',
+                        4 => 'Approve VP',
+                        5 => 'Reject VP',
+                        6 => 'Approve CEO/CTO',
+                        7 => 'Reject CEO/CTO',
+                    ]),
             ])
             ->actions([
             
@@ -364,21 +438,23 @@ class LeaveResource extends Resource
                             if ($job === 'Manager' && $record->approval_1 == 0) {
                                 $record->update([
                                     'approval_1' => 1,
+                                    'status' => 2,
                                     'approved_1_at' => now(),
                                     'approval_1_by' => $userId,
                                 ]);
                             } elseif ($job === 'VP' && $record->approval_2 == 0 && $record->approval_1 == 1) {
                                 $record->update([
                                     'approval_2' => 1,
+                                    'status' => 4,
                                     'approved_2_at' => now(),
                                     'approval_2_by' => $userId,
                                 ]);
                             } elseif (in_array($job, ['CEO','CTO']) && $record->approval_3 == 0 && $record->approval_2 == 1) {
                                 $record->update([
                                     'approval_3' => 1,
+                                    'status' => 6,
                                     'approved_3_at' => now(),
                                     'approval_3_by' => $userId,
-                                    'status' => 2, // final approved
                                 ]);
                             }
 
@@ -420,13 +496,14 @@ class LeaveResource extends Resource
                                 
                                 
                         }),
-                Actions\EditAction::make(),
+                Actions\ViewAction::make(),
+                Actions\EditAction::make()->visible(fn ($record) => $record->status <= 1),
                 Tables\Actions\DeleteAction::make()
                         ->visible(fn ($record) => 
-                            $record->created_by === auth()->user()->email // hanya creator
-                            && $record->approval_1 == 0              // belum di-approve level 1
-                            && $record->approval_2 == 0              // belum di-approve level 2
-                            && $record->approval_3 == 0              // belum di-approve level 3
+                            $record->created_by === auth()->user()->email
+                            && $record->approval_1 == 0              
+                            && $record->approval_2 == 0             
+                            && $record->approval_3 == 0              
                         ),
             ])
             ->bulkActions([

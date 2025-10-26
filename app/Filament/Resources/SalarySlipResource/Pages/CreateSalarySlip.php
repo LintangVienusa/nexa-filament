@@ -132,118 +132,118 @@ class CreateSalarySlip extends CreateRecord
             $deduction_bpjs_kk = $deductin_jp+$deductin_jht+$jkk_company+$jkm_company;
 
 
-                SalarySlip::create([
-                        'employee_id'         => $data['employee_id'],
-                        'periode'             => $data['periode'],
-                        'salary_component_id' => \App\Models\SalaryComponent::where('component_name', 'Marriage Allowance')->where('component_type', '0')->value('id'),
-                        'component_type'      => 0, 
-                        'amount'              => $marriage_allowance,
-                        'payroll_id'          => $data['payroll_id'] ?? null,
-                    ]);
+                // SalarySlip::create([
+                //         'employee_id'         => $data['employee_id'],
+                //         'periode'             => $data['periode'],
+                //         'salary_component_id' => \App\Models\SalaryComponent::where('component_name', 'Marriage Allowance')->where('component_type', '0')->value('id'),
+                //         'component_type'      => 0, 
+                //         'amount'              => $marriage_allowance,
+                //         'payroll_id'          => $data['payroll_id'] ?? null,
+                //     ]);
 
             
-                SalarySlip::create([
-                        'employee_id'         => $data['employee_id'],
-                        'periode'             => $data['periode'],
-                        'salary_component_id' => \App\Models\SalaryComponent::where('component_name', 'Child Allowance')->where('component_type', '0')->value('id'),
-                        'component_type'      => 0, 
-                        'amount'              => $marriage_allowance,
-                        'payroll_id'          => $data['payroll_id'] ?? null,
-                    ]);
+                // SalarySlip::create([
+                //         'employee_id'         => $data['employee_id'],
+                //         'periode'             => $data['periode'],
+                //         'salary_component_id' => \App\Models\SalaryComponent::where('component_name', 'Child Allowance')->where('component_type', '0')->value('id'),
+                //         'component_type'      => 0, 
+                //         'amount'              => $marriage_allowance,
+                //         'payroll_id'          => $data['payroll_id'] ?? null,
+                //     ]);
             
-            SalarySlip::create([
-                        'employee_id'         => $data['employee_id'],
-                        'periode'             => $data['periode'],
-                        'salary_component_id' => \App\Models\SalaryComponent::where('component_name', 'BPJS Kesehatan')->where('component_type', '0')->value('id'),
-                        'component_type'      => 0, 
-                        'amount'              => $allow_bpjs_kesehatan,
-                        'payroll_id'          => $data['payroll_id'] ?? null,
-                    ]);
+            // SalarySlip::create([
+            //             'employee_id'         => $data['employee_id'],
+            //             'periode'             => $data['periode'],
+            //             'salary_component_id' => \App\Models\SalaryComponent::where('component_name', 'BPJS Kesehatan')->where('component_type', '0')->value('id'),
+            //             'component_type'      => 0, 
+            //             'amount'              => $allow_bpjs_kesehatan,
+            //             'payroll_id'          => $data['payroll_id'] ?? null,
+            //         ]);
             
-            SalarySlip::create([
-                        'employee_id'         => $data['employee_id'],
-                        'periode'             => $data['periode'],
-                        'salary_component_id' => \App\Models\SalaryComponent::where('component_name', 'BPJS Kesehatan')->where('component_type', '1')->value('id'),
-                        'component_type'      => 1, 
-                        'amount'              => $deduction_bpjs_kesehatan,
-                        'payroll_id'          => $data['payroll_id'] ?? null,
-                    ]);
+            // SalarySlip::create([
+            //             'employee_id'         => $data['employee_id'],
+            //             'periode'             => $data['periode'],
+            //             'salary_component_id' => \App\Models\SalaryComponent::where('component_name', 'BPJS Kesehatan')->where('component_type', '1')->value('id'),
+            //             'component_type'      => 1, 
+            //             'amount'              => $deduction_bpjs_kesehatan,
+            //             'payroll_id'          => $data['payroll_id'] ?? null,
+            //         ]);
 
-            SalarySlip::create([
-                        'employee_id'         => $data['employee_id'],
-                        'periode'             => $data['periode'],
-                        'salary_component_id' => \App\Models\SalaryComponent::where('component_name', 'JHT BPJS TK')->where('component_type', '0')->value('id'),
-                        'component_type'      => 1, 
-                        'amount'              => $jht_company,
-                        'payroll_id'          => $data['payroll_id'] ?? null,
-                    ]);
-            
-
-            SalarySlip::create([
-                        'employee_id'         => $data['employee_id'],
-                        'periode'             => $data['periode'],
-                        'salary_component_id' => \App\Models\SalaryComponent::where('component_name', 'JHT BPJS TK')->where('component_type', '1')->value('id'),
-                        'component_type'      => 1, 
-                        'amount'              => $deductin_jht,
-                        'payroll_id'          => $data['payroll_id'] ?? null,
-                    ]);
-
-            SalarySlip::create([
-                        'employee_id'         => $data['employee_id'],
-                        'periode'             => $data['periode'],
-                        'salary_component_id' => \App\Models\SalaryComponent::where('component_name', 'JP BPJS TK')->where('component_type', '0')->value('id'),
-                        'component_type'      => 1, 
-                        'amount'              => $jp_company,
-                        'payroll_id'          => $data['payroll_id'] ?? null,
-                    ]);
+            // SalarySlip::create([
+            //             'employee_id'         => $data['employee_id'],
+            //             'periode'             => $data['periode'],
+            //             'salary_component_id' => \App\Models\SalaryComponent::where('component_name', 'JHT BPJS TK')->where('component_type', '0')->value('id'),
+            //             'component_type'      => 1, 
+            //             'amount'              => $jht_company,
+            //             'payroll_id'          => $data['payroll_id'] ?? null,
+            //         ]);
             
 
-            SalarySlip::create([
-                        'employee_id'         => $data['employee_id'],
-                        'periode'             => $data['periode'],
-                        'salary_component_id' => \App\Models\SalaryComponent::where('component_name', 'JP BPJS TK')->where('component_type', '1')->value('id'),
-                        'component_type'      => 1, 
-                        'amount'              => $deductin_jp,
-                        'payroll_id'          => $data['payroll_id'] ?? null,
-                    ]);
-            
-            SalarySlip::create([
-                        'employee_id'         => $data['employee_id'],
-                        'periode'             => $data['periode'],
-                        'salary_component_id' => \App\Models\SalaryComponent::where('component_name', 'JKK BPJS TK')->where('component_type', '0')->value('id'),
-                        'component_type'      => 1, 
-                        'amount'              => $jkk_company,
-                        'payroll_id'          => $data['payroll_id'] ?? null,
-                    ]);
+            // SalarySlip::create([
+            //             'employee_id'         => $data['employee_id'],
+            //             'periode'             => $data['periode'],
+            //             'salary_component_id' => \App\Models\SalaryComponent::where('component_name', 'JHT BPJS TK')->where('component_type', '1')->value('id'),
+            //             'component_type'      => 1, 
+            //             'amount'              => $deductin_jht,
+            //             'payroll_id'          => $data['payroll_id'] ?? null,
+            //         ]);
+
+            // SalarySlip::create([
+            //             'employee_id'         => $data['employee_id'],
+            //             'periode'             => $data['periode'],
+            //             'salary_component_id' => \App\Models\SalaryComponent::where('component_name', 'JP BPJS TK')->where('component_type', '0')->value('id'),
+            //             'component_type'      => 1, 
+            //             'amount'              => $jp_company,
+            //             'payroll_id'          => $data['payroll_id'] ?? null,
+            //         ]);
             
 
-            SalarySlip::create([
-                        'employee_id'         => $data['employee_id'],
-                        'periode'             => $data['periode'],
-                        'salary_component_id' => \App\Models\SalaryComponent::where('component_name', 'JKK BPJS TK')->where('component_type', '1')->value('id'),
-                        'component_type'      => 1, 
-                        'amount'              => $jkk_company,
-                        'payroll_id'          => $data['payroll_id'] ?? null,
-                    ]);
+            // SalarySlip::create([
+            //             'employee_id'         => $data['employee_id'],
+            //             'periode'             => $data['periode'],
+            //             'salary_component_id' => \App\Models\SalaryComponent::where('component_name', 'JP BPJS TK')->where('component_type', '1')->value('id'),
+            //             'component_type'      => 1, 
+            //             'amount'              => $deductin_jp,
+            //             'payroll_id'          => $data['payroll_id'] ?? null,
+            //         ]);
             
-            SalarySlip::create([
-                        'employee_id'         => $data['employee_id'],
-                        'periode'             => $data['periode'],
-                        'salary_component_id' => \App\Models\SalaryComponent::where('component_name', 'JKM BPJS TK')->where('component_type', '0')->value('id'),
-                        'component_type'      => 1, 
-                        'amount'              => $jkm_company,
-                        'payroll_id'          => $data['payroll_id'] ?? null,
-                    ]);
+            // SalarySlip::create([
+            //             'employee_id'         => $data['employee_id'],
+            //             'periode'             => $data['periode'],
+            //             'salary_component_id' => \App\Models\SalaryComponent::where('component_name', 'JKK BPJS TK')->where('component_type', '0')->value('id'),
+            //             'component_type'      => 1, 
+            //             'amount'              => $jkk_company,
+            //             'payroll_id'          => $data['payroll_id'] ?? null,
+            //         ]);
             
 
-            SalarySlip::create([
-                        'employee_id'         => $data['employee_id'],
-                        'periode'             => $data['periode'],
-                        'salary_component_id' => \App\Models\SalaryComponent::where('component_name', 'JKM BPJS TK')->where('component_type', '1')->value('id'),
-                        'component_type'      => 1, 
-                        'amount'              => $jkm_company,
-                        'payroll_id'          => $data['payroll_id'] ?? null,
-                    ]);
+            // SalarySlip::create([
+            //             'employee_id'         => $data['employee_id'],
+            //             'periode'             => $data['periode'],
+            //             'salary_component_id' => \App\Models\SalaryComponent::where('component_name', 'JKK BPJS TK')->where('component_type', '1')->value('id'),
+            //             'component_type'      => 1, 
+            //             'amount'              => $jkk_company,
+            //             'payroll_id'          => $data['payroll_id'] ?? null,
+            //         ]);
+            
+            // SalarySlip::create([
+            //             'employee_id'         => $data['employee_id'],
+            //             'periode'             => $data['periode'],
+            //             'salary_component_id' => \App\Models\SalaryComponent::where('component_name', 'JKM BPJS TK')->where('component_type', '0')->value('id'),
+            //             'component_type'      => 1, 
+            //             'amount'              => $jkm_company,
+            //             'payroll_id'          => $data['payroll_id'] ?? null,
+            //         ]);
+            
+
+            // SalarySlip::create([
+            //             'employee_id'         => $data['employee_id'],
+            //             'periode'             => $data['periode'],
+            //             'salary_component_id' => \App\Models\SalaryComponent::where('component_name', 'JKM BPJS TK')->where('component_type', '1')->value('id'),
+            //             'component_type'      => 1, 
+            //             'amount'              => $jkm_company,
+            //             'payroll_id'          => $data['payroll_id'] ?? null,
+            //         ]);
             
 
 
@@ -276,29 +276,32 @@ class CreateSalarySlip extends CreateRecord
             $bpjs = $deduction_bpjs_kesehatan+$deduction_bpjs_kk ?? 0;
             
             $pph21 = app(Pph21Service::class);
+            $marital_status =0;
+            $number_of_children=0;
+            $bpjs = 0;
             $hpph21 = $pph21->hitung($basicSalary, $allowance,$marital_status, $number_of_children, $bpjs);
             $pkp = $hpph21['taxable_income'];
             $taxmount = $hpph21['monthly_pph21'];
             $positionalallowance = $hpph21['position_cost'];
             if ($pkp > 0) {
 
-                SalarySlip::create([
-                    'employee_id'         => $data['employee_id'],
-                    'periode'             => $data['periode'],
-                    'salary_component_id' => \App\Models\SalaryComponent::where('component_name', 'Positional Allowance')->value('id'),
-                    'component_type'      => 0, 
-                    'amount'              => $positionalallowance,
-                    'payroll_id'          => $data['payroll_id'] ?? null,
-                ]);
+                // SalarySlip::create([
+                //     'employee_id'         => $data['employee_id'],
+                //     'periode'             => $data['periode'],
+                //     'salary_component_id' => \App\Models\SalaryComponent::where('component_name', 'Positional Allowance')->value('id'),
+                //     'component_type'      => 0, 
+                //     'amount'              => $positionalallowance,
+                //     'payroll_id'          => $data['payroll_id'] ?? null,
+                // ]);
                 
-                SalarySlip::create([
-                    'employee_id'         => $data['employee_id'],
-                    'periode'             => $data['periode'],
-                    'salary_component_id' => \App\Models\SalaryComponent::where('component_name', 'PPh 21')->value('id'),
-                    'component_type'      => 1, 
-                    'amount'              => $taxmount,
-                    'payroll_id'          => $data['payroll_id'] ?? null,
-                ]);
+                // SalarySlip::create([
+                //     'employee_id'         => $data['employee_id'],
+                //     'periode'             => $data['periode'],
+                //     'salary_component_id' => \App\Models\SalaryComponent::where('component_name', 'PPh 21')->value('id'),
+                //     'component_type'      => 1, 
+                //     'amount'              => $taxmount,
+                //     'payroll_id'          => $data['payroll_id'] ?? null,
+                // ]);
 
                 
 

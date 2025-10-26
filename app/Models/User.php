@@ -16,12 +16,14 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, HasRoles, HasApiTokens;
 
+    protected $connection = 'mysql';
+    protected $table = 'users';
+
     /**
      * The attributes that are mass assignable.
      *
      * @var list<string>
      */
-
     public function canAccessPanel(\Filament\Panel $panel): bool
     {
         return true;
@@ -56,8 +58,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
         ];
     }
 
-    protected $connection = 'mysql';
-    protected $table = 'users';
+    
 
     public function employee()
     {

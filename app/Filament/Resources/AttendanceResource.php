@@ -25,6 +25,9 @@ use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Livewire;
 use Filament\Forms\Components\ViewField;
+use Filament\Tables\Actions\Action;
+use App\Filament\Resources\AttendanceResource\Widgets\AttendanceSummary;
+
 
 class AttendanceResource extends Resource
 {
@@ -191,8 +194,11 @@ class AttendanceResource extends Resource
             ]);
     }
 
+    
+
     public static function table(Table $table): Table
     {
+        $totalAttendance = Attendance::count();
         return $table
             ->columns([
                 TextColumn::make('employee.employee_id')->label('Employee ID'),
@@ -243,6 +249,7 @@ class AttendanceResource extends Resource
                 Filter::make('today')
                     ->query(fn($query) => $query->whereDate('attendance_date', now()->toDateString())),
             ])
+            
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 // Tables\Actions\DeleteAction::make(),

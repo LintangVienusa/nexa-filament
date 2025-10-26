@@ -13,10 +13,12 @@ use App\Models\Timesheet;
 use Illuminate\Support\Facades\Auth;
 use App\Traits\HasOwnRecordPolicy;
 use Carbon\Carbon;
+use App\Filament\Resources\AttendanceResource\Widgets\AttendanceSummary;
 
 class ListAttendances extends ListRecords
 {
     protected static string $resource = AttendanceResource::class;
+    
     
 
     protected function getHeaderActions(): array
@@ -70,4 +72,16 @@ class ListAttendances extends ListRecords
                 ->requiresConfirmation(), 
         ];
     }
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            AttendanceSummary::class,
+        ];
+    }
+    
+    // protected function getFooterWidgets(): array
+    // {
+        
+    // }
 }
