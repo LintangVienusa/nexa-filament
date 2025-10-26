@@ -57,6 +57,14 @@ class SalarySlipResource extends Resource
                                     ->pluck('divisi_name', 'divisi_name'))
                                 ->reactive()
                                 ->required()
+                                ->afterStateHydrated(function ($set, $record) {
+                                    if ($record && $record->employee_id) {
+                                        $employee = \App\Models\Employee::find($record->employee_id);
+                                        if ($employee && $employee->organization) {
+                                            $set('divisi_name', $employee->organization->divisi_name);
+                                        }
+                                    }
+                                })
                                 ->disabled(fn ($record) => $record !== null) 
                                 ->afterStateUpdated(function ($state, callable $set) {
                                     $set('unit_id', null);
@@ -72,6 +80,14 @@ class SalarySlipResource extends Resource
                                                 ->pluck('unit_name', 'id');
                                         })
                                     ->required()
+                                    ->afterStateHydrated(function ($set, $record) {
+                                        if ($record && $record->employee_id) {
+                                            $employee = \App\Models\Employee::find($record->employee_id);
+                                            if ($employee && $employee->organization) {
+                                                $set('unit_id', $employee->organization->id);
+                                            }
+                                        }
+                                    })
                                     ->disabled(fn ($record) => $record !== null) 
                                     ->afterStateUpdated(function ($state, callable $set) {
                                         $set('employee_name', null);
@@ -91,6 +107,15 @@ class SalarySlipResource extends Resource
                                     ->searchable()
                                     ->reactive()
                                     ->required()
+                                    ->afterStateHydrated(function ($set, $record) {
+                                        if ($record && $record->employee_id) {
+                                            $employee = \App\Models\Employee::find($record->employee_id);
+                                            if ($employee) {
+                                                $set('employee_name', $employee->employee_id);
+                                                $set('employee_id', $employee->employee_id);
+                                            }
+                                        }
+                                    })
                                     ->disabled(fn ($record) => $record !== null) 
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                         if (!$state) return;
@@ -130,15 +155,15 @@ class SalarySlipResource extends Resource
                                         $alphaId = \App\Models\SalaryComponent::where('component_name', 'No Attendance')->value('id');
                                         $overtimeId = \App\Models\SalaryComponent::where('component_name', 'Overtime')->value('id');
 
-                                        $components[] = [
-                                            'salary_component_id' => $alphaId,
-                                            'component_type' => \App\Models\SalaryComponent::where('component_name', 'No Attendance')->value('component_type'),
-                                            'jumlah_hari_kerja' => $hariKerjaData['jumlah_hari_kerja'] ?? 0,
-                                            'jumlah_absensi' => $hariKerjaData['jml_absensi'] ?? 0,
-                                            'no_attendance' => $hariKerjaData['jml_alpha'] ?? 0,
-                                            'amount_display' => number_format(100000, 0, ',', '.'),
-                                            'amount' => 100000,
-                                        ];
+                                        // $components[] = [
+                                        //     'salary_component_id' => $alphaId,
+                                        //     'component_type' => \App\Models\SalaryComponent::where('component_name', 'No Attendance')->value('component_type'),
+                                        //     'jumlah_hari_kerja' => $hariKerjaData['jumlah_hari_kerja'] ?? 0,
+                                        //     'jumlah_absensi' => $hariKerjaData['jml_absensi'] ?? 0,
+                                        //     'no_attendance' => $hariKerjaData['jml_alpha'] ?? 0,
+                                        //     'amount_display' => number_format(100000, 0, ',', '.'),
+                                        //     'amount' => 100000,
+                                        // ];
 
                                         if ($overtimeHours > 0) {
                                             $components[] = [
@@ -244,15 +269,15 @@ class SalarySlipResource extends Resource
                                     }
 
                                     if (!$found) {
-                                        $components[] = [
-                                            'salary_component_id' => $alphaId,
-                                            'component_type' => SalaryComponent::where('component_name', 'No Attendance')->value('component_type'),
-                                            'jumlah_hari_kerja' => $hariKerjaData['jumlah_hari_kerja'] ?? 0,
-                                            'jumlah_absensi' => $hariKerjaData['jml_absensi'] ?? 0,
-                                            'no_attendance' => $hariKerjaData['jml_alpha'] ?? 0,
-                                            'amount_display' => number_format((int) $amountpt, 0, ',', '.'),
-                                                'amount'     => (int) $amountpt,
-                                        ];
+                                        // $components[] = [
+                                        //     'salary_component_id' => $alphaId,
+                                        //     'component_type' => SalaryComponent::where('component_name', 'No Attendance')->value('component_type'),
+                                        //     'jumlah_hari_kerja' => $hariKerjaData['jumlah_hari_kerja'] ?? 0,
+                                        //     'jumlah_absensi' => $hariKerjaData['jml_absensi'] ?? 0,
+                                        //     'no_attendance' => $hariKerjaData['jml_alpha'] ?? 0,
+                                        //     'amount_display' => number_format((int) $amountpt, 0, ',', '.'),
+                                        //         'amount'     => (int) $amountpt,
+                                        // ];
                                     }
 
                                     if (!$foundOvertime && $overtimeHours > 0) {
@@ -326,15 +351,15 @@ class SalarySlipResource extends Resource
                                         }
 
                                         if (!$found) {
-                                            $components[] = [
-                                                'salary_component_id' => $alphaId,
-                                                'component_type' => SalaryComponent::where('component_name', 'No Attendance')->value('component_type'),
-                                                'jumlah_hari_kerja' => $hariKerjaData['jumlah_hari_kerja'] ?? 0,
-                                                'jumlah_absensi' => $hariKerjaData['jml_absensi'] ?? 0,
-                                                'no_attendance' => $hariKerjaData['jml_alpha'] ?? 0,
-                                                'amount_display' => number_format((int) $amountpt, 0, ',', '.'),
-                                                    'amount'     => (int) $amountpt,
-                                            ];
+                                            // $components[] = [
+                                            //     'salary_component_id' => $alphaId,
+                                            //     'component_type' => SalaryComponent::where('component_name', 'No Attendance')->value('component_type'),
+                                            //     'jumlah_hari_kerja' => $hariKerjaData['jumlah_hari_kerja'] ?? 0,
+                                            //     'jumlah_absensi' => $hariKerjaData['jml_absensi'] ?? 0,
+                                            //     'no_attendance' => $hariKerjaData['jml_alpha'] ?? 0,
+                                            //     'amount_display' => number_format((int) $amountpt, 0, ',', '.'),
+                                            //         'amount'     => (int) $amountpt,
+                                            // ];
                                         }
 
                                         if (!$foundOvertime && $overtimeHours > 0) {
@@ -399,14 +424,14 @@ class SalarySlipResource extends Resource
                                             // Kalau edit record (tidak kosong), exclude komponen tertentu
                                             if ($record == '') {
                                                 $query->whereNotIn('component_name', [
-                                                    'BPJS Kesehatan',
-                                                    'JHT BPJS TK',
-                                                    'JP BPJS TK',
-                                                    'JKK BPJS TK',
-                                                    'JKM BPJS TK',
-                                                    'Marriage Allowance',
-                                                    'Child Allowance',
-                                                    'PPh 21',
+                                                    // 'BPJS Kesehatan',
+                                                    // 'JHT BPJS TK',
+                                                    // 'JP BPJS TK',
+                                                    // 'JKK BPJS TK',
+                                                    // 'JKM BPJS TK',
+                                                    // 'Marriage Allowance',
+                                                    // 'Child Allowance',
+                                                    // 'PPh 21',
                                                 ]);
                                             }
 
@@ -445,31 +470,31 @@ class SalarySlipResource extends Resource
 
                                 Select::make('salary_component_id') ->label('Salary Component type') ->options(function () { return SalaryComponent::all()->mapWithKeys(fn($c) => [ $c->id => ($c->component_type == 0 ? 'Allowance' : 'Deduction'), ]); }) ->disabled() ->required(),
                                 
-                                TextInput::make('jumlah_hari_kerja')
-                                    ->label('Jumlah Hari Kerja')
-                                    ->reactive()
-                                    ->visible(function ($get) {
-                                        $basicSalaryId = \App\Models\SalaryComponent::where('component_name', 'No Attendance')->value('id');
+                                // TextInput::make('jumlah_hari_kerja')
+                                //     ->label('Jumlah Hari Kerja')
+                                //     ->reactive()
+                                //     ->visible(function ($get) {
+                                //         $basicSalaryId = \App\Models\SalaryComponent::where('component_name', 'No Attendance')->value('id');
                                         
-                                        return $get('salary_component_id') == $basicSalaryId;
-                                    })
-                                    ->required(),
-                                TextInput::make('jumlah_absensi')
-                                    ->label('Jumlah Absensi')
-                                    ->reactive()
-                                    ->required()
-                                    ->visible(function ($get) {
-                                        $basicSalaryId = SalaryComponent::where('component_name', 'No Attendance')->value('id');
-                                        return $get('salary_component_id') == $basicSalaryId;
-                                    }),
-                                TextInput::make('no_attendance')
-                                    ->label('Jumlah Alpha')
-                                    ->reactive()
-                                    ->required()
-                                    ->visible(function ($get) {
-                                        $basicSalaryId = SalaryComponent::where('component_name', 'No Attendance')->value('id');
-                                        return $get('salary_component_id') == $basicSalaryId;
-                                    }),
+                                //         return $get('salary_component_id') == $basicSalaryId;
+                                //     })
+                                //     ->required(),
+                                // TextInput::make('jumlah_absensi')
+                                //     ->label('Jumlah Absensi')
+                                //     ->reactive()
+                                //     ->required()
+                                //     ->visible(function ($get) {
+                                //         $basicSalaryId = SalaryComponent::where('component_name', 'No Attendance')->value('id');
+                                //         return $get('salary_component_id') == $basicSalaryId;
+                                //     }),
+                                // TextInput::make('no_attendance')
+                                //     ->label('Jumlah Alpha')
+                                //     ->reactive()
+                                //     ->required()
+                                //     ->visible(function ($get) {
+                                //         $basicSalaryId = SalaryComponent::where('component_name', 'No Attendance')->value('id');
+                                //         return $get('salary_component_id') == $basicSalaryId;
+                                //     }),
                                 TextInput::make('overtime_hours')
                                     ->label('Overtime Hours')
                                     ->reactive()
@@ -482,12 +507,13 @@ class SalarySlipResource extends Resource
                                 Forms\Components\TextInput::make('amount_display')
                                     ->label(function ($get) {
                                         $componentId = $get('salary_component_id');
-                                        $potonganAlphaId = SalaryComponent::where('component_name', 'No Attendance')->value('id');
+                                        // $potonganAlphaId = SalaryComponent::where('component_name', 'No Attendance')->value('id');
                                         $overtimeId = SalaryComponent::where('component_name', 'Overtime')->value('id');
 
-                                        if ($componentId == $potonganAlphaId) {
-                                            return 'Amount (*day)';
-                                        } elseif ($componentId == $overtimeId) {
+                                        // if ($componentId == $potonganAlphaId) {
+                                        //     return 'Amount (*day)';
+                                        // } else
+                                        if ($componentId == $overtimeId) {
                                             return 'Amount (*hour)';
                                         }
 

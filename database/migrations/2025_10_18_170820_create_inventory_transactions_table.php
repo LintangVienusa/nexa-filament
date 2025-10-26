@@ -19,11 +19,14 @@ return new class extends Migration
             $table->string('PIC', 250)->nullable();
             $table->integer('asset_qty_now')->default(0);
             $table->integer('request_asset_qty')->default(0);
+            $table->integer('receive_asset_qty')->default(0);
             $table->text('notes')->nullable();
             $table->enum('usage_type', ['ASSIGNED_TO_EMPLOYEE', 'DEPLOYED_FIELD', 'WAREHOUSE'])
                   ->default('WAREHOUSE');
             $table->enum('assigned_type', ['EMPLOYEE', 'DISTRIBUTOR', 'CONTRACTOR'])->nullable();
-            $table->string('assigned_id', 50)->nullable();
+            $table->string('recipient_by', 150)->nullable();
+            $table->string('sender_by', 150)->nullable();
+            $table->string('sender_custom', 150)->nullable();
             $table->string('province_code')->nullable();
             $table->string('regency_code')->nullable();
             $table->string('village_code')->nullable();
@@ -39,10 +42,13 @@ return new class extends Migration
 
             $table->index('inventory_id');
             $table->index('PIC');
-            $table->index('assigned_id');
+            $table->index('recipient_by');
+            $table->index('sender_by');
+            $table->index('sender_custom');
             $table->index('transaction_type');
             $table->index('created_by');
             $table->index('assigned_type');
+            $table->index('status');
         });
     }
 

@@ -242,7 +242,8 @@ class PayrollResource extends Resource
                 Action::make('approve')
                         ->label('Approve')
                         ->icon('heroicon-o-check')
-                        ->visible(fn ($record) => (int)$record->status === 0) 
+                        ->color('success')
+                        ->visible(fn ($record) => (int)$record->status === 0 && auth()->user()->employee?->job_title === 'CEO')
                         ->requiresConfirmation()
                         ->action(function ($record) {
                             $record->update(['status' => 1]);
@@ -284,7 +285,9 @@ class PayrollResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->visible(fn () => auth()->user()?->hasAnyRole(['superadmin', 'admin', 'manager']))
+                        ->authorize(fn () => auth()->user()?->hasAnyRole(['superadmin', 'admin', 'manager'])),
                 ]),
             ]);
     }

@@ -49,9 +49,33 @@ class CreateAttendance extends CreateRecord
             $data['check_in_longitude'] = $todayAttendance->check_in_longitude;
         } else {
             if (isset($data['check_in_evidence']) && str_starts_with($data['check_in_evidence'], 'data:image')) {
-                $data['check_in_evidence'] = Attendance::compressBase64Image($data['check_in_evidence'], 70);
-                 $data['check_in_evidence'] = preg_replace('#^data:image/\w+;base64,#i', '', $data['check_in_evidence']);
+                // $data['check_in_evidence'] = Attendance::compressBase64Image($data['check_in_evidence'], 70);
+                //  $data['check_in_evidence'] = preg_replace('#^data:image/\w+;base64,#i', '', $data['check_in_evidence']);
                
+                    $base64 = preg_replace('#^data:image/\w+;base64,#i', '', $data['check_in_evidence']);
+                    
+                    $imageData = base64_decode($base64);
+                    if ($imageData === false) {
+                        return response()->json(['error' => 'Base64 decode failed'], 400);
+                    }
+
+                    $image = imagecreatefromstring($imageData);
+                    if ($image === false) {
+                        return response()->json(['error' => 'Invalid image data'], 400);
+                    }
+
+                    $folder = storage_path('app/public/check_in_evidence');
+                    if (!file_exists($folder)) mkdir($folder, 0777, true);
+
+                   
+                    $fileName = 'check_in_' . time() . '.jpg';
+                    $filePath = $folder . '/' . $fileName;
+
+                    imagejpeg($image, $filePath, 70);
+                    imagedestroy($image);
+
+                    $data['check_in_evidence']= 'check_in_evidence/' . $fileName;
+                   
             }
             $data['check_out_evidence'] = null;
             $data['check_out_time'] = null;
@@ -79,7 +103,6 @@ class CreateAttendance extends CreateRecord
             ->first();
 
         if ($existing) {
-            // Jika sudah check in hari ini, arahkan ke form edit
             $this->redirect(AttendanceResource::getUrl('edit', ['record' => $existing->id]));
         }
     }

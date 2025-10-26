@@ -25,19 +25,20 @@ use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Livewire;
 use Filament\Forms\Components\ViewField;
+use Filament\Tables\Actions\Action;
+use App\Filament\Resources\AttendanceResource\Widgets\AttendanceSummary;
+
 
 class AttendanceResource extends Resource
 {
     use HasPermissions, HasOwnRecordPolicy;
+
     protected static ?string $model = Attendance::class;
     protected static ?string $permissionPrefix = 'employees';
     protected static string $ownerColumn = 'email';
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-check';
     protected static ?string $navigationGroup = 'HR Management';
     protected static ?string $navigationLabel = 'Attendances';
-
- 
-
 
     public static function form(Form $form): Form
     {
@@ -56,8 +57,7 @@ class AttendanceResource extends Resource
                         TextInput::make('employee_nik')
                             ->label('NIK')
                             ->required()
-                            ->default(fn ($record) => 
-                                $record?->employee_id 
+                            ->default(fn($record) => $record?->employee_id
                                 ?? auth()->user()->employee?->employee_id
                             )
                             ->afterStateHydrated(function ($component, $state, $record) {
@@ -76,9 +76,9 @@ class AttendanceResource extends Resource
                             ->disabled()
                             ->required()
                             ->dehydrated(true),
-                        
+
                         TextInput::make('check_in_time_display')
-                            ->label(fn ($record) => $record ? 'Time Check Out' : 'Time Check In')
+                            ->label(fn($record) => $record ? 'Time Check Out' : 'Time Check In')
                             ->default(Carbon::now('Asia/Jakarta')->format('H:i'))
                             ->afterStateHydrated(function ($component, $state, $record) {
                                 // jika sedang edit (record ada)
@@ -92,17 +92,17 @@ class AttendanceResource extends Resource
                             ->required()
                             ->dehydrated(false),
                         Hidden::make('check_in_time')
-                            ->default(fn ($record) => $record 
-                                ? $record->check_in_time 
+                            ->default(fn($record) => $record
+                                ? $record->check_in_time
                                 : Carbon::now('Asia/Jakarta')->toDateTimeString()
-                            )->afterStateHydrated(fn ($record) => $record 
-                                ? $record->check_in_time 
+                            )->afterStateHydrated(fn($record) => $record
+                                ? $record->check_in_time
                                 : Carbon::now('Asia/Jakarta')->toDateTimeString()
                             )
-                            ->dehydrated(true)
+                             ->dehydrated(fn($record) => $record === null)
                             ->required(),
                         Hidden::make('check_out_time')
-                            ->default(fn ($record) => $record 
+                            ->default(fn($record) => $record
                                 ? Carbon::now('Asia/Jakarta')->toDateTimeString()
                                 : Carbon::now('Asia/Jakarta')->toDateTimeString()
                             )->afterStateHydrated(function ($component, $state, $record) {
@@ -114,89 +114,91 @@ class AttendanceResource extends Resource
                             })
                             ->dehydrated(true)
                             ->required()
-                            ,
-                    
+                        ,
+
                     ])->columns(2),
                 Section::make('Evidence')
                     ->schema([
-                    // Section::make('location')
+                        // Section::make('location')
                         // ->schema([
                         //     ViewField::make('location_map_in')
                         // ->label('Lokasi Absensi')
                         // ->view('filament.partials.location-capture')
                         // ->visible(fn ($record) => $record && $record->check_in_latitude && $record->check_in_longitude),
                         ViewField::make('location_map')
-                                ->view('filament.partials.location-map'),
+                            ->view('filament.partials.location-map'),
                         // ]),s
-                        
-                     Section::make('')
-                        ->schema([
-                        TextInput::make('check_in_latitude')
-                                ->label('Check In Latitude')
-                                ->required()
-                                ->dehydrated()
-                                ->default(fn ($record) => $record  ? $record->check_in_latitude : null)
-                                ->id('check_in_latitude'),
+
+                        Section::make('')
+                            ->schema([
+                                TextInput::make('check_in_latitude')
+                                    ->label('Check In Latitude')
+                                    ->required()
+                                    ->dehydrated()
+                                    ->default(fn($record) => $record ? $record->check_in_latitude : null)
+                                    ->id('check_in_latitude'),
                                 // ->visible(fn ($record) => !$record || !$record->check_in_latitude),
 
-                            TextInput::make('check_in_longitude')
-                                ->label('Check In Longitude')
-                                ->required()
-                                ->dehydrated()
-                                ->default(fn ($record) => $record  ? $record->check_in_longitude : null)
-                                ->id('check_in_longitude'),
+                                TextInput::make('check_in_longitude')
+                                    ->label('Check In Longitude')
+                                    ->required()
+                                    ->dehydrated()
+                                    ->default(fn($record) => $record ? $record->check_in_longitude : null)
+                                    ->id('check_in_longitude'),
                                 // ->visible(fn ($record) => !$record || !$record->check_in_latitude),
 
-                            TextInput::make('check_out_latitude')
-                                ->label('Check Out Latitude')
-                                ->dehydrated()
-                                ->default(fn ($record) => $record  ? $record->check_out_latitude : null)
-                                ->id('check_out_latitude'),
+                                TextInput::make('check_out_latitude')
+                                    ->label('Check Out Latitude')
+                                    ->dehydrated()
+                                    ->default(fn($record) => $record ? $record->check_out_latitude : null)
+                                    ->id('check_out_latitude'),
                                 // ->visible(fn ($record) => $record && $record->check_in_latitude && !$record->check_out_latitude),
 
 
-                            TextInput::make('check_out_longitude')
-                                ->label('Check Out Longitude')
-                                ->dehydrated()
-                                ->default(fn ($record) => $record  ? $record->check_out_longitude : null)
-                                ->id('check_out_longitude'),
+                                TextInput::make('check_out_longitude')
+                                    ->label('Check Out Longitude')
+                                    ->dehydrated()
+                                    ->default(fn($record) => $record ? $record->check_out_longitude : null)
+                                    ->id('check_out_longitude'),
                                 // ->visible(fn ($record) => $record && $record->check_in_latitude && !$record->check_out_latitude),
-                         ])->columns(2),
+                            ])->columns(2),
                     ]),
                 Section::make('Bukti Kehadiran')
                     ->schema([
                         Section::make('')
-                         ->visible(fn($record) => !empty($record?->check_in_evidence) || !empty($record?->check_out_evidence))
+                            ->visible(fn($record) => !empty($record?->check_in_evidence) || !empty($record?->check_out_evidence))
                             ->schema([
                                 ViewField::make('check_in_evidence')
                                     ->label('Check In Evidence')
-                                    ->view('filament.partials.image-preview') 
+                                    ->view('filament.partials.image-preview')
                                     ->visible(fn($record) => $record?->check_in_evidence), // safe navigation operator ?->
 
                                 ViewField::make('check_out_evidence')
                                     ->label('Check Out Evidence')
-                                    ->view('filament.partials.image-preview') 
+                                    ->view('filament.partials.image-preview')
                                     ->visible(fn($record) => $record?->check_out_evidence), // safe navigation
                             ])->columns(2),
-                         Hidden::make('check_in_evidence')
-                             ->reactive()
+                        Hidden::make('check_in_evidence')
+                            ->reactive()
+                             ->dehydrated(fn($record) => $record === null)
                             ->required(),
                         Hidden::make('check_out_evidence')
-                        ->reactive()->dehydrated()->dehydrated(),
-                        
-                         ViewField::make('camera_capture')
+                            ->reactive()->dehydrated()->dehydrated(),
+
+                        ViewField::make('camera_capture')
                             ->view('filament.partials.camera-capture'),
                     ]),
-
-                
                 Hidden::make('created_by')
                     ->disabled()
                     ->default(auth()->user()->email ?? null),
             ]);
     }
 
+    
+
     public static function table(Table $table): Table
     {
+        $totalAttendance = Attendance::count();
         return $table
             ->columns([
                 TextColumn::make('employee.employee_id')->label('Employee ID'),
@@ -212,34 +214,50 @@ class AttendanceResource extends Resource
                 TextColumn::make('check_in_time')->dateTime(),
                 TextColumn::make('check_out_time')->dateTime(),
                 TextColumn::make('working_hours')
-                        ->label('Working Hours')
-                        ->getStateUsing(function ($record) {
-                            // Jika working_hours ada, pakai
-                            if ($record->working_hours) {
-                                $hoursDecimal = $record->working_hours;
-                            } else {
-                                // Jika kosong, hitung dari check_in_time sampai sekarang
+                    ->label('Working Hours')
+                    ->getStateUsing(function ($record) {
+                        if ($record->working_hours) {
+                            // $hoursDecimal = $record->working_hours;
+                            if($record->check_out_time){
                                 $checkIn = $record->check_in_time ? Carbon::parse($record->check_in_time) : now();
-                                $hoursDecimal = round($checkIn->floatDiffInHours(now()), 2); // desimal 2 angka
+                                $checkOut = $record->check_out_time ? Carbon::parse($record->check_out_time) : now();
+                                $hoursDecimal = round($checkIn->floatDiffInHours($checkOut), 2); 
+                            }else{
+                                $checkIn = $record->check_in_time ? Carbon::parse($record->check_in_time) : now();
+                                $hoursDecimal = round($checkIn->floatDiffInHours(now()), 2); 
+                            } 
+                        } else {
+                            if($record->check_out_time){
+                                $checkIn = $record->check_in_time ? Carbon::parse($record->check_in_time) : now();
+                                $checkOut = $record->check_out_time ? Carbon::parse($record->check_out_time) : now();
+                                $hoursDecimal = round($checkIn->floatDiffInHours($checkOut), 2); 
+                            }else{
+                                $checkIn = $record->check_in_time ? Carbon::parse($record->check_in_time) : now();
+                                $hoursDecimal = round($checkIn->floatDiffInHours(now()), 2); 
                             }
+                            
+                        }
 
-                            $hours = floor($hoursDecimal);
-                            $minutes = round(($hoursDecimal - $hours) * 60);
+                        $hours = floor($hoursDecimal);
+                        $minutes = round(($hoursDecimal - $hours) * 60);
 
-                            return "{$hours} jam {$minutes} menit";
-                        })
-                        ->sortable(),
-            ])
+                        return "{$hours} jam {$minutes} menit";
+                    })
+                    ->sortable(),
+            ])->defaultSort('attendance_date', 'desc')
             ->filters([
                 Filter::make('today')
-                    ->query(fn ($query) => $query->whereDate('attendance_date', now()->toDateString())),
+                    ->query(fn($query) => $query->whereDate('attendance_date', now()->toDateString())),
             ])
+            
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 // Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
+                Tables\Actions\DeleteBulkAction::make()
+                ->visible(fn () => auth()->user()?->hasAnyRole(['superadmin', 'admin', 'manager']))
+                ->authorize(fn () => auth()->user()?->hasAnyRole(['superadmin', 'admin', 'manager'])),
             ]);
     }
 

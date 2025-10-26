@@ -20,6 +20,16 @@ class AssetMovementResource extends Resource
     protected static ?string $navigationLabel = 'Asset Movements';
     protected static ?int $navigationSort = 0;
 
+    public static function canCreate(): bool
+    {
+        return false; 
+    }
+
+    public static function canEdit($record): bool
+    {
+        return false; // atau logika sesuai role
+    }
+
     public static function form(Form $form): Form
     {
         return $form
@@ -127,12 +137,17 @@ class AssetMovementResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('id')->sortable(),
                 Tables\Columns\TextColumn::make('movement_id')->label('Movement ID')->searchable(),
-                Tables\Columns\TextColumn::make('movement_type')->label('Movement Type')->searchable(),
-                Tables\Columns\TextColumn::make('placement_type')->label('Movement Type')->searchable(),
-                Tables\Columns\TextColumn::make('asset.name')->label('Asset'),
-                Tables\Columns\TextColumn::make('inventory.asse')->label('Inventory'),
-                Tables\Columns\TextColumn::make('asset_qty_now')->label('Qty Now'),
-                Tables\Columns\TextColumn::make('status')
+                Tables\Columns\TextColumn::make('movementType')->label('Movement Type')->searchable(),
+                Tables\Columns\TextColumn::make('placement_type')->label('Placement Type')->searchable(),
+                Tables\Columns\TextColumn::make('asset.name')->label('Asset')->searchable(),
+                Tables\Columns\TextColumn::make('asset.serialNumber')->label('Serial Number')->searchable(),
+                Tables\Columns\TextColumn::make('PIC')->label('PIC'),
+                Tables\Columns\TextColumn::make('recipient')->label('Penerima')->searchable(),
+                Tables\Columns\TextColumn::make('location')->label('location')->searchable(),
+                Tables\Columns\TextColumn::make('province_code')->label('Provinsi')->searchable(),
+                Tables\Columns\TextColumn::make('regency_code')->label('Kabupaten')->searchable(),
+                Tables\Columns\TextColumn::make('village_code')->label('Kota')->searchable(),
+                Tables\Columns\TextColumn::make('status')->searchable()
                     ->formatStateUsing(fn ($state) => match ($state) {
                         0 => 'Submit',
                         1 => 'Pending',
@@ -150,12 +165,12 @@ class AssetMovementResource extends Resource
                 Tables\Columns\TextColumn::make('created_at')->dateTime()->label('Created At'),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                // Tables\Actions\ViewAction::make(),
+                // Tables\Actions\EditAction::make(),
+                // Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
+                // Tables\Actions\DeleteBulkAction::make(),
             ]);
     }
 

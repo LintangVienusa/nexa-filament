@@ -10,6 +10,7 @@ use Filament\View\PanelsRenderHook;
 use Filament\Navigation\UserMenuItem;
 use Filament\Facades\Filament;
 
+
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -26,11 +27,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-
         Filament::serving(function () {
-
             FilamentView::registerRenderHook(
-
                 PanelsRenderHook::USER_MENU_PROFILE_BEFORE,
                 function () {
                     $user = auth()->user();
@@ -38,7 +36,7 @@ class AppServiceProvider extends ServiceProvider
                     $employee = $user?->employee;
                     $organization = $employee?->organization;
                     $avatarUrl = $user?->getFilamentAvatarUrl() ?? asset('images/default-avatar.png');
-                    $name =strtoupper(optional($user?->employee)->first_name ?? '-');
+                    $name = strtoupper(optional($user?->employee)->first_name ?? '-');
                     $position = e(optional($user?->employee)->job_title ?? optional($user?->employee)->job_title ?? '-');
                     $division = $organization?->divisi_name ?? '-';
                     $unit = $organization?->unit_name ?? '-';
@@ -49,7 +47,7 @@ class AppServiceProvider extends ServiceProvider
                                 <img
                                     src="{$avatarUrl}"
                                     alt="Avatar"
-                                    
+
                                     style="width: 6rem; height: 7rem;"
                                     class=" object-cover border border-gray-300"
                                     onerror="this.src='" . asset('images/default-avatar.png') . "'"
@@ -64,6 +62,8 @@ class AppServiceProvider extends ServiceProvider
                     HTML;
                 }
             );
+            config(['filament.path' => 'admin']);
+            config(['filesystems.disks.public.url' => env('APP_URL') . '/storage']);
         });
     }
 }

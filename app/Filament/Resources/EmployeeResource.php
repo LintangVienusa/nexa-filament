@@ -35,7 +35,6 @@ class EmployeeResource extends Resource
 
     public static function canCreate(): bool
     {
-        // Hanya admin dan manager yang boleh membuat Employee baru
         return auth()->user()->hasAnyRole(['admin', 'manager', 'superadmin', 'Supervisor', 'Admin']);
     }
 
@@ -111,12 +110,22 @@ class EmployeeResource extends Resource
                         
                         Select::make('job_title')
                             ->label('Jabatan')
-                            ->options([
-                                'Staff'     => 'Staff',
-                                'SPV'       => 'SPV',
-                                'Manager'   => 'Manager',
-                                'VP'        => 'VP',
-                            ])
+                            ->options(function () {
+                                $options = [
+                                    'Staff'   => 'Staff',
+                                    'SPV'     => 'SPV',
+                                    'Manager' => 'Manager',
+                                    'VP'      => 'VP',
+                                ];
+
+                                if (auth()->user()->hasRole('superadmin')) {
+                                    $options['CTO'] = 'CTO';
+                                    $options['CEO'] = 'CEO';
+                                }
+
+                                return $options;
+                            })
+
                             ->required(),
 
                         Select::make('divisi_name')
@@ -213,21 +222,25 @@ class EmployeeResource extends Resource
                         TextInput::make('bpjs_kes_no')
                             ->label('No. BPJS Kesehatan')
                             ->numeric()
-                            ->maxLength(20),
+                            ->maxLength(20)
+                            ->required(),
 
                         TextInput::make('bpjs_tk_no')
                             ->label('No. BPJS Ketenagakerjaan')
                             ->numeric()
-                            ->maxLength(20),
+                            ->maxLength(20)
+                            ->required(),
 
                         TextInput::make('npwp_no')
                             ->label('NPWP No.')
                             ->numeric()
-                            ->maxLength(20),
+                            ->maxLength(20)
+                            ->required(),
 
                         Textarea::make('address')
                             ->label('Alamat')
-                            ->rows(3),
+                            ->rows(3)
+                            ->required(),
                     ])->columns(2),
 
                 Section::make('Info Tambahan')
@@ -249,7 +262,8 @@ class EmployeeResource extends Resource
                                 0 => "Belum Menikah",
                                 1 => "Menikah"
                             ])
-                            ->reactive(),
+                            ->reactive()
+                            ->required(),
 
                         TextInput::make('number_of_children')
                             ->label('Jumlah Anak')
@@ -262,16 +276,19 @@ class EmployeeResource extends Resource
                     ->schema([
                         TextInput::make('bank_account_name')
                             ->label('Bank')
-                            ->maxLength(100),
+                            ->maxLength(100)
+                            ->required(),
 
                         TextInput::make('bank_account_no')
                             ->label('No. Rekening')
                             ->numeric()
-                            ->maxLength(50),
+                            ->maxLength(50)
+                            ->required(),
 
                         TextInput::make('name_in_bank_account')
                             ->label('Nama di Rekening')
-                            ->maxLength(100),
+                            ->maxLength(100)
+                            ->required(),
                     ])->columns(3),
             ]);
     }
@@ -292,10 +309,13 @@ class EmployeeResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make()
+                    ->visible(fn () => auth()->user()?->hasAnyRole(['superadmin', 'admin', 'manager'])),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                    ->visible(fn () => auth()->user()?->hasAnyRole(['superadmin', 'admin', 'manager']))
+                    ->authorize(fn () => auth()->user()?->hasAnyRole(['superadmin', 'admin', 'manager'])),
                 ]),
             ]);
     }

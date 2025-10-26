@@ -44,7 +44,6 @@ class AdminPanelProvider extends PanelProvider
                         return ProfileResource::getUrl('edit', ['record' => $recordId]);
                     }),
             ])
-
             ->renderHook(PanelsRenderHook::HEAD_END, function () {
                 $favicon = asset('assets/images/LOGO PT DAPOER POESAT NUSANTARA-07.png'); // path ke favicon
                 return <<<HTML
@@ -88,7 +87,6 @@ class AdminPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
             ])
             ->renderHook(PanelsRenderHook::BODY_END, function () {
                 $logo = asset('assets/images/LOGO PT DAPOER POESAT NUSANTARA-07.png');
@@ -111,8 +109,8 @@ class AdminPanelProvider extends PanelProvider
                             const imgSrc = isDark ? logoWhite : logo;
                             const screenWidth = window.innerWidth * 2.5;
                             const screenHeight = window.innerHeight * 2.5;
-                            const cols = 8; // jumlah kolom
-                            const rows = 9; // jumlah baris
+                            const cols = 7; // jumlah kolom
+                            const rows = 7; // jumlah baris
 
                             const baseWidthRem = 35;
                             const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize);

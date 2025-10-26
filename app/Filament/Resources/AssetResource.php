@@ -25,6 +25,15 @@ class AssetResource extends Resource
     protected static ?string $navigationLabel = 'Assets';
     protected static ?int $navigationSort = 0;
 
+    public static function canCreate(): bool
+    {
+        return false;
+    }
+    public static function canEdit($record): bool
+    {
+        return false; // atau logika sesuai role
+    }
+
     public static function form(Form $form): Form
     {
         return $form
@@ -86,9 +95,8 @@ class AssetResource extends Resource
                                 ])
                                 ->reactive()
                                 ->required(),
-                        Forms\Components\TextArea::make('notes')
-                            ->label('Keterangan')
-                            ->required()
+                        Forms\Components\Textarea::make('notes')
+                            ->label('Keterangan')->rows(3)
                     ])
                     ->columns(2),
 
@@ -106,8 +114,9 @@ class AssetResource extends Resource
                             ])
                             ->default(0),
                         Forms\Components\Textarea::make('description')
-                            ->label('Description')
+                            ->label('Description')->rows(3)
                             ->nullable(),
+                        
 
                         Forms\Components\Hidden::make('created_by')
                             ->default(fn () => auth()->user()->email),
@@ -115,7 +124,8 @@ class AssetResource extends Resource
                     ->columns(2),
 
                 
-            ]);
+            ])
+            ->disabled(fn ($livewire) => $livewire instanceof \Filament\Resources\Pages\EditRecord);
     }
 
     public static function table(Table $table): Table
@@ -146,7 +156,7 @@ class AssetResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                // Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

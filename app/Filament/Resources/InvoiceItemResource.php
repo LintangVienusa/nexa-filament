@@ -28,6 +28,7 @@ use Filament\Forms\Components\HasManyRepeater;
 use Filament\Forms\Components\Textarea;
 use Carbon\Carbon;
 use Filament\Tables\Actions\Action;
+use Illuminate\Support\HtmlString;
 
 class InvoiceItemResource extends Resource
 {
@@ -161,11 +162,16 @@ class InvoiceItemResource extends Resource
     {
         return $table
         ->query(InvoiceItem::UniqueInvoiceItem())
-            ->columns([
-                Split::make([
+        ->columns([
                     TextColumn::make('po_number')
                         ->label('PO Number')
                         ->numeric()
+                       ->getStateUsing(function ($record) {
+        return "
+            <div class='text-xl font-semibold'>Invoice</div>
+        ";
+    })
+    ->html()
                         ->sortable(),
                     TextColumn::make('invoice.invoice_number')
                         ->label('Invoice ID')
@@ -182,9 +188,6 @@ class InvoiceItemResource extends Resource
                         ->dateTime()
                         ->sortable(),
 
-                    
-                ])
-                ->columnSpanFull(),
                 Panel::make([
                 TextColumn::make('items')
                         ->label('Invoice Items')
@@ -199,6 +202,12 @@ class InvoiceItemResource extends Resource
                 ->columnSpanFull()
                 ->extraAttributes(['class' => '!max-w-none w-full']),
             ])
+            ->contentGrid([
+            'md' => 2,
+            'xl' => 2,
+        ])
+            
+            
             ->filters([
                 //
             ])

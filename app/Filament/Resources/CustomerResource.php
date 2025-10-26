@@ -31,9 +31,10 @@ class CustomerResource extends Resource
     {
         return $form
             ->schema([
-                Section::make('Customer Info')
+                Section::make('Mitra Info')
                     ->schema([
                         TextInput::make('customer_name')
+                            ->label('Mitra Name')
                             ->required()
                             ->maxLength(255)
                             ->afterStateUpdated(function ($state, callable $set) {

@@ -22,6 +22,16 @@ class InventoryAssetResource extends Resource
     protected static ?string $navigationGroup = 'Inventory';
     protected static ?string $navigationLabel = 'Inventory Asset Summary';
 
+    public static function canCreate(): bool
+    {
+        return false; 
+    }
+
+    public static function canEdit($record): bool
+    {
+        return false; // atau logika sesuai role
+    }
+
     public static function form(Form $form): Form
     {
         return $form
@@ -124,7 +134,7 @@ class InventoryAssetResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                // Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

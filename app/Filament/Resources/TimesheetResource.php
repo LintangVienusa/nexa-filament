@@ -15,6 +15,7 @@ use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\ViewField;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -113,7 +114,19 @@ class TimesheetResource extends Resource
 
             Hidden::make('job_duration')
                 ->dehydrated(true)
-                ->default('0'),
+                ->default(function ($record) {
+                    if (! $record) {
+                        return 0;
+                    }
+
+                    $createdAt = $record->created_at instanceof Carbon
+                        ? $record->created_at
+                        : Carbon::parse($record->created_at);
+
+                    $now = now();
+
+                    return $createdAt->diffInMinutes($now);
+                }),
 
             Textarea::make('job_description')
                 ->dehydrated(true)
@@ -130,7 +143,7 @@ class TimesheetResource extends Resource
                     '2' => 'Done',
                     '3' => 'Cancel',
                 ])
-                ->default('0') // default untuk create
+                ->default('0') 
                 ->required(),
             Hidden::make('created_by')
                 ->default(fn () => auth()->user()->email ?? null),
@@ -140,7 +153,7 @@ class TimesheetResource extends Resource
     public static function table(Table $table): Table
     {
         return $table->columns([
-            Tables\Columns\TextColumn::make('attendance_id')
+            TextColumn::make('attendance_id')
                 ->label('Attendance')
                 ->sortable()
                 ->formatStateUsing(fn ($state) => "View #{$state}")
@@ -148,27 +161,66 @@ class TimesheetResource extends Resource
                     ? AttendanceResource::getUrl('edit', ['record' => $record->attendance_id])
                     : null)
                 ->openUrlInNewTab(),
-             Tables\Columns\TextColumn::make('attendance.employee_id')
+             TextColumn::make('Attendance.employee_id')
                 ->label('NIK')
                 ->sortable()
                 ->searchable(),
+            
+             TextColumn::make('attendance.employee.full_name')
+                ->label('Nama Lengkap')
+                ->sortable(query: function ($query, string $direction) {
+                    $query
+                        ->leftJoin('Attendances', 'Timesheets.attendance_id', '=', 'Attendances.id')
+                        ->leftJoin('Employees', 'Attendances.employee_id', '=', 'Employees.employee_id')
+                        ->orderByRaw("CONCAT(Employees.first_name, ' ', Employees.last_name) {$direction}")
+                        ->select('Timesheets.*');
+                })
+                ->searchable(query: function ($query, string $search) {
+                    $query->whereHas('attendance.employee', function ($q) use ($search) {
+                        $q->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"]);
+                    });
+                }),
 
-            Tables\Columns\TextColumn::make('attendance.attendance_date')
+            TextColumn::make('Attendance.attendance_date')
                 ->label('Tanggal Attendance')
                 ->date()
                 ->sortable(),
            
 
-            Tables\Columns\TextColumn::make('job_description')
+            TextColumn::make('job_description')
                 ->label('Detail Pekerjaan')
                 ->sortable()
                 ->searchable(),
 
-            Tables\Columns\TextColumn::make('job_duration')
+            // Tables\Columns\TextColumn::make('job_duration')
+            //     ->label('Durasi Pekerjaan')
+            //     ->getStateUsing(function ($record) {
+            //         $hours = floor($record->job_duration);
+            //         $minutes = round(($record->job_duration - $hours) * 60);
+
+            //         if ($hours > 0 && $minutes > 0) {
+            //             return "{$hours} jam {$minutes} menit";
+            //         } elseif ($hours > 0) {
+            //             return "{$hours} jam";
+            //         } else {
+            //             return "{$minutes} menit";
+            //         }
+            //     })
+            //     ->sortable(),
+
+            TextColumn::make('job_duration')
                 ->label('Durasi Pekerjaan')
                 ->getStateUsing(function ($record) {
-                    $hours = floor($record->job_duration);
-                    $minutes = round(($record->job_duration - $hours) * 60);
+                    if (!$record->created_at || !$record->updated_at) {
+                        return '-';
+                    }
+
+                    $start = \Carbon\Carbon::parse($record->created_at);
+                    $end   = \Carbon\Carbon::parse($record->updated_at);
+
+                    $diffInMinutes = $start->diffInMinutes($end);
+                    $hours = floor($diffInMinutes / 60);
+                    $minutes = $diffInMinutes % 60;
 
                     if ($hours > 0 && $minutes > 0) {
                         return "{$hours} jam {$minutes} menit";
@@ -180,23 +232,23 @@ class TimesheetResource extends Resource
                 })
                 ->sortable(),
 
-            Tables\Columns\TextColumn::make('created_at')
+            TextColumn::make('created_at')
                 ->dateTime()
                 ->sortable()
                 ->toggleable(isToggledHiddenByDefault: true),
 
-             Tables\Columns\TextColumn::make('status')
+             TextColumn::make('status')
                 ->label('Stataus')
                 ->sortable()
                 ->searchable()
                 ->formatStateUsing(fn($state) => match((int)$state) {
                     0 => 'On Progress',
-                    1 => 'Done',
-                    2 => 'Pending',
+                    1 => 'Pending',
+                    2 => 'Done',
                     3 => 'Cancel',
                     default => 'Unknown',
                 }),
-        ])
+        ])->defaultSort('created_at', 'desc')
         ->actions([
             Tables\Actions\EditAction::make(),
             Tables\Actions\DeleteAction::make(),
@@ -239,7 +291,6 @@ class TimesheetResource extends Resource
             return;
         }
 
-        // pastikan $date format Y-m-d
         $dateFormatted = $date instanceof \Carbon\Carbon ? $date->format('Y-m-d') : $date;
 
         $attendance = Attendance::where('employee_id', $employeeId)

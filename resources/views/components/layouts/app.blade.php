@@ -1,20 +1,28 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title> Presensi</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        #map {
-            height: 400px;
-        }
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+    <head>
+        <meta charset="utf-8" />
 
-    </style>
-</head>
-<body>
-    {{ $slot }}
-</body>
+        <meta name="application-name" content="{{ config('app.name') }}" />
+        <meta name="csrf-token" content="{{ csrf_token() }}" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+        <title>{{ config('app.name') }}</title>
+
+        <style>
+            [x-cloak] {
+                display: none !important;
+            }
+        </style>
+
+        @filamentStyles
+        @vite('resources/css/app.css')
+    </head>
+
+    <body class="antialiased">
+        {{ $slot }}
+
+        @filamentScripts
+        @vite('resources/js/app.js')
+    </body>
 </html>

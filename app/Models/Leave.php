@@ -75,6 +75,15 @@ class Leave extends Model
         'leave_duration',
         'reason',
         'status',
+        'approval_1',
+        'approval_1_by',
+        'approval_2',
+        'approval_2_by',
+        'approval_3',
+        'approval_3_by',
+        'approved_1_at',
+        'approved_2_at',
+        'approved_3_at',
         'created_by',
         'approved_by',
         'note_rejected',
@@ -166,7 +175,7 @@ class Leave extends Model
 
             $used = self::where('employee_id', $employeeId)
                 ->where('leave_type', 1) 
-                ->where('status', 2)    
+                ->whereIn('status', ['2','4','6'])   
                 ->whereYear('start_date', $now->year)
                 ->sum('leave_duration');
 
@@ -176,11 +185,21 @@ class Leave extends Model
         
     }
 
+    public static function getImportantReasonLeaveBalance($employeeId)
+    {
+        $used = self::where('employee_id', $employeeId)
+            ->where('leave_type', 5) 
+            ->whereIn('status', ['2','4','6'])   
+            ->count(); 
+
+        return $used > 0 ? 0 : 2;
+    }
+
     public static function getMarriageLeaveBalance($employeeId)
     {
         $used = self::where('employee_id', $employeeId)
             ->where('leave_type', 7) 
-            ->where('status', 2)
+            ->whereIn('status', ['2','4','6'])   
             ->count(); 
 
         return $used > 0 ? 0 : 3;
@@ -192,7 +211,7 @@ class Leave extends Model
 
         $used = self::where('employee_id', $employeeId)
             ->where('leave_type', 7) 
-            ->where('status', 2)
+            ->whereIn('status', ['2','4','6'])   
             ->whereYear('start_date', $now->year) 
             ->sum('leave_duration');
 

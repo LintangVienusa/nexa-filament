@@ -13,10 +13,12 @@ use App\Models\Timesheet;
 use Illuminate\Support\Facades\Auth;
 use App\Traits\HasOwnRecordPolicy;
 use Carbon\Carbon;
+use App\Filament\Resources\AttendanceResource\Widgets\AttendanceSummary;
 
 class ListAttendances extends ListRecords
 {
     protected static string $resource = AttendanceResource::class;
+    
     
 
     protected function getHeaderActions(): array
@@ -31,7 +33,6 @@ class ListAttendances extends ListRecords
 
         
 
-        // Tentukan label, warna, icon tombol
         if (!$attendance) {
             $label = 'Check In';
             $color = 'success';
@@ -60,7 +61,7 @@ class ListAttendances extends ListRecords
             }
     
         } else {
-            return []; // Sudah check out hari ini, tidak tampil tombol
+            return []; 
         }
 
         return [
@@ -68,7 +69,19 @@ class ListAttendances extends ListRecords
                 ->label($label)
                 ->color($color)
                 ->url($route)
-                ->requiresConfirmation(), // optional, bisa klik langsung tanpa confirm
+                ->requiresConfirmation(), 
         ];
     }
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            AttendanceSummary::class,
+        ];
+    }
+    
+    // protected function getFooterWidgets(): array
+    // {
+        
+    // }
 }

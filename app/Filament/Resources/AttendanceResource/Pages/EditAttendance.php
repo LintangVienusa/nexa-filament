@@ -99,6 +99,33 @@ class EditAttendance extends EditRecord
            $data['check_out_evidence'] = Attendance::compressBase64Image($data['check_out_evidence'], 70);
              $data['check_out_evidence'] = preg_replace('#^data:image/\w+;base64,#i', '', $cek_out);
             
+               $base64 = preg_replace('#^data:image/\w+;base64,#i', '', $data['check_out_evidence']);
+                    
+                    $imageData = base64_decode($base64);
+                    if ($imageData === false) {
+                        return response()->json(['error' => 'Base64 decode failed'], 400);
+                    }
+
+                    $image = imagecreatefromstring($imageData);
+                    if ($image === false) {
+                        return response()->json(['error' => 'Invalid image data'], 400);
+                    }
+
+                    $folder = storage_path('app/public/check_out_evidence');
+                    if (!file_exists($folder)) mkdir($folder, 0777, true);
+
+                   
+                    $fileName = 'check_out_' . time() . '.jpg';
+                    $filePath = $folder . '/' . $fileName;
+
+                    imagejpeg($image, $filePath, 70);
+                    imagedestroy($image);
+
+                    $data['check_out_evidence']= 'check_out_evidence/' . $fileName;
+
+
+
+
             $this->record->update([
                 'check_out_evidence' => $this->data['check_out_evidence'],
             ]);
@@ -107,6 +134,9 @@ class EditAttendance extends EditRecord
           
             
         }
+        $this->record->update([
+                'check_in_time' => $attendance->check_in_time->timezone('Asia/Jakarta')->format('Y-m-d H:i:s'),
+            ]);
 
         if ($existingTimesheet > 0) {
             Notification::make()
@@ -116,12 +146,14 @@ class EditAttendance extends EditRecord
                 ->send();
 
                     $data['check_in_evidence'] = $attendance->check_in_evidence;
+                    $data['check_in_time'] = $attendance->check_in_time->timezone('Asia/Jakarta')->format('Y-m-d H:i:s');
                     $data['check_out_evidence'] = null;
                     $data['check_out_time'] = null;
                     $data['check_out_latitude'] = null;
                     $data['check_out_longitude'] = null;
                 //    throw new ActionFailedException("Tidak bisa menyimpan karena masih ada job yang On Progress.");
-    
+                // \Log::info('Check in (raw): ' . $attendance->getRawOriginal('check_in_time'));
+                // \Log::info('Check in (carbon): ' . $attendance->check_in_time);
         }
 
         
