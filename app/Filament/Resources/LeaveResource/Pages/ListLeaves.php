@@ -46,9 +46,9 @@ class ListLeaves extends ListRecords
 
         $jobTitle = auth()->user()->employee?->job_title;
 
-        if (in_array($jobTitle, ['Manager', 'VP', 'CEO', 'CTO'])) {
-            $widgets[] = LeaveNotification::class;
-        }
+        // if (in_array($jobTitle, ['Manager', 'VP', 'CEO', 'CTO'])) {
+        //     $widgets[] = LeaveNotification::class;
+        // }
         return $widgets;
 
     }
