@@ -17,7 +17,10 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Columns\BadgeColumn;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Attendance;
+use App\Models\Timesheet;
+use App\Models\Organization;
 use Filament\Tables\Actions;
+use App\Models\Employee;
 use Filament\Notifications\Notification;
 
 class OvertimeResource extends Resource
@@ -32,14 +35,68 @@ class OvertimeResource extends Resource
 
     public static function form(Form $form): Form
     {
+        $currentUser = auth()->user();
+        $jobTitle = $currentUser->employee?->job_title;
+        $orgId = $currentUser->employee?->org_id;
+        $employeeId = $currentUser->employee?->employee_id;
         return $form
             ->schema([
+                Forms\Components\Select::make('divisi_id')
+                    ->label('Divisi')
+                    ->options(Organization::pluck('divisi_name', 'divisi_name'))
+                    ->visible(fn() => in_array($jobTitle, ['VP','CEO','CTO']))
+                    ->reactive(),
+                Forms\Components\Select::make('unit_id')
+                    ->label('Unit')
+                    ->options(function ($get) {
+                        $divisi_name = $get('divisi_id');
+                        if ($divisi_name) {
+                            return Organization::where('divisi_name', $divisi_name)->pluck('unit_name', 'id');
+                        }
+                        return [];
+                    })
+                    ->visible(fn() => in_array($jobTitle, ['VP','CEO','CTO']))
+                    ->reactive(),
                 Forms\Components\Select::make('employee_id')
                     ->label('Employee')
-                    ->relationship('employee', 'full_name')
+                    ->options(function ($get) use ($jobTitle, $orgId, $employeeId) {
+                        $currentUser = auth()->user();
+                        $jobTitle = $currentUser->employee?->job_title;
+
+                        $query = Employee::query();
+
+                        if ($jobTitle === 'Manager' || $jobTitle === "SVP") {
+                            
+                            $query->where('org_id', $orgId)
+                                ->where('job_title', 'Staff');
+                        } elseif ($jobTitle === 'Staff') {
+                            $query->where('employee_id', $employeeId);
+                        }elseif (in_array($jobTitle, ['VP','CEO','CTO'])) {
+                            $unitId = $get('unit_id');
+                            if ($unitId) {
+                                $query->where('org_id', $unitId);
+                            }
+                        }
+
+                        return $query->get()->pluck('full_name', 'employee_id')->toArray();
+                    })
                     ->searchable()
                     ->required()
-                    ->default(fn() => auth()->user()->employee?->employee_id),
+                     ->getOptionLabelUsing(fn($value) => Employee::find($value)?->full_name ?? $value)
+    
+                    ->default(fn($component) => auth()->user()->employee?->employee_id)
+                    ->afterStateHydrated(function ($component, $state) {
+                        // Set placeholder/label agar default terlihat full_name
+                        if ($state) {
+                            $employee = Employee::find($state);
+                            if ($employee) {
+                                $component->placeholder($employee->full_name);
+                            }
+                        }
+                    })
+                    ->disabled(fn() => $jobTitle === 'Staff')
+                    ->dehydrated(true)
+                    ->reactive(),
 
                 Forms\Components\DatePicker::make('overtime_date')
                     ->label('Overtime Date')
@@ -121,7 +178,18 @@ class OvertimeResource extends Resource
 
                 Forms\Components\Select::make('job_id')
                     ->label('Job')
-                    ->relationship('job', 'job_description')
+                    ->relationship('job', 'job_description',function ($query, $get) {
+                        $nik = $get('employee_id'); 
+                        $overtimeDate = $get('overtime_date');
+                        if ($nik && $overtimeDate) {
+                             $query->whereHas('timesheet.attendance', function ($q) use ($nik, $overtimeDate) {
+                                    $q->where('employee_id', $nik)
+                                    ->whereDate('attendance_date', $overtimeDate);
+                                });
+                        } else {
+                            $query->whereRaw('0 = 1');
+                        }
+                    })
                     ->preload()
                     ->searchable(),
 

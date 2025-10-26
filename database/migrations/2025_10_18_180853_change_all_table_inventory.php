@@ -11,12 +11,12 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::connection('mysql_inventory')->table('AssetMovement', function (Blueprint $table) {
-            // $table->dropForeign(['asset_transaction_id']);
+            $table->dropUnique(['asset_transaction_id']);
             $table->dropForeign(['asset_id']);
             $table->unique(['asset_id', 'asset_transaction_id'], 'asset_id_asset_transaction_id');
-            // $table->string('province_code', 50)->nullable()->after('location');
-            // $table->string('regency_code', 50)->nullable()->after('province_code');
-            // $table->string('village_code', 50)->nullable()->after('regency_code');
+            $table->string('province_code', 50)->nullable()->after('location');
+            $table->string('regency_code', 50)->nullable()->after('province_code');
+            $table->string('village_code', 50)->nullable()->after('regency_code');
         });
 
         Schema::connection('mysql_inventory')->table('Assets', function (Blueprint $table) {
@@ -33,9 +33,9 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::connection('mysql_inventory')->table('AssetMovement', function (Blueprint $table) {
-            // $table->dropUnique('asset_id_asset_transaction_id');
+            $table->dropUnique('asset_id_asset_transaction_id');
             $table->unique('asset_id');
-            // $table->dropColumn(['province_code', 'regency_code', 'village_code']);s
+            $table->dropColumn(['province_code', 'regency_code', 'village_code']);
         });
 
         Schema::connection('mysql_inventory')->table('Assets', function (Blueprint $table) {

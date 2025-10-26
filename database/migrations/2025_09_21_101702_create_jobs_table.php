@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::connection('mysql_employees')->create('Jobs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('timesheet_id')->constrained('Timesheets')->cascadeOnDelete();
-            $table->decimal('job_duration', 5, 2);
+            $table->decimal('job_duration', 5, 2)->nullable();
             $table->text('job_description')->nullable();
             $table->timestamps();
         });

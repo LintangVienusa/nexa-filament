@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Role extends SpatieRole
 {
+    protected $connection = 'mysql';
     protected $appends = ['permissions_count'];
 
     public function getPermissionsCountAttribute(): int
