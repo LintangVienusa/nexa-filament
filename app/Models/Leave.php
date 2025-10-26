@@ -175,7 +175,7 @@ class Leave extends Model
 
             $used = self::where('employee_id', $employeeId)
                 ->where('leave_type', 1) 
-                ->where('status', 2)    
+                ->whereIn('status', ['2','4','6'])   
                 ->whereYear('start_date', $now->year)
                 ->sum('leave_duration');
 
@@ -189,7 +189,7 @@ class Leave extends Model
     {
         $used = self::where('employee_id', $employeeId)
             ->where('leave_type', 5) 
-            ->where('status', 2)
+            ->whereIn('status', ['2','4','6'])   
             ->count(); 
 
         return $used > 0 ? 0 : 2;
@@ -199,7 +199,7 @@ class Leave extends Model
     {
         $used = self::where('employee_id', $employeeId)
             ->where('leave_type', 7) 
-            ->where('status', 2)
+            ->whereIn('status', ['2','4','6'])   
             ->count(); 
 
         return $used > 0 ? 0 : 3;
@@ -211,7 +211,7 @@ class Leave extends Model
 
         $used = self::where('employee_id', $employeeId)
             ->where('leave_type', 7) 
-            ->where('status', 2)
+            ->whereIn('status', ['2','4','6'])   
             ->whereYear('start_date', $now->year) 
             ->sum('leave_duration');
 
