@@ -118,49 +118,49 @@ class InvoiceResource extends Resource
                     ])
                     ->columns(2),
 
-                Section::make('Approval')
-                    ->columns(2)
-                    ->schema([
-                        TextInput::make('create_by')
-                            ->label('Created By')
-                            ->disabled()
-                            ->maxLength(255),
+                // Section::make('Approval')
+                //     ->columns(2)
+                //     ->schema([
+                //         TextInput::make('create_by')
+                //             ->label('Created By')
+                //             ->disabled()
+                //             ->maxLength(255),
 
-                        DateTimePicker::make('created_at')
-                            ->label('Created At')
-                            ->disabled()
-                            ->displayFormat('d M Y H:i'),
-                        Select::make('status')
-                            ->label('Invoice Status')
-                            ->options([
-                                '0' => 'Draft',
-                                '1' => 'Approved',
-                                '2' => 'Paid',
-                            ])
-                            ->required()
-                            ->default('0')
-                            ->reactive()
-                            ->afterStateUpdated(function ($state, callable $set) {
-                                if (in_array($state, ['1', '2'])) {
-                                    $set('approval_by', auth()->user()->email);
-                                    $set('approval_at', now());
-                                } else {
-                                    $set('approval_by', null);
-                                    $set('approval_at', null);
-                                }
-                            }),
+                //         DateTimePicker::make('created_at')
+                //             ->label('Created At')
+                //             ->disabled()
+                //             ->displayFormat('d M Y H:i'),
+                //         Select::make('status')
+                //             ->label('Invoice Status')
+                //             ->options([
+                //                 '0' => 'Draft',
+                //                 '1' => 'Approved',
+                //                 '2' => 'Paid',
+                //             ])
+                //             ->required()
+                //             ->default('0')
+                //             ->reactive()
+                //             ->afterStateUpdated(function ($state, callable $set) {
+                //                 if (in_array($state, ['1', '2'])) {
+                //                     $set('approval_by', auth()->user()->email);
+                //                     $set('approval_at', now());
+                //                 } else {
+                //                     $set('approval_by', null);
+                //                     $set('approval_at', null);
+                //                 }
+                //             }),
 
-                        TextInput::make('approval_by')
-                            ->label('Approved By')
-                            ->readonly()
-                            ->visible(fn ($get) => in_array($get('status'), ['1', '2'])),
+                //         TextInput::make('approval_by')
+                //             ->label('Approved By')
+                //             ->readonly()
+                //             ->visible(fn ($get) => in_array($get('status'), ['1', '2'])),
 
-                        DateTimePicker::make('approval_at')
-                            ->label('Approved At')
-                            ->readonly()
-                            ->displayFormat('d M Y H:i')
-                            ->visible(fn ($get) => in_array($get('status'), ['1', '2'])),
-                        ]),
+                //         DateTimePicker::make('approval_at')
+                //             ->label('Approved At')
+                //             ->readonly()
+                //             ->displayFormat('d M Y H:i')
+                //             ->visible(fn ($get) => in_array($get('status'), ['1', '2'])),
+                //         ]),
             ]);
     }
 
@@ -193,16 +193,20 @@ class InvoiceResource extends Resource
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()
-                    ->getStateUsing(fn ($record) => match($record->status) {
-                        '0' => 'Draft',
-                        '1' => 'Approved',
-                        '2' => 'Paid',
-                        default => 'Unknown',
+                    ->formatStateUsing(fn ($state) => match ($state) {
+                        0 => 'Draft',
+                        1 => 'Approve CTO',
+                        2 => 'Reject CTO',
+                        3 => 'Approve CEO',
+                        4 => 'Reject CEO',
+                        default => $state,
                     })
                     ->color(fn ($state): string => match ($state) {
                         0 => 'warning',
                         1 => 'success',
-                        2 => 'info',
+                        2 => 'warning',
+                        3 => 'success',
+                        4 => 'warning',
                         default => 'primary',
                     }),
                 TextColumn::make('keterangan')
@@ -218,12 +222,24 @@ class InvoiceResource extends Resource
                         'DP' => 'warning',
                         default => 'primary',
                     }),
+                
                 TextColumn::make('create_by')->label('Created By')->sortable(),
                 TextColumn::make('created_at')->date()->label('Created At')->sortable(),
-                TextColumn::make('approval_by')->label('Approval By')->sortable(),
-                TextColumn::make('approval_at')->date()->label('Approval At')->sortable(),
+                TextColumn::make('approval_by')
+                    ->label('Disetujui oleh')
+                    ->getStateUsing(function ($record) {
+                        return match ($record->status) {
+                            1 => 'CTO',
+                            3 => 'CTO, CEO',
+                            default => '-',
+                        };
+                    })
+                    ->searchable(),
+                TextColumn::make('updated_at')->date()->label('Approval At')->sortable(),
 
             ])
+            ->defaultSort('status', 'asc')
+            ->defaultSort('created_at', 'desc')
 
             ->filters([
                 //
@@ -248,36 +264,113 @@ class InvoiceResource extends Resource
                             ]);
                         })
                         ->color('primary'),
-                Action::make('approve')
-                        ->label('Approve')
-                        ->icon('heroicon-o-check')
-                        ->visible(fn ($record) => (int)$record->status === 0) 
-                        ->requiresConfirmation()
-                        ->action(function ($record) {
-                            $record->update(['status' => 1]);
+                    
+                        Action::make('approve_level_1')
+                            ->label('Approve')
+                            ->icon('heroicon-o-check')
+                            ->color('success')
+                            ->visible(fn ($record) => match(auth()->user()->employee?->job_title) {
+                                'CTO' => $record->approval_1 == 0 && $record->status == 0,
+                                default => false,
+                            })
+                            ->action(function ($record) {
+                                $record->update([
+                                    'approval_1' => 1,
+                                    'status' => 1,
+                                    'approval_1_by' => auth()->user()->email,
+                                    'approved_1_at' => now(),
+                                    'updated_at' => now(),
+                                ]);
+                                Notification::make()->title('Invoice Approved')->success()->send();
 
-                            activity('invoice-action')
-                                ->causedBy(auth()->user())
-                                ->withProperties([
-                                    'ip'    => request()->ip(),
-                                    'menu'  => 'Invoice',
-                                    'email' => auth()->user()?->email,
-                                    'record_id' => $record->id,
-                                    'invoice_number' => $record->invoice_number,
-                                    'action' => 'Approve',
-                                ])
-                                ->tap(function ($activity) {
-                                        $activity->email = auth()->user()?->email;
-                                        $activity->menu = 'Invoice';
-                                    })
-                                ->log('Invoice disetujui');
-
-                            Notification::make()
-                                ->title('Payroll Approved')
-                                ->success()
-                                ->send();
                                 return $record->fresh();
-                        }),
+                            })
+                            ->requiresConfirmation(),
+
+                        Action::make('reject_level_1')
+                            ->label('Reject')
+                            ->color('danger')
+                            ->icon('heroicon-o-x-circle')
+                            ->visible(fn ($record) => match(auth()->user()->employee?->job_title) {
+                                'CTO' => $record->approval_1 == 0 && $record->status == 0,
+                                default => false,
+                            })
+                            ->action(function ($record) {
+                                $record->update([
+                                    'approval_1' => 2,
+                                    'status' => 2,
+                                    'approval_1_by' => auth()->user()->email,
+                                    'approved_1_at' => now(),
+                                    'updated_at' => now(),
+                                ]);
+                            })
+                            ->requiresConfirmation(),
+
+                        Action::make('approve_level_2')
+                            ->label('Approve')
+                            ->icon('heroicon-o-check')
+                            ->color('success')
+                            ->visible(fn ($record) => match(auth()->user()->employee?->job_title) {
+                                'CEO' => $record->approval_2 == 0 && $record->approval_1 == 1 && $record->status == 2,
+                                default => false,
+                            })
+                            ->action(function ($record) {
+                                $record->update([
+                                    'approval_2' => 1,
+                                    'status' => 3,
+                                    'approval_2_by' => auth()->user()->email,
+                                    'approved_2_at' => now(),
+                                    'updated_at' => now(),
+                                ]);
+                            })
+                            ->requiresConfirmation(),
+
+                        Action::make('reject_level_2')
+                            ->label('Reject')
+                            ->color('danger')
+                            ->icon('heroicon-o-x-circle')
+                            ->visible(fn ($record) => auth()->user()->employee->job_title === 'CEO' && $record->approval_1 === 1 && $record->approval_2 === 0)
+                            ->action(function ($record) {
+                                $record->update([
+                                    'approval_2' => 2,
+                                    'status' => 4,
+                                    'approval_2_by' => auth()->user()->email,
+                                    'approved_2_at' => now(),
+                                    'updated_at' => now(),
+                                ]);
+                            })
+                            ->requiresConfirmation(),
+                    
+                // Action::make('approve')
+                //         ->label('Approve')
+                //         ->icon('heroicon-o-check')
+                //         ->visible(fn ($record) => (int)$record->status === 0) 
+                //         ->requiresConfirmation()
+                //         ->action(function ($record) {
+                //             $record->update(['status' => 1]);
+
+                //             activity('invoice-action')
+                //                 ->causedBy(auth()->user())
+                //                 ->withProperties([
+                //                     'ip'    => request()->ip(),
+                //                     'menu'  => 'Invoice',
+                //                     'email' => auth()->user()?->email,
+                //                     'record_id' => $record->id,
+                //                     'invoice_number' => $record->invoice_number,
+                //                     'action' => 'Approve',
+                //                 ])
+                //                 ->tap(function ($activity) {
+                //                         $activity->email = auth()->user()?->email;
+                //                         $activity->menu = 'Invoice';
+                //                     })
+                //                 ->log('Invoice disetujui');
+
+                //             Notification::make()
+                //                 ->title('Payroll Approved')
+                //                 ->success()
+                //                 ->send();
+                //                 return $record->fresh();
+                //         }),
                 // Tables\Actions\ViewAction::make()
                 //     ->mountUsing(function ($record) {
                 //         activity('invoice-action')

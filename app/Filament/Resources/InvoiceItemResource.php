@@ -29,6 +29,7 @@ use Filament\Forms\Components\Textarea;
 use Carbon\Carbon;
 use Filament\Tables\Actions\Action;
 use Illuminate\Support\HtmlString;
+use Filament\Forms\Components\Placeholder;
 
 class InvoiceItemResource extends Resource
 {
@@ -151,6 +152,60 @@ class InvoiceItemResource extends Resource
                             ->columns(3)
                     ])
                     ->columns(1),
+
+                    Section::make('Status')
+                            ->schema([
+                                Placeholder::make('status_display')
+                                    ->label('Status')
+                                    ->content(function ($record) {
+                                        // Ambil status dari invoice induk
+                                        $status = $record->invoice->status ?? null;
+
+                                        $levels = [
+                                            0 => ['Draft'],
+                                            1 => ['Approved CTO'],
+                                            2 => ['Reject CTO'],
+                                            3 => ['Approved CTO','Approved CEO'],
+                                            4 => ['Reject CTO','Reject CEO'],
+                                        ];
+
+                                        $approveStatuses = [1, 3];
+                                        $rejectStatuses = [2, 4];
+
+                                        $approvers = $levels[$status] ?? [];
+                                        $symbol = '';
+
+                                        if (in_array($status, $approveStatuses)) {
+                                            $symbol = '✔️';
+                                        } elseif (in_array($status, $rejectStatuses)) {
+                                            $symbol = '❌';
+                                        }else{
+                                            $symbol = '';
+                                        }
+
+                                        if (empty($approvers)) {
+                                            return $status === 0 ? 'Draft' : ($status === 1 ? 'Pending' : 'Unknown');
+                                        }
+
+                                        $lines = array_map(fn($level) => "$symbol $level", $approvers);
+
+                                        return new HtmlString(implode('<br>', $lines));
+                                    })
+                                    ->extraAttributes(function ($record) {
+                                        $status = $record->invoice->status ?? null;
+
+                                        $approveStatus = [1, 3];
+                                        $rejectStatus = [2, 4];
+
+                                        if (in_array($status, $approveStatus)) {
+                                            return ['style' => 'color: green; font-weight: bold;'];
+                                        } elseif (in_array($status, $rejectStatus)) {
+                                            return ['style' => 'color: red; font-weight: bold;'];
+                                        }
+
+                                        return [];
+                                    }),
+                            ])
 
                     
 

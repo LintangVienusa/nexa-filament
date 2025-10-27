@@ -136,8 +136,14 @@ class OvertimeResource extends Resource
                     ->label('Start Time')
                     ->reactive()
                     ->format('H:i')
-                    ->seconds(false)
+                    ->seconds(false) 
                     ->required()
+                    ->default('18:00')
+                    ->afterStateHydrated(function ($state, $set) {
+                        if (!$state) {
+                            $set('start_time', Carbon::createFromTime(18, 0, 0)->format('H:i'));
+                        }
+                    })
                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
                         $end = $get('end_time');
                         if ($state && $end) {
