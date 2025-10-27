@@ -60,8 +60,13 @@ class Invoice extends Model
         'status',
         'keterangan',
         'create_by',
-        'approval_by',
-        'approval_at',
+        'approval_1',
+        'approval_1_by',
+        'approved_1_at',
+        'approval_2',
+        'approval_2_by',
+        'approved_2_at',
+        'updated_at',
         'file_path',
     ];
 
