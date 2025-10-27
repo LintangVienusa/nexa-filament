@@ -206,11 +206,9 @@ class ReportAttendanceWidget extends BaseWidget
     {
         $service = new HariKerjaService();
 
-        // Ambil bulan & tahun dari filter atau default ke bulan berjalan
         $bulan = $this->bulan ?? now('Asia/Jakarta')->month;
         $tahun = $this->tahun ?? now('Asia/Jakarta')->year;
 
-        // 🔹 Logika: periode dari 28 bulan sebelumnya sampai 27 bulan yang dipilih
         $start = Carbon::create($tahun, $bulan, 1, 0, 0, 0, 'Asia/Jakarta')
             ->subMonthNoOverflow()
             ->day(28)

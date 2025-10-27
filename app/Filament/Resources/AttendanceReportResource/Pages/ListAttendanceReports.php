@@ -22,7 +22,6 @@ class ListAttendanceReports extends ListRecords
     {
         return false;
     }
-    // Sembunyikan table
     protected function getTableColumns(): array
     {
         return [];
