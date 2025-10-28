@@ -32,6 +32,7 @@ class Overtime extends Model
         'working_hours',
         'description',
         'job_id',
+        'ba_file',
         'status',
         'created_by',
         'updated_by'

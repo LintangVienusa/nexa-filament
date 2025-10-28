@@ -440,16 +440,21 @@ class SalarySlipResource extends Resource
                                                     $c->id => $c->component_name ?? 'No Name'
                                                 ]);
                                     })
-                                    ->rules([
-                                        function (callable $get, $record) {
-                                            return \Illuminate\Validation\Rule::unique('salary_component_id', 'salary_component_id')
-                                                ->where('employee_id', $get('employee_id'))
-                                                ->ignore($record?->id);
-                                        },
-                                    ])
+                                    // ->rules([
+                                    //     function (callable $get, $record) {
+                                    //         return \Illuminate\Validation\Rule::unique('SalaryComponents', 'id')
+                                    //             ->where('employee_id', $get('employee_id'))
+                                    //             ->ignore($record?->id);
+                                    //     },
+                                    // ])
                                     ->afterStateUpdated(function ($state, callable $get, callable $set) {
                                         $employeeId = $get('employee_id');
                                         if (!$employeeId || !$state) return;
+
+                                        $scomponent = SalaryComponent::find($state);
+                                            if ($scomponent) {
+                                                $set('component_type', $scomponent->component_type);
+                                            }
 
                                         $exists = SalarySlip::where('employee_id', $employeeId)
                                             ->where('periode', $state)
@@ -468,7 +473,14 @@ class SalarySlipResource extends Resource
                                     })
                                     ->required(),
 
-                                Select::make('salary_component_id') ->label('Salary Component type') ->options(function () { return SalaryComponent::all()->mapWithKeys(fn($c) => [ $c->id => ($c->component_type == 0 ? 'Allowance' : 'Deduction'), ]); }) ->disabled() ->required(),
+                                Select::make('component_type')
+                                        ->label('Salary Component type')
+                                        ->options([
+                                                0 => 'Allowance',
+                                                1 => 'Deduction',
+                                            ])
+                                            ->disabled() 
+                                            ->required(),
                                 
                                 // TextInput::make('jumlah_hari_kerja')
                                 //     ->label('Jumlah Hari Kerja')

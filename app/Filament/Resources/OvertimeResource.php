@@ -22,6 +22,7 @@ use App\Models\Organization;
 use Filament\Tables\Actions;
 use App\Models\Employee;
 use Filament\Notifications\Notification;
+use Filament\Forms\Components\FileUpload;
 
 class OvertimeResource extends Resource
 {
@@ -136,8 +137,15 @@ class OvertimeResource extends Resource
                     ->label('Start Time')
                     ->reactive()
                     ->format('H:i')
-                    ->seconds(false)
+                    ->seconds(false) 
                     ->required()
+                    ->default('18:00')
+                    ->rules(['after_or_equal:17:00', 'before_or_equal:18:00'])
+                    ->afterStateHydrated(function ($state, $set) {
+                        if (!$state) {
+                            $set('start_time', Carbon::createFromTime(18, 0, 0)->format('H:i'));
+                        }
+                    })
                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
                         $end = $get('end_time');
                         if ($state && $end) {
@@ -192,6 +200,35 @@ class OvertimeResource extends Resource
                     })
                     ->preload()
                     ->searchable(),
+                
+                FileUpload::make('ba_file')
+                        ->label('Upload Berita Acara (BA)')
+                        ->directory('overtimes/ba')
+                        ->downloadable()
+                        ->openable()
+                        ->previewable(true)
+                        ->acceptedFileTypes([
+                            'application/pdf',
+                            'application/msword',
+                            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                            'application/vnd.ms-excel',
+                            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                            'image/jpeg',
+                            'image/png',
+                        ])
+                        ->maxSize(10240)
+                        ->helperText('Hanya bisa diinput oleh user di atas Manager.')
+                        ->visible(function () {
+                            $user = auth()->user();
+                            $jobTitle = $user->employee->job_title ?? null;
+                            $allowedJobTitles = [
+                                'Manager',
+                                'VP',
+                                'CEO',
+                                'CTO',
+                            ];
+                            return in_array($jobTitle, $allowedJobTitles);
+                        }),
 
                 Forms\Components\Hidden::make('created_by')
                     ->default(fn() => auth()->user()->email)

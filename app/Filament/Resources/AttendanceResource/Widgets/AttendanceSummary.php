@@ -20,13 +20,21 @@ class AttendanceSummary extends BaseWidget
     protected function getStats(): array
     {
         $today = Carbon::now('Asia/Jakarta')->toDateString();
+        $todayf = Carbon::now('Asia/Jakarta');
 
         $employee = Auth::user()->employee;
         $employeeId = $employee?->employee_id;
 
         // $total = Attendance::where('employee_id', $employeeId)->count();
-        $startPeriod = Carbon::create(2025, 9, 28)->startOfDay();
-        $endPeriod = Carbon::create(2025, 10, 27)->endOfDay();
+        // $startPeriod = Carbon::create(2025, 9, 28)->startOfDay();
+        // $endPeriod = Carbon::create(2025, 10, 27)->endOfDay();
+        if ($todayf->day >= 28) {
+            $startPeriod = $todayf->copy()->day(28)->startOfDay();
+            $endPeriod = $todayf->copy()->addMonthNoOverflow()->day(27)->endOfDay();
+        } else {
+            $startPeriod = $todayf->copy()->subMonthNoOverflow()->day(28)->startOfDay();
+            $endPeriod = $todayf->copy()->day(27)->endOfDay();
+        }
         $periodName = $startPeriod->format('d M') . ' - ' . $endPeriod->format('d M');
 
        $attendanceDates = Attendance::where('employee_id', $employeeId)

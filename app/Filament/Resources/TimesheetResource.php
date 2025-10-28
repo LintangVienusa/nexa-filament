@@ -66,9 +66,10 @@ class TimesheetResource extends Resource
 
             TextInput::make('attendance_id')
                 ->label('ID Attendance')
-                ->disabled()
+                ->readonly()
                 ->reactive()
-                ->dehydrated(true),
+                ->dehydrated(true)
+                ->required(),
 
             Section::make('Informasi Kehadiran')
                 ->schema([

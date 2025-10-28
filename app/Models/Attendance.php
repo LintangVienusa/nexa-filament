@@ -24,6 +24,8 @@ class Attendance extends Model
         'check_out_latitude',
         'check_out_longitude',
         'check_out_evidence',
+        'status',
+        'notes',
         'created_by',
         'updated_by',
     ];
@@ -68,4 +70,8 @@ class Attendance extends Model
 
         return 'data:image/jpeg;base64,' . base64_encode($compressedData);
     }
+
+
+   
+    
 }

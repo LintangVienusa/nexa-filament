@@ -214,6 +214,56 @@ class DownloadInvoiceService
                             border: none; 
                         }
 
+                        .total-box2 {
+                            position: absolute;
+                            left: 40px;       
+                            bottom: 100px; 
+                            background-color: #3a3a3a;
+                            color: white;
+                            width: 250px;
+                            padding: 10px;
+                            margin-left: auto;
+                            margin-top: 50px;
+                            margin-bottom: 10px;
+                            border-radius: 5px;
+                            font-size: 12px;
+                        }
+
+                        .total-box2 div {
+                            margin-bottom: 5px;
+                        }
+
+                         
+                        
+                        .total-box2-footer {
+                                position: fixed;
+                                bottom: 70;
+                                left: 40px;
+                                right: 80px;
+                                width: 90%;
+                                background-color: #3a3a3a;
+                                color: white;
+                                text-align: left;
+                                font-size: 12px;
+                                padding: 8px 0;
+                                font-style: italic;
+                                border-radius: 5px;
+                                border-top:none;
+                            }
+
+                        .total-box2-footer td.footer-item {
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            gap: 5px;  
+                            padding: 4px 0;
+                        }
+
+                        .total-box2-footer td.footer-item img {
+                            width: 14px;
+                            height: 14px;
+                        }
+
                         .total-box {
                             position: absolute;
                             right: 40px;       
@@ -399,7 +449,19 @@ class DownloadInvoiceService
 
             $html .= '</tbody>
                     </table>
-
+                    <div class="total-box2" style="">
+                        <table>
+                            <tr>
+                                <td colspan="3" class="number"><b>BANK MANDIRI</b></td>
+                            </tr>
+                            <tr>
+                                <td><b>1180014213705</b></td>
+                            </tr>
+                            <tr>
+                                <td><b>PT DAPOER POESAT NOESANTARA GROUP</b></td>
+                            </tr>
+                        </table>
+                    </div>
                     <div class="total-box">
                          <table class="">
                             <tr>
@@ -436,9 +498,7 @@ class DownloadInvoiceService
                         </table>
                     </div>
                      <table class="total-box-footer">
-                            <tr>
-                                <td colspan="3" class="number"><b>BANK MANDIRI - 1180014213705 PT DAPOER POESAT NOESANTARA GROUP</b></td>
-                            </tr>
+                            
                              <tr>
                                 <td>
                                     <img src="'. public_path('assets/icons/worldwide-white.png') .'" class="footer-icon" alt="Website Icon">
