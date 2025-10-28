@@ -18,12 +18,4 @@ class ListAttendanceReports extends ListRecords
         ];
     }
 
-    public static function shouldRegisterNavigation(array $parameters = []): bool
-    {
-        return false;
-    }
-    protected function getTableColumns(): array
-    {
-        return [];
-    }
 }

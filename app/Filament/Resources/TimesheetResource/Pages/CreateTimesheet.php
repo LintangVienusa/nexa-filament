@@ -5,12 +5,20 @@ namespace App\Filament\Resources\TimesheetResource\Pages;
 use App\Filament\Resources\TimesheetResource;
 use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
+use App\Models\Attendance;
 
 class CreateTimesheet extends CreateRecord
 {
     protected static string $resource = TimesheetResource::class;
     protected function mutateFormDataBeforeCreate(array $data): array
     {
+        if (empty($data['attendance_id'])) {
+            $attendance = Attendance::where('employee_id', $data['employee_id'])
+                ->whereDate('attendance_date', $data['timesheet_date'])
+                ->first();
+
+            $data['attendance_id'] = $attendance?->id ?? null;
+        }
         $data['created_by'] = auth()->user()->email ?? null;
         return $data;
     }

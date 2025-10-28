@@ -11,6 +11,7 @@ use App\Services\BpjsKesehatanService;
 use App\Services\BpjsKetenagakerjaanService;
 use App\Services\FixedAllowanceService;
 use App\Models\Payroll;
+use App\Models\Attendance;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\DB;
 use App\Services\Pph21Service;
@@ -21,6 +22,18 @@ class CreateSalarySlip extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
+        
+        $data['created_by'] = auth()->user()->email ?? null;
+
+        // pastikan salary_component_id ada di setiap komponen
+        // if (isset($data['components']) && is_array($data['components'])) {
+        //     foreach ($data['components'] as &$component) {
+        //         if (empty($component['salary_component_id1'])) {
+        //             $component['salary_component_id'] = $component['salary_component_id1'];
+        //         }
+        //     }
+        // }
+
         $periodeCarbon = $data['periode']
             ? Carbon::createFromFormat('F Y', $data['periode'])
             : Carbon::now();

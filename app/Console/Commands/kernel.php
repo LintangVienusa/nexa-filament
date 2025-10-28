@@ -24,11 +24,14 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(\Illuminate\Console\Scheduling\Schedule $schedule)
     {
-        $schedule->command('attendance:delete-expired')
-                ->hourly()
-                ->between('8:00', '23:30')
-                ->withoutOverlapping()
-                ->evenInMaintenanceMode();
+        // $schedule->command('attendance:delete-expired')
+        //         ->hourly()
+        //         ->between('8:00', '23:30')
+        //         ->withoutOverlapping()
+        //         ->evenInMaintenanceMode();
+        $schedule->command('app:apply-attendance-rules')->dailyAt('09:30');
+        $schedule->command('app:auto-checkout')->twiceDaily(20, 23);
+        
     }
 
     protected function commands()
