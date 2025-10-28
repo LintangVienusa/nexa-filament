@@ -106,6 +106,11 @@ class CreateAttendance extends CreateRecord
             $this->redirect(AttendanceResource::getUrl('edit', ['record' => $existing->id]));
         }
     }
+
+    protected function afterCreate(): void
+    {
+        \App\Services\AttendanceRuleService::applyRules($this->record, true);
+    }
    
     protected function getRedirectUrl(): string
     {
