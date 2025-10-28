@@ -11,10 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Schema::connection('mysql_employees')->table('Attendances', function (Blueprint $table) {
-        //     $table->integer('status')->default(0)->comment('0=success,1=alpha')->after('check_out_longitude');
-        //     $table->LongText('notes')->nullable()->after('status');
-        // });
+        Schema::connection('mysql_employees')->table('Attendances', function (Blueprint $table) {
+            $table->integer('status')->default(0)->comment('0=success,1=alpha')->after('check_out_longitude');
+            $table->LongText('notes')->nullable()->after('status');
+        });
 
         Schema::connection('mysql_employees')->table('Overtimes', function (Blueprint $table) {
             $table->text('ba_file')->nullable(0)->after('job_id');
@@ -26,9 +26,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        //  Schema::connection('mysql_employees')->table('Attendances', function (Blueprint $table) {
-        //     $table->dropColumn(['status', 'info']);
-        // });
+         Schema::connection('mysql_employees')->table('Attendances', function (Blueprint $table) {
+            $table->dropColumn(['status', 'info']);
+        });
 
         Schema::connection('mysql_employees')->table('Overtimes', function (Blueprint $table) {
             $table->dropColumn(['ba_file']);
