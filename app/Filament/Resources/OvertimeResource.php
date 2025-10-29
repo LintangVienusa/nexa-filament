@@ -178,7 +178,48 @@ class OvertimeResource extends Resource
                     ->label('Working Hours')
                     ->numeric()
                     ->disabled()
-                    ->required(),
+                    ->required()
+                    ->afterStateHydrated(function ($state, $set, $get) {
+                            $start = $get('start_time');
+                            $end = $get('end_time');
+                            if ($start && $end) {
+                                $s = Carbon::createFromFormat('H:i', $start);
+                                $e = Carbon::createFromFormat('H:i', $end);
+                                if ($e->lessThan($s)) $e->addDay();
+                                $minutes = $s->diffInMinutes($e);
+                                $set('working_hours', round($minutes / 60, 2));
+                            }
+                        })
+                        ->afterStateUpdated(function ($state, $set, $get) {
+                            $employeeId = $get('employee_id');
+                            $overtimeHours = $state; 
+                            $overtimeDate = $get('overtime_date');
+                            $todayf = Carbon::parse($overtimeDate, 'Asia/Jakarta');
+
+                            if ($employeeId && $overtimeDate) {
+                                if ($todayf->day >= 28) {
+                                    $startPeriod = $todayf->copy()->day(28)->startOfDay(); 
+                                    $endPeriod   = $todayf->copy()->addMonthNoOverflow()->day(27)->endOfDay(); 
+                                } else {
+                                    $startPeriod = $todayf->copy()->subMonthNoOverflow()->day(28)->startOfDay();
+                                    $endPeriod   = $todayf->copy()->day(27)->endOfDay(); 
+                                }
+
+                                $totalOvertime = Overtime::query()
+                                    ->join('Attendances', 'Overtimes.attendance_id', '=', 'Attendances.id')
+                                    ->where('Overtimes.employee_id', $employeeId)
+                                    ->whereBetween('Attendances.attendance_date', [$startPeriod, $endPeriod])
+                                    ->sum('Overtimes.working_hours');
+
+                                if (($totalOvertime + $overtimeHours) > 60) {
+                                    // $set('working_hours', 0); 
+                                    Notification::make()
+                                        ->title('Total overtime tidak boleh lebih dari 60 jam!')
+                                        ->danger()
+                                        ->send();
+                                }
+                            }
+                        }),
 
                 Forms\Components\Textarea::make('description')
                     ->required()

@@ -6,7 +6,9 @@ use App\Filament\Resources\OvertimeResource;
 use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
 use App\Models\Attendance;
+use App\Models\Overtime;
 use Carbon\Carbon;
+use Filament\Notifications\Notification;
 
 class CreateOvertime extends CreateRecord
 {
@@ -21,6 +23,60 @@ class CreateOvertime extends CreateRecord
             $data['attendance_id'] = $attendance?->id ?? null;
         }
         $data['created_by'] = auth()->user()->email ?? null;
+
+        $exists = Overtime::where('employee_id', $data['employee_id'])
+                ->where('attendance_id', $data['attendance_id'])
+                ->exists();
+
+            if ($exists) {
+                
+                 Notification::make()
+                        ->title('Overtime di tgl '.$data['overtime_date']. ' sudah ada!')
+                        ->body('Overtime di tgl '.$data['overtime_date']. ' sudah ada!')
+                        ->danger()
+                        ->send();
+
+                    $this->halt(); 
+            }
+
+
+        $todayf = Carbon::parse($data['overtime_date'], 'Asia/Jakarta');
+
+        
+        
+        if ($todayf->day >= 28) {
+            $startPeriod = $todayf->copy()->day(28)->startOfDay();
+            $endPeriod = $todayf->copy()->addMonthNoOverflow()->day(27)->endOfDay();
+        } else {
+            $startPeriod = $todayf->copy()->subMonthNoOverflow()->day(28)->startOfDay();
+            $endPeriod = $todayf->copy()->day(27)->endOfDay();
+        }
+        
+        
+
+         $totalOvertime = Overtime::query()
+            ->join('Attendances', 'Overtimes.attendance_id', '=', 'Attendances.id')
+            ->where('Overtimes.employee_id', $data['employee_id'])
+            ->whereBetween('Attendances.attendance_date', [$startPeriod, $endPeriod])
+            ->sum('Overtimes.working_hours');
+
+        $startTime = Carbon::parse($data['start_time']);
+        $endTime   = Carbon::parse($data['end_time']);
+        $newHours  = $startTime->floatDiffInHours($endTime);
+
+        
+
+        if (($totalOvertime + $newHours) > 60) {
+            Notification::make()
+                        ->title('Overtimes Lebih dari 60 jam')
+                        ->body('Overtimes Lebih dari 60 jam.')
+                        ->danger()
+                        ->send();
+
+                    $this->halt(); 
+        }
+
+
         return $data;
     }
     protected function getRedirectUrl(): string
