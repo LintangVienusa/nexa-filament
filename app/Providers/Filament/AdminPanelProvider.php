@@ -22,6 +22,7 @@ use App\Filament\Resources\ProfileResource;
 use Filament\Navigation\UserMenuItem;
 use Filament\Pages\Auth\EditProfile;
 use Illuminate\Support\Facades\Auth;
+use App\Filament\Resources\Widgets\TimesheetCalendarWidget;
 
 
 class AdminPanelProvider extends PanelProvider
@@ -83,10 +84,12 @@ class AdminPanelProvider extends PanelProvider
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
                 Pages\Dashboard::class,
+                
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 Widgets\AccountWidget::class,
+                // TimesheetCalendarWidget::class,
             ])
             ->renderHook(PanelsRenderHook::BODY_END, function () {
                 $logo = asset('assets/images/LOGO PT DAPOER POESAT NUSANTARA-07.png');

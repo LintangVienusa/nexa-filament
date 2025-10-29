@@ -12,6 +12,7 @@
         "emmanpbarrameda/filament-take-picture-field": "1.1",
         "filament/filament": "^3.2",
         "filament/widgets": "3.3",
+        "guava/calendar": "^1.14",
         "intervention/image": "^3.11",
         "laravel/framework": "^12.0",
         "laravel/sanctum": "^4.2",

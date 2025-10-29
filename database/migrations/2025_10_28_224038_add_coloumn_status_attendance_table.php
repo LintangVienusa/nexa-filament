@@ -17,7 +17,7 @@ return new class extends Migration
         });
 
         Schema::connection('mysql_employees')->table('Overtimes', function (Blueprint $table) {
-            $table->text('ba_file')->nullable(0)->after('job_id');
+            $table->text('ba_file')->nullable()->after('job_id');
         });
     }
 

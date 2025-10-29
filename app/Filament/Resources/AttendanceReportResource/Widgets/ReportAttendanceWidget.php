@@ -39,6 +39,7 @@ class ReportAttendanceWidget extends BaseWidget
         $this->bulan = now('Asia/Jakarta')->month;
         $this->tahun = now('Asia/Jakarta')->year;
         $this->updatePeriod();
+        $this->preloadHariKerja();
     }
 
     public function updatedTableFilters(): void
@@ -54,6 +55,7 @@ class ReportAttendanceWidget extends BaseWidget
         }
 
         $this->updatePeriod();
+        $this->preloadHariKerja();
     }
 
     protected function updatePeriod(): void
@@ -68,52 +70,106 @@ class ReportAttendanceWidget extends BaseWidget
     protected function getTableQuery(): Builder|Relation|null
     {
         return Employee::query()
-            ->with('Organization')
-            ->when($this->employee_id, fn($q) => $q->where('employee_id', $this->employee_id))
-            ->when($this->divisi_name, fn($q) =>
-                $q->whereHas('Organization', fn($oq) =>
-                    $oq->where('divisi_name', $this->divisi_name)
-                )
-            )
-            ->when($this->unit_name, fn($q) =>
-                $q->whereHas('Organization', fn($oq) =>
-                    $oq->where('unit_name', $this->unit_name)
-                )
-            );
+            ->select('Employees.employee_id','Employees.job_title', 'Organizations.divisi_name', 'Organizations.unit_name')
+            ->join('Organizations', 'Employees.org_id', '=', 'Organizations.id')
+            ->when($this->employee_id, fn($q) => $q->where('Employees.employee_id', $this->employee_id))
+            ->when($this->divisi_name, fn($q) => $q->where('Organizations.divisi_name', $this->divisi_name))
+            ->when($this->unit_name, fn($q) => $q->where('Organizations.unit_name', $this->unit_name))
+            ->orderBy('Organizations.divisi_name')
+            ->orderBy('Organizations.unit_name')
+            ->orderBy('Employees.employee_id')
+            ->orderBy('Employees.job_title');
+    }
+
+    protected function preloadHariKerja(): void
+    {
+        $service = new HariKerjaService();
+
+        $bulan = $this->bulan ?? now('Asia/Jakarta')->month;
+        $tahun = $this->tahun ?? now('Asia/Jakarta')->year;
+
+        $start = Carbon::create($tahun, $bulan, 1, 0, 0, 0, 'Asia/Jakarta')
+            ->subMonthNoOverflow()
+            ->day(28)
+            ->startOfDay()
+            ->toDateString();
+
+        $end = Carbon::create($tahun, $bulan, 27, 0, 0, 0, 'Asia/Jakarta')
+            ->endOfDay()
+            ->toDateString();
+
+        $employees = Employee::query()
+            ->select('Employees.employee_id','Employees.first_name','Employees.middle_name','Employees.last_name', 'Employees.job_title','Organizations.divisi_name', 'Organizations.unit_name')
+            ->join('Organizations', 'Employees.org_id', '=', 'Organizations.id')
+            ->when($this->employee_id, fn($q) => $q->where('Employees.employee_id', $this->employee_id))
+            ->when($this->divisi_name, fn($q) => $q->where('Organizations.divisi_name', $this->divisi_name))
+            ->when($this->unit_name, fn($q) => $q->where('Organizations.unit_name', $this->unit_name))
+            ->orderBy('Organizations.divisi_name')
+            ->orderBy('Organizations.unit_name')
+            ->orderBy('Employees.employee_id')->get();
+
+        $this->hariKerjaCache = [];
+
+        foreach ($employees as $employee) {
+            $hariKerja = $service->hitungHariKerja($employee->employee_id, $start, $end);
+            if($employee->middle_name != ''){
+                $fullname = $employee->first_name." ".$employee->middle_name." ".$employee->last_name;
+            }else{
+                $fullname = $employee->first_name." ".$employee->last_name;
+            }
+
+            $this->hariKerjaCache[$employee->employee_id] = [
+                'employee_id' => $employee->employee_id,
+                'divisi_name' => $employee->divisi_name,
+                'unit_name' => $employee->unit_name,
+                'name' => $fullname,
+                'jumlah_hari_kerja' => $hariKerja['jumlah_hari_kerja'] ?? 0,
+                'jml_absensi' => $hariKerja['jml_absensi'] ?? 0,
+                'jml_alpha' => $hariKerja['jml_alpha'] ?? 0,
+            ];
+        }
     }
 
     public function table(Table $table): Table
     {
         return $table
             ->query($this->getTableQuery())
+            
             ->headerActions([
                 Tables\Actions\Action::make('periode_info')
                     ->label(fn() => $this->selectedPeriod)
                     ->disabled()
-                    ->color('gray'),
+                    ->color('gray')->extraAttributes(['wire:loading.class' => 'opacity-50']),
             ])
             ->columns([
                Tables\Columns\TextColumn::make('Organization.divisi_name')
-                    ->label('Divisi'),
+                    ->label('Divisi')
+                    ->getStateUsing(fn($record) => $this->hariKerjaCache[$record['employee_id']]['divisi_name'] ?? 0),
 
                 Tables\Columns\TextColumn::make('Organization.unit_name')
-                    ->label('Unit'),
+                    ->label('Unit')
+                    ->getStateUsing(fn($record) => $this->hariKerjaCache[$record['employee_id']]['unit_name'] ?? 0),
+                Tables\Columns\TextColumn::make('job_title')
+                    ->label('Jabatan'),
                 Tables\Columns\TextColumn::make('employee_id')
                     ->label('NIK'),
                Tables\Columns\TextColumn::make('fullname')
-                    ->label('Nama Karyawan'),
+                    ->label('Nama Karyawan')
+                    ->getStateUsing(fn($record) => $this->hariKerjaCache[$record['employee_id']]['name'] ?? 0),
 
                 Tables\Columns\TextColumn::make('jumlah_hari_kerja')
                     ->label('Hari Kerja')
-                    ->getStateUsing(fn($record) => $this->getHariKerja($record->employee_id)['jumlah_hari_kerja']),
+                    ->getStateUsing(fn($record) => $this->hariKerjaCache[$record['employee_id']]['jumlah_hari_kerja'] ?? 0),
+
 
                 Tables\Columns\TextColumn::make('jml_absensi')
-                    ->label('Absensi')
-                    ->getStateUsing(fn($record) => $this->getHariKerja($record->employee_id)['jml_absensi']),
+                    ->label('Hadir')
+                    ->getStateUsing(fn($record) => $this->hariKerjaCache[$record['employee_id']]['jml_absensi'] ?? 0),
+
 
                 Tables\Columns\TextColumn::make('jml_alpha')
                     ->label('Tidak Hadir')
-                    ->getStateUsing(fn($record) => $this->getHariKerja($record->employee_id)['jml_alpha']),
+                     ->getStateUsing(fn($record) => $this->hariKerjaCache[$record['employee_id']]['jml_alpha'] ?? 0),
                 Tables\Columns\TextColumn::make('periode')
                     ->label('Periode')
                     ->getStateUsing(function() {
@@ -202,23 +258,35 @@ class ReportAttendanceWidget extends BaseWidget
             ]);
     }
 
-    private function getHariKerja($employeeId)
+    
+
+    public function updating($name, $value): void
     {
-        $service = new HariKerjaService();
-
-        $bulan = $this->bulan ?? now('Asia/Jakarta')->month;
-        $tahun = $this->tahun ?? now('Asia/Jakarta')->year;
-
-        $start = Carbon::create($tahun, $bulan, 1, 0, 0, 0, 'Asia/Jakarta')
-            ->subMonthNoOverflow()
-            ->day(28)
-            ->startOfDay()
-            ->toDateString();
-
-        $end = Carbon::create($tahun, $bulan, 27, 0, 0, 0, 'Asia/Jakarta')
-            ->endOfDay()
-            ->toDateString();
-
-        return $service->hitungHariKerja($employeeId, $start, $end);
+        $this->dispatchBrowserEvent('start-loading');
     }
+
+    public function updated($name, $value): void
+    {
+        $this->dispatchBrowserEvent('stop-loading');
+    }
+
+    // private function getHariKerja($employeeId)
+    // {
+    //     $service = new HariKerjaService();
+
+    //     $bulan = $this->bulan ?? now('Asia/Jakarta')->month;
+    //     $tahun = $this->tahun ?? now('Asia/Jakarta')->year;
+
+    //     $start = Carbon::create($tahun, $bulan, 1, 0, 0, 0, 'Asia/Jakarta')
+    //         ->subMonthNoOverflow()
+    //         ->day(28)
+    //         ->startOfDay()
+    //         ->toDateString();
+
+    //     $end = Carbon::create($tahun, $bulan, 27, 0, 0, 0, 'Asia/Jakarta')
+    //         ->endOfDay()
+    //         ->toDateString();
+
+    //     return $service->hitungHariKerja($employeeId, $start, $end);
+    // }
 }

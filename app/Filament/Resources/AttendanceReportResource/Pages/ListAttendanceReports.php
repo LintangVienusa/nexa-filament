@@ -14,7 +14,7 @@ class ListAttendanceReports extends ListRecords
     protected function getHeaderWidgets(): array
     {
         return [
-            ReportAttendanceWidget::class,
+            // ReportAttendanceWidget::class,
         ];
     }
 
