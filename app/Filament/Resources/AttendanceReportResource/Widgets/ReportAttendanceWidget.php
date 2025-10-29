@@ -98,7 +98,6 @@ class ReportAttendanceWidget extends BaseWidget
             ->endOfDay()
             ->toDateString();
 
-        // Ambil semua karyawan sekaligus
         $employees = Employee::query()
             ->select('Employees.employee_id','Employees.first_name','Employees.middle_name','Employees.last_name', 'Employees.job_title','Organizations.divisi_name', 'Organizations.unit_name')
             ->join('Organizations', 'Employees.org_id', '=', 'Organizations.id')
@@ -119,7 +118,6 @@ class ReportAttendanceWidget extends BaseWidget
                 $fullname = $employee->first_name." ".$employee->last_name;
             }
 
-            // Simpan langsung semua informasi dalam cache
             $this->hariKerjaCache[$employee->employee_id] = [
                 'employee_id' => $employee->employee_id,
                 'divisi_name' => $employee->divisi_name,
