@@ -20,11 +20,13 @@ use Spatie\Permission\Traits\HasPermissions;
 use Filament\Forms\Components\FileUpload;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Forms\Components\Hidden;
+use App\Traits\HasNavigationPolicy;
 
 
 class EmployeeResource extends Resource
 {
-    use HasPermissions, HasOwnRecordPolicy;
+    
+    use HasPermissions, HasOwnRecordPolicy, HasNavigationPolicy;
 
     protected static ?string $model = Employee::class;
     protected static ?string $permissionPrefix = 'employees';

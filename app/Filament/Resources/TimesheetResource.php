@@ -24,10 +24,12 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Spatie\Permission\Traits\HasPermissions;
 use Filament\Forms\Components\Select;
+use App\Traits\HasNavigationPolicy;
 
 class TimesheetResource extends Resource
 {
-    use HasPermissions, HasOwnRecordPolicy;
+    use HasPermissions, HasOwnRecordPolicy,HasNavigationPolicy;
+    
     protected static ?string $model = Timesheet::class;
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
     protected static ?string $permissionPrefix = 'employees';

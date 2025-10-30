@@ -23,12 +23,14 @@ use Filament\Notifications\Notification;
 use App\Services\HariKerjaService;
 use Filament\Forms\Components\Placeholder;
 use Illuminate\Support\HtmlString;
+use App\Traits\HasNavigationPolicy;
 
 
 
 class LeaveResource extends Resource
 {
-    use HasPermissions,  HasOwnRecordPolicy;
+    
+    use HasPermissions, HasOwnRecordPolicy, HasNavigationPolicy;
 
     protected static ?string $model = Leave::class;
     protected static ?string $permissionPrefix = 'employees';

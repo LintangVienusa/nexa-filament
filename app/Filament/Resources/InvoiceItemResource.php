@@ -30,9 +30,13 @@ use Carbon\Carbon;
 use Filament\Tables\Actions\Action;
 use Illuminate\Support\HtmlString;
 use Filament\Forms\Components\Placeholder;
+use App\Traits\HasOwnRecordPolicy;
+use Spatie\Permission\Traits\HasPermissions;
+use App\Traits\HasNavigationPolicy;
 
 class InvoiceItemResource extends Resource
 {
+    use HasPermissions, HasOwnRecordPolicy, HasNavigationPolicy;
     protected static ?string $model = InvoiceItem::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-document-text';

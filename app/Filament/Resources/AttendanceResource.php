@@ -27,11 +27,12 @@ use Filament\Forms\Components\Livewire;
 use Filament\Forms\Components\ViewField;
 use Filament\Tables\Actions\Action;
 use App\Filament\Resources\AttendanceResource\Widgets\AttendanceSummary;
+use App\Traits\HasNavigationPolicy;
 
 
 class AttendanceResource extends Resource
 {
-    use HasPermissions, HasOwnRecordPolicy;
+    use HasPermissions, HasOwnRecordPolicy, HasNavigationPolicy;
 
     protected static ?string $model = Attendance::class;
     protected static ?string $permissionPrefix = 'employees';

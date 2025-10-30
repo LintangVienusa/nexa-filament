@@ -15,9 +15,13 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Traits\HasOwnRecordPolicy;
+use Spatie\Permission\Traits\HasPermissions;
+use App\Traits\HasNavigationPolicy;
 
 class SalaryComponentResource extends Resource
 {
+     use HasPermissions, HasOwnRecordPolicy, HasNavigationPolicy;
     protected static ?string $model = SalaryComponent::class;
     
     protected $fillable = ['component_name', 'component_type'];
