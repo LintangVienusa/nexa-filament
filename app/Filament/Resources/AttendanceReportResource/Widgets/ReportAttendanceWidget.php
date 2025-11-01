@@ -140,6 +140,14 @@ class ReportAttendanceWidget extends BaseWidget
                     ->label(fn() => $this->selectedPeriod)
                     ->disabled()
                     ->color('gray')->extraAttributes(['wire:loading.class' => 'opacity-50']),
+                    // \pxlrbt\FilamentExcel\Actions\Tables\ExportAction::make('export')
+                    //     ->label('Export Rekap')
+                    //     ->exports([
+                    //         ExcelExport::make()
+                    //             ->fromTable()
+                    //             ->withFilename(fn() => 'Rekap_Absensi_' . now()->format('Y_m_d_His'))
+                    //             ->withWriterType(Excel::XLSX),
+                    //     ]),
             ])
             ->columns([
                Tables\Columns\TextColumn::make('Organization.divisi_name')
@@ -262,12 +270,12 @@ class ReportAttendanceWidget extends BaseWidget
 
     public function updating($name, $value): void
     {
-        $this->dispatchBrowserEvent('start-loading');
+        $this->dispatch('start-loading');
     }
 
     public function updated($name, $value): void
     {
-        $this->dispatchBrowserEvent('stop-loading');
+        $this->dispatch('stop-loading');
     }
 
     // private function getHariKerja($employeeId)

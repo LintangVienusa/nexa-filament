@@ -160,6 +160,12 @@ class AttendanceController extends Controller
         
         $user = User::where('email', $email)->first();
         $employee = Employee::where('email', $email)->first();
+        if (!$employee || !$employee->employee_id) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User '.$email.' tidak terhubung dengan employee'
+            ], 404);
+        }
         $today = Carbon::today();
 
         $employee_id = $employee->employee_id;
@@ -298,7 +304,7 @@ class AttendanceController extends Controller
         date_default_timezone_set('Asia/Jakarta');
         $user = Auth::user();
 
-        if (! $user) {
+        if (!$user) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Unauthorized',
@@ -307,13 +313,27 @@ class AttendanceController extends Controller
         $email = $request->email;
         $user = User::where('email', $email)->first();
         $employee = Employee::where('email', $email)->first();
+        if (!$employee || !$employee->employee_id) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User '.$email.' tidak terhubung dengan employee'
+            ], 404);
+        }
         $employee_id = $employee->employee_id;
         $today = Carbon::today()->format('Y-m-d');
+
+       
 
         $attendance = Attendance::where('employee_id', $employee_id)
             ->whereDate('attendance_date', $today)
             ->first();
 
+             if (! $attendance) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Attendance not found',
+                ], 404);
+            }
         $workingHours = null;
 
         if ($attendance->check_out_time) {
