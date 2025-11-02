@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\AttendanceResource\Pages;
 use App\Filament\Resources\AttendanceResource\RelationManagers;
 use App\Models\Attendance;
+use App\Models\Employee;
 use App\Traits\HasOwnRecordPolicy;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
@@ -27,6 +28,7 @@ use Filament\Forms\Components\Livewire;
 use Filament\Forms\Components\ViewField;
 use Filament\Tables\Actions\Action;
 use App\Filament\Resources\AttendanceResource\Widgets\AttendanceSummary;
+use Illuminate\Database\Eloquent\Builder;
 
 
 class AttendanceResource extends Resource
