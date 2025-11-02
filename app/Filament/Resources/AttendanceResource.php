@@ -202,14 +202,23 @@ class AttendanceResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('employee.employee_id')->label('Employee ID'),
-                TextColumn::make('employee.full_name')
-                    ->label('Employee Name')
+                TextColumn::make('employee.first_name')
+                    ->label('Nama')
+                    ->getStateUsing(fn($record) => $record->employee?->full_name ?? '-')
                     ->searchable(query: function ($query, $search) {
                         $query->whereHas('employee', function ($q) use ($search) {
-                            $q->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"]);
+                            $q->whereRaw("CONCAT(first_name, ' ', middle_name,' ', last_name) LIKE ?", ["%{$search}%"]);
                         });
                     })
-                    ->sortable(),
+                    ->sortable(function (Builder $query) {
+                        $direction = request()->input('tableSortDirection', 'asc');
+                        return $query->orderBy(
+                            Employee::selectRaw("CONCAT(first_name,' ', middle_name, ' ', last_name)")
+                                ->whereColumn('employees.employee_id', 'attendances.employee_id')
+                                ->limit(1),
+                            $direction
+                        );
+                    }),
                 TextColumn::make('attendance_date')->date(),
                 TextColumn::make('check_in_time')->dateTime(),
                 TextColumn::make('check_out_time')->dateTime(),
