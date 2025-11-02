@@ -269,13 +269,22 @@ class LeaveResource extends Resource
         return $table
              
             ->columns([
-                Tables\Columns\TextColumn::make('full_name')
+                Tables\Columns\TextColumn::make('employee.first_name')
                     ->label('Nama')
-                    ->sortable()
-                     ->searchable(query: function ($query, $search) {
+                    ->getStateUsing(fn($record) => $record->employee?->full_name ?? '-')
+                    ->searchable(query: function ($query, $search) {
                         $query->whereHas('employee', function ($q) use ($search) {
-                            $q->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"]);
+                            $q->whereRaw("CONCAT(first_name, ' ', middle_name,' ', last_name) LIKE ?", ["%{$search}%"]);
                         });
+                    })
+                    ->sortable(function (Builder $query) {
+                        $direction = request()->input('tableSortDirection', 'asc');
+                        return $query->orderBy(
+                            Employee::selectRaw("CONCAT(first_name,' ', middle_name, ' ', last_name)")
+                                ->whereColumn('employees.employee_id', 'attendances.employee_id')
+                                ->limit(1),
+                            $direction
+                        );
                     }),
                 Tables\Columns\TextColumn::make('leave_type')
                     ->label('Jenis Cuti')

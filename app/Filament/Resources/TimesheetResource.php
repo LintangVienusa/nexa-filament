@@ -168,17 +168,17 @@ class TimesheetResource extends Resource
                 ->searchable(),
             
              TextColumn::make('attendance.employee.full_name')
-                ->label('Nama Lengkap')
+                ->label('Nama')
                 ->sortable(query: function ($query, string $direction) {
                     $query
                         ->leftJoin('Attendances', 'Timesheets.attendance_id', '=', 'Attendances.id')
                         ->leftJoin('Employees', 'Attendances.employee_id', '=', 'Employees.employee_id')
-                        ->orderByRaw("CONCAT(Employees.first_name, ' ', Employees.last_name) {$direction}")
+                        ->orderByRaw("CONCAT(Employees.first_name, ' ', Employees.middle_name,' ', Employees.last_name) {$direction}")
                         ->select('Timesheets.*');
                 })
                 ->searchable(query: function ($query, string $search) {
                     $query->whereHas('attendance.employee', function ($q) use ($search) {
-                        $q->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"]);
+                        $q->whereRaw("CONCAT(first_name, ' ', middle_name,' ', last_name) LIKE ?", ["%{$search}%"]);
                     });
                 }),
 
@@ -239,9 +239,19 @@ class TimesheetResource extends Resource
                 ->toggleable(isToggledHiddenByDefault: true),
 
              TextColumn::make('status')
-                ->label('Stataus')
-                ->sortable()
-                ->searchable()
+                ->label('Status')
+                ->sortable(query: function ($query, string $direction) {
+                    return $query->orderBy('Timesheets.status', $direction);
+                })
+                ->searchable(query: function ($query, $search) {
+                    $query->where(function ($q) use ($search) {
+                        $q->where('Timesheets.status', 'like', "%{$search}%")
+                        ->orWhere('job_description', 'like', "%{$search}%")
+                        ->orWhereHas('attendance.employee', function ($sub) use ($search) {
+                            $sub->whereRaw("CONCAT(first_name, ' ', middle_name, ' ', last_name) LIKE ?", ["%{$search}%"]);
+                        });
+                    });
+                })
                 ->formatStateUsing(fn($state) => match((int)$state) {
                     0 => 'On Progress',
                     1 => 'Pending',
