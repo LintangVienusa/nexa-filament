@@ -15,7 +15,9 @@ class Kernel extends ConsoleKernel
      * maka masukkan ke sini.
      */
     protected $commands = [
-        \App\Console\Commands\DeleteExpiredAttendance::class,
+        
+        \App\Console\Commands\ApplyAttendanceRules::class,
+        \App\Console\Commands\AutoCheckout::class,
         // Tambahkan command lain jika ada...
     ];
 
@@ -29,8 +31,10 @@ class Kernel extends ConsoleKernel
         //         ->between('8:00', '23:30')
         //         ->withoutOverlapping()
         //         ->evenInMaintenanceMode();
-        $schedule->command('app:apply-attendance-rules')->dailyAt('09:30');
-        $schedule->command('app:auto-checkout')->twiceDaily(20, 23);
+        $schedule->command('attendance:apply-rules')->dailyAt('00:36')
+        ->appendOutputTo('/var/www/html/apps/logs_cron/schedule_attendance_rules.log');
+        $schedule->command('app:auto-checkout')->twiceDaily(20, 23)
+        ->appendOutputTo('/var/www/html/apps/logs_cron/auto_checkout.log');
         
     }
 

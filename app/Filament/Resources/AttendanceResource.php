@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\AttendanceResource\Pages;
 use App\Filament\Resources\AttendanceResource\RelationManagers;
 use App\Models\Attendance;
+use App\Models\Employee;
 use App\Traits\HasOwnRecordPolicy;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
@@ -27,6 +28,7 @@ use Filament\Forms\Components\Livewire;
 use Filament\Forms\Components\ViewField;
 use Filament\Tables\Actions\Action;
 use App\Filament\Resources\AttendanceResource\Widgets\AttendanceSummary;
+use Illuminate\Database\Eloquent\Builder;
 
 
 class AttendanceResource extends Resource
@@ -253,6 +255,27 @@ class AttendanceResource extends Resource
                         return "{$hours} jam {$minutes} menit";
                     })
                     ->sortable(),
+                    TextColumn::make('status')
+                        ->label('Status')
+                        ->formatStateUsing(fn($state) => match((int)$state) {
+                            0 => 'On Time',
+                            2 => 'Late',
+                            3 => 'Alpha',
+                            default => 'Unknown',
+                        })
+                        ->badge()
+                        ->color(fn($state) => match((int)$state) {
+                            0 => 'success',
+                            2 => 'warning',
+                            3 => 'danger',
+                            default => 'secondary',
+                        }),
+
+                    TextColumn::make('notes')
+                        ->label('Catatan')
+                        ->wrap()
+                        ->limit(50),
+                    
             ])->defaultSort('attendance_date', 'desc')
             ->filters([
                 Filter::make('today')

@@ -40,7 +40,7 @@ class TimesheetResource extends Resource
         return $form->extraAttributes(['wire:key' => 'timesheet-form'])
         ->schema([
             Hidden::make('employee_id')
-                ->default(fn () => auth()->user()->employee?->employee_id),
+                ->default(fn () => auth()->user()->employee?->employee_id), 
 
             DatePicker::make('timesheet_date')
                 ->label('Tanggal')
