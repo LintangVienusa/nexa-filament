@@ -19,14 +19,14 @@ class AttendanceRuleService
             ? $attendance->attendance_date
             : Carbon::parse($attendance->attendance_date);
 
-        $status = '2';
+        $status = '3';
         $info = 'Belum check-in atau di luar jam kerja';
 
         $limitTask = $date->copy()->setTime(9, 15);
         $hasTimesheet = Timesheet::where('attendance_id', $attendance->id)->exists();
 
         if ($now->gt($limitTask) && ! $hasTimesheet) {
-            $status = '2'; // 2 = Alpha
+            $status = '3'; // 2 = Alpha
             $info = 'Tidak input task sebelum 09:15 WIB';
         }
 
@@ -36,7 +36,7 @@ class AttendanceRuleService
                 $status = '0';
                 $info = 'Check-in dalam waktu normal (07:00 - 08:15)';
             } elseif ($checkinTime->gt($date->copy()->setTime(8, 15))) {
-                $status = '1';
+                $status = '2';
                 $info = 'Terlambat check-in setelah 08:15 WIB';
             }
         }
