@@ -30,6 +30,7 @@ class AttendanceStatusWidget extends BaseWidget
 
         // Ambil data absensi periode ini
         $attendances = Attendance::where('employee_id', $employeeId)
+            ->where('status', 0)
             ->whereBetween('attendance_date', [$startPeriod, $endPeriod])
             ->get();
 
@@ -52,17 +53,27 @@ class AttendanceStatusWidget extends BaseWidget
 
         // Total jam kerja hari ini
         $todayHours = Attendance::where('employee_id', $employeeId)
-            ->whereDate('attendance_date', $today->toDateString())
+            ->where('status', 0)
+            ->whereDate('attendance_date', $today)
             ->get()
             ->sum(function ($attendance) {
+                if ($attendance->status != 0) {
+                    return 0; // pastikan tidak dihitung
+                }
                 $checkIn = Carbon::parse($attendance->check_in_time);
                 $checkOut = $attendance->check_out_time ? Carbon::parse($attendance->check_out_time) : now();
-                return $checkIn->floatDiffInHours($checkOut);
+                return $checkIn->diffInMinutes($checkOut) / 60;
             });
-
-        $hours = floor($todayHours);
-        $minutes = round(($todayHours - $hours) * 60);
-        $formattedToday = "{$hours} jam {$minutes} menit";
+        if($todayHours->status ===0){
+             $hours = floor($todayHours);
+            $minutes = round(($todayHours - $hours) * 60);
+            $formattedToday = "{$hours} jam {$minutes} menit";
+        }else{
+            // $hours = floor($todayHours);
+            // $minutes = round(($todayHours - $hours) * 60);
+            $formattedToday = "0 jam 0 menit";
+        }
+        
 
         return [
             Stat::make('On Time ' . $periodName, "{$onTimePercent}%")

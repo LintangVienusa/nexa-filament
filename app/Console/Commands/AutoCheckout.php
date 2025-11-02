@@ -32,6 +32,7 @@ class AutoCheckout extends Command
     {
         $now = Carbon::now();
         $date = now()->toDateString();
+        $currentTime = now()->format('H:i:s');
 
         // // ====== 1. Auto Checkout untuk Technician ======
         // $technicians = Employee::whereHas('Organization', function ($query) {
@@ -131,8 +132,9 @@ class AutoCheckout extends Command
             $isTechnician = $emp->Organization?->unit_name === 'Technician';
             $checkoutTime = $isTechnician ? '20:00:00' : '23:00:00';
 
-            if (empty($attendance->check_out_time) && empty($hasOvertime->id)) {
-                $attendance->update([
+            // if (empty($attendance->check_out_time) && empty($hasOvertime->id)) {
+            if (($currentTime < '23:00:00' && $isTechnician) || $currentTime === '23:00:00') {
+                $attendance->where('status', 0)->update([
                     'check_out_time' => $date . ' ' . $checkoutTime,
                     'updated_by' => 'Auto Checkout',
                 ]);
