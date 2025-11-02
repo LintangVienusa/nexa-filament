@@ -49,7 +49,7 @@ class HariKerjaService
         }
 
         $attendances = Attendance::where('employee_id', $employeeId)
-            ->whereIn('status', [0,2])
+            ->whereIn('status', [0])
             ->whereBetween('attendance_date', [$startDate, $endDate])
             ->get();
 

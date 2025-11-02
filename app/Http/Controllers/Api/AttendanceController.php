@@ -353,7 +353,6 @@ class AttendanceController extends Controller
                 $workingHours = "{$minutes} menit";
             }
         } else {
-            // Jika belum checkout, hitung sementara dari jam sekarang
             $checkIn = Carbon::parse($attendance->check_in_time, 'Asia/Jakarta');
             $now = Carbon::now('Asia/Jakarta');
             $diffInSeconds = $checkIn->diffInSeconds($now);
@@ -370,6 +369,29 @@ class AttendanceController extends Controller
             'data' => $attendance,
             ], 404);
         }else{
+            $file_in =$attendance->check_in_evidence;
+            $file_out =$attendance->check_out_evidence;
+
+            if($file_in != '' ){
+                $filePath = storage_path('app/public/' . $file_in);
+                $base64_in = file_exists($filePath)
+                ? base64_encode(file_get_contents($filePath))
+                : null;
+            }else{
+                $base64_in = null;
+            }
+
+            
+            if($file_out != '' ){
+                $filePath = storage_path('app/public/' . $file_out);
+                $base64_out = file_exists($filePath)
+                ? base64_encode(file_get_contents($filePath))
+                : null;
+            }else{
+                $base64_out = null;
+            }
+
+
             return response()->json([
                 'message' => 'Sudah melakukan check-in hari ini',
             'data' => [
@@ -386,8 +408,8 @@ class AttendanceController extends Controller
                             ? $attendance->check_out_time->setTimezone('Asia/Jakarta')->format('Y-m-d H:i:s')
                             : null,
                         'working_hours' => $workingHours,
-                        'check_in_evidence' => $attendance->check_in_evidence,
-                        'check_out_evidence' => $attendance->check_out_evidence,
+                        'check_in_evidence' => $base64_in,
+                        'check_out_evidence' => $base64_out,
                         'check_in_latitude' => $attendance->check_in_latitude,
                         'check_in_longitude' => $attendance->check_in_longitude,
                         'check_out_latitude' => $attendance->check_out_latitude,
