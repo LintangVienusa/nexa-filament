@@ -283,7 +283,23 @@ class OvertimeResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('employee.full_name')->label('Nama')->sortable()->searchable(),
+                Tables\Columns\TextColumn::make('employee.first_name')
+                    ->label('Nama')
+                    ->getStateUsing(fn($record) => $record->employee?->full_name ?? '-')
+                    ->searchable(query: function ($query, $search) {
+                        $query->whereHas('employee', function ($q) use ($search) {
+                            $q->whereRaw("CONCAT(first_name, ' ', middle_name,' ', last_name) LIKE ?", ["%{$search}%"]);
+                        });
+                    })
+                    ->sortable(function (Builder $query) {
+                        $direction = request()->input('tableSortDirection', 'asc');
+                        return $query->orderBy(
+                            Employee::selectRaw("CONCAT(first_name,' ', middle_name, ' ', last_name)")
+                                ->whereColumn('employees.employee_id', 'attendances.employee_id')
+                                ->limit(1),
+                            $direction
+                        );
+                    }),
                 Tables\Columns\TextColumn::make('employee.employee_id')->label('NIK')->sortable()->searchable(),
                 Tables\Columns\TextColumn::make('job.job_description')->label('Pekerjaan')->sortable(),
                 Tables\Columns\TextColumn::make('description')->label('keterangan')->sortable(),

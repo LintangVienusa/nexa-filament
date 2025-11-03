@@ -63,7 +63,7 @@ class ReportAttendanceWidget extends BaseWidget
         $start = Carbon::create($this->tahun, $this->bulan, 28)->subMonthNoOverflow()->startOfDay();
         $end = Carbon::create($this->tahun, $this->bulan, 27)->endOfDay();
 
-        $this->selectedPeriod = 'Periode: ' . $start->format('d M Y') . ' - ' . $end->format('d M Y');
+        $this->selectedPeriod = 'Periode Sekarang: ' . $start->format('d M Y') . ' - ' . $end->format('d M Y');
     }
 
 
@@ -140,6 +140,14 @@ class ReportAttendanceWidget extends BaseWidget
                     ->label(fn() => $this->selectedPeriod)
                     ->disabled()
                     ->color('gray')->extraAttributes(['wire:loading.class' => 'opacity-50']),
+                    // \pxlrbt\FilamentExcel\Actions\Tables\ExportAction::make('export')
+                    //     ->label('Export Rekap')
+                    //     ->exports([
+                    //         ExcelExport::make()
+                    //             ->fromTable()
+                    //             ->withFilename(fn() => 'Rekap_Absensi_' . now()->format('Y_m_d_His'))
+                    //             ->withWriterType(Excel::XLSX),
+                    //     ]),
             ])
             ->columns([
                Tables\Columns\TextColumn::make('Organization.divisi_name')
@@ -223,37 +231,52 @@ class ReportAttendanceWidget extends BaseWidget
                     }),
                 Filter::make('periode')
                     ->form([
-                        Forms\Components\Select::make('bulan')
-                            ->label('Bulan')
-                            ->options([
-                                1 => 'Januari',
-                                2 => 'Februari',
-                                3 => 'Maret',
-                                4 => 'April',
-                                5 => 'Mei',
-                                6 => 'Juni',
-                                7 => 'Juli',
-                                8 => 'Agustus',
-                                9 => 'September',
-                                10 => 'Oktober',
-                                11 => 'November',
-                                12 => 'Desember',
-                            ])
-                            ->default(now('Asia/Jakarta')->month)
-                            ->required(),
-
-                        Forms\Components\Select::make('tahun')
-                            ->label('Tahun')
+                        Forms\Components\Select::make('periode')
+                            ->label('Periode')
                             ->options(function () {
-                                $years = range(now()->year - 2, now()->year + 1);
-                                return collect($years)->mapWithKeys(fn($y) => [$y => $y]);
+                                $now = now('Asia/Jakarta');
+
+                                $bulanSekarang = $now->month;
+                                $tahunSekarang = $now->year;
+
+                                $bulanSebelumnya = $bulanSekarang === 1 ? 12 : $bulanSekarang - 1;
+                                $tahunSebelumnya = $bulanSekarang === 1 ? $tahunSekarang - 1 : $tahunSekarang;
+
+                                $namaBulan = [
+                                    1 => 'Januari',
+                                    2 => 'Februari',
+                                    3 => 'Maret',
+                                    4 => 'April',
+                                    5 => 'Mei',
+                                    6 => 'Juni',
+                                    7 => 'Juli',
+                                    8 => 'Agustus',
+                                    9 => 'September',
+                                    10 => 'Oktober',
+                                    11 => 'November',
+                                    12 => 'Desember',
+                                ];
+
+                                return [
+                                    "{$tahunSebelumnya}-" . str_pad($bulanSebelumnya, 2, '0', STR_PAD_LEFT) =>
+                                        "{$namaBulan[$bulanSebelumnya]} {$tahunSebelumnya}",
+
+                                    "{$tahunSekarang}-" . str_pad($bulanSekarang, 2, '0', STR_PAD_LEFT) =>
+                                        "{$namaBulan[$bulanSekarang]} {$tahunSekarang}",
+                                ];
                             })
-                            ->default(now('Asia/Jakarta')->year)
+                            ->default(function () {
+                                $now = now('Asia/Jakarta');
+                                return $now->format('Y-m');
+                            })
                             ->required(),
                     ])
                     ->query(function (Builder $query, array $data) {
-                        $this->bulan = $data['bulan'] ?? now('Asia/Jakarta')->month;
-                        $this->tahun = $data['tahun'] ?? now('Asia/Jakarta')->year;
+                        $periode = $data['periode'] ?? now('Asia/Jakarta')->format('Y-m');
+                        [$tahun, $bulan] = explode('-', $periode);
+
+                        $this->tahun = (int) $tahun;
+                        $this->bulan = (int) $bulan;
                     }),
             ]);
     }
@@ -262,12 +285,12 @@ class ReportAttendanceWidget extends BaseWidget
 
     public function updating($name, $value): void
     {
-        $this->dispatchBrowserEvent('start-loading');
+        $this->dispatch('start-loading');
     }
 
     public function updated($name, $value): void
     {
-        $this->dispatchBrowserEvent('stop-loading');
+        $this->dispatch('stop-loading');
     }
 
     // private function getHariKerja($employeeId)

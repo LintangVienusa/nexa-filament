@@ -12,11 +12,13 @@
         "emmanpbarrameda/filament-take-picture-field": "1.1",
         "filament/filament": "^3.2",
         "filament/widgets": "3.3",
+        "guava/calendar": "*",
         "intervention/image": "^3.11",
         "laravel/framework": "^12.0",
         "laravel/sanctum": "^4.2",
         "laravel/tinker": "^2.10.1",
         "pxlrbt/filament-activity-log": "^1.1",
+        "pxlrbt/filament-excel": "^2.5",
         "shkubu18/filament-widget-tabs": "^1.0",
         "spatie/laravel-activitylog": "^4.10",
         "spatie/laravel-permission": "^6.21"

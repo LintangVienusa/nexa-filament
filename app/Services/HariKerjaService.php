@@ -27,6 +27,9 @@ class HariKerjaService
      */
     public function hitungHariKerja($employeeId, $startDate, $endDate): array
     {
+        $startDate = Carbon::now()->subMonth()->setDay(28)->startOfDay();
+        $endDate   = Carbon::now()->setDay(27)->endOfDay();
+
         $start = Carbon::parse($startDate);
         $end = Carbon::parse($endDate);
         $year = $start->format('Y');
@@ -46,6 +49,7 @@ class HariKerjaService
         }
 
         $attendances = Attendance::where('employee_id', $employeeId)
+            ->whereIn('status', [0])
             ->whereBetween('attendance_date', [$startDate, $endDate])
             ->get();
 

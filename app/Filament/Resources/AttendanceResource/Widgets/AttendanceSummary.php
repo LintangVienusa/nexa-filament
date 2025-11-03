@@ -46,6 +46,7 @@ class AttendanceSummary extends BaseWidget
         $monthName = today()->format('F Y');
 
         $todayHours = Attendance::where('employee_id', $employeeId)
+            ->where('status', 0)
             ->whereDate('attendance_date', today())
             ->get()
             ->sum(function ($attendance) {
