@@ -38,6 +38,8 @@ class CheckNavigationAccess
         $currentRoute = $request->route();
         $controller = $currentRoute?->getController();
 
+        
+
        
         if ($controller && method_exists($controller, 'getResource')) {
             $resourceClass = $controller::getResource();
