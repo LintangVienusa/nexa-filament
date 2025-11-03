@@ -13,9 +13,13 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Spatie\Permission\Models\Role;
+use App\Traits\HasOwnRecordPolicy;
+use Spatie\Permission\Traits\HasPermissions;
+use App\Traits\HasNavigationPolicy;
 
 class RoleResource extends Resource
 {
+    use HasPermissions, HasOwnRecordPolicy, HasNavigationPolicy;
     protected static ?string $model = \App\Models\Role::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-shield-check';

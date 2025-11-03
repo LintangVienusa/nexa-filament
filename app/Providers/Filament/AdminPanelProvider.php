@@ -6,6 +6,7 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use App\Http\Middleware\CheckNavigationAccess;
 use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -22,8 +23,12 @@ use App\Filament\Resources\ProfileResource;
 use Filament\Navigation\UserMenuItem;
 use Filament\Pages\Auth\EditProfile;
 use Illuminate\Support\Facades\Auth;
-use App\Filament\Resources\Widgets\TimesheetCalendarWidget;
+use Filament\Facades\Filament;
+use Filament\Notifications\Notification;
 
+use App\Filament\Resources\TimesheetResource\Widgets\TimesheetStatusChart;
+use App\Filament\Resources\Widgets\TimesheetCalendarWidget;
+use App\Filament\Resources\AttendanceResource\Widgets\AttendanceStatusWidget;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -86,11 +91,15 @@ class AdminPanelProvider extends PanelProvider
                 Pages\Dashboard::class,
                 
             ])
-            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 Widgets\AccountWidget::class,
+                AttendanceStatusWidget::class,
+                TimesheetStatusChart::class,
                 // TimesheetCalendarWidget::class,
+                // TimesheetPendingChart::class,
             ])
+            
+            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->renderHook(PanelsRenderHook::BODY_END, function () {
                 $logo = asset('assets/images/LOGO PT DAPOER POESAT NUSANTARA-07.png');
                 $logoWhite = asset('assets/images/LOGO PT DAPOER POESAT NUSANTARA-07.png');
@@ -167,10 +176,24 @@ class AdminPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+                CheckNavigationAccess::class,
             ])
+            ->renderHook('panels::body.end', function () {
+                    if (session('access_denied')) {
+                        \Filament\Notifications\Notification::make()
+                            ->title('Akses Ditolak')
+                            ->body('Anda tidak memiliki izin untuk membuka halaman ini. Silakan hubungi administrator.')
+                            ->danger()
+                            ->send();
+
+                        echo "<script>window.location.href='/admin';</script>";
+                    }
+                })
             ->authMiddleware([
                 Authenticate::class,
             ])
             ->homeUrl('/admin');
     }
+
+   
 }

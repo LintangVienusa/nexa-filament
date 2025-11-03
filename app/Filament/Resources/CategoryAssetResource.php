@@ -15,9 +15,13 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use App\Traits\HasOwnRecordPolicy;
+use Spatie\Permission\Traits\HasPermissions;
+use App\Traits\HasNavigationPolicy;
 
 class CategoryAssetResource extends Resource
 {
+     use HasPermissions, HasOwnRecordPolicy, HasNavigationPolicy;
     protected static ?string $model = CategoryAsset::class;
 
     

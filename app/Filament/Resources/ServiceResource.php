@@ -12,9 +12,13 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Traits\HasOwnRecordPolicy;
+use Spatie\Permission\Traits\HasPermissions;
+use App\Traits\HasNavigationPolicy;
 
 class ServiceResource extends Resource
 {
+     use HasPermissions, HasOwnRecordPolicy, HasNavigationPolicy;
     protected static ?string $model = Service::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-briefcase';

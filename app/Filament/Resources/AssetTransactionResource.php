@@ -27,9 +27,13 @@ use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Hidden;
 use Illuminate\Support\Facades\Auth;
 use Filament\Notifications\Notification;
+use App\Traits\HasOwnRecordPolicy;
+use Spatie\Permission\Traits\HasPermissions;
+use App\Traits\HasNavigationPolicy;
 
 class AssetTransactionResource extends Resource
 {
+    use HasPermissions, HasOwnRecordPolicy, HasNavigationPolicy;
     protected static ?string $model = AssetTransaction::class;
 
     protected static ?string $title = 'Transaksi Asset';

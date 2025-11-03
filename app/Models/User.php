@@ -63,7 +63,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
     public function employee()
     {
         return $this->setConnection('mysql_employees')
-            ->belongsTo(Employee::class, 'email', 'email');
+            ->hasOne(Employee::class, 'email', 'email');
     }
 
 
