@@ -200,6 +200,7 @@ class AttendanceResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         $user = auth()->user();
+        $hasRole = $user->setConnection('mysql');
         $query = parent::getEloquentQuery();
         $model = new static::$model;
 
