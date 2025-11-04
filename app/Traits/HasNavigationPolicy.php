@@ -35,7 +35,20 @@ trait HasNavigationPolicy
         }
 
         if (in_array($jobTitle, ['VP','Manager','SPV'])) {
-            return $unitName === 'IT' || $unitName === 'HR'; 
+            // return $unitName === 'IT' || $unitName === 'HR'; 
+             if ($unitName != 'WAREHOUSE') {
+                $resourceClass = static::class;
+
+                $allowedResources = [
+                    \App\Filament\Resources\EmployeeResource::class,
+                    \App\Filament\Resources\AttendanceResource::class,
+                    \App\Filament\Resources\OvertimeResource::class,
+                    \App\Filament\Resources\TimesheetResource::class,
+                    \App\Filament\Resources\PayrollResource::class,
+                ];
+
+                return in_array($resourceClass, $allowedResources);
+            }
         }
 
         
