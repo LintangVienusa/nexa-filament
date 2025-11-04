@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Traits\HasOwnRecordPolicy;
 use Carbon\Carbon;
 use App\Filament\Resources\AttendanceResource\Widgets\AttendanceSummary;
+use App\Filament\Resources\AttendanceResource\Widgets\AttendanceLateWidget;
 
 class ListAttendances extends ListRecords
 {
@@ -75,9 +76,16 @@ class ListAttendances extends ListRecords
 
     protected function getHeaderWidgets(): array
     {
-        return [
+        $widgets = [
             AttendanceSummary::class,
         ];
+
+        // Jika user yang login superadmin, tambahkan widget AttendanceLateWidget
+        if (auth()->user()?->role === 'superadmin') {
+            $widgets[] = AttendanceLateWidget::class;
+        }
+
+        return $widgets;
     }
     
     // protected function getFooterWidgets(): array
