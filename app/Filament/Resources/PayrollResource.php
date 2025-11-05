@@ -26,9 +26,13 @@ use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Actions\Action;
 use Filament\Notifications\Notification;
 use App\Services\DownloadSlipService;
+use App\Traits\HasOwnRecordPolicy;
+use Spatie\Permission\Traits\HasPermissions;
+use App\Traits\HasNavigationPolicy;
 
 class PayrollResource extends Resource
 {
+    use HasPermissions, HasOwnRecordPolicy, HasNavigationPolicy;
     protected static ?string $model = Payroll::class;
     
     protected static ?string $permissionPrefix = 'employees';

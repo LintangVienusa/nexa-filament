@@ -28,12 +28,13 @@ use Filament\Forms\Components\Livewire;
 use Filament\Forms\Components\ViewField;
 use Filament\Tables\Actions\Action;
 use App\Filament\Resources\AttendanceResource\Widgets\AttendanceSummary;
+use App\Traits\HasNavigationPolicy;
 use Illuminate\Database\Eloquent\Builder;
 
 
 class AttendanceResource extends Resource
 {
-    use HasPermissions, HasOwnRecordPolicy;
+    use HasPermissions, HasOwnRecordPolicy, HasNavigationPolicy;
 
     protected static ?string $model = Attendance::class;
     protected static ?string $permissionPrefix = 'employees';
@@ -196,14 +197,43 @@ class AttendanceResource extends Resource
             ]);
     }
 
-    
+    public static function getEloquentQuery(): Builder
+    {
+        $user = auth()->user();
+        $hasRole = $user->setConnection('mysql');
+        $query = parent::getEloquentQuery();
+        $model = new static::$model;
+
+        $jobTitle = $user->employee?->job_title;
+        $orgId = $user->employee?->org_id;
+
+        if ($user->hasAnyRole(['superadmin','admin']) || in_array($jobTitle, ['CEO','CTO'])) {
+            return $query;
+        }
+
+        if (in_array($jobTitle, ['VP','Manager','SPV']) && $orgId && method_exists($model, 'employee')) {
+            return $query->whereHas('employee', fn($q) => $q->where('org_id', $orgId));
+        }
+
+        if ($user->hasRole('employee') || $jobTitle === 'Staff') {
+            if (method_exists($model, 'employee')) {
+                return $query->whereHas('employee', fn($q) => $q->where('email', $user->email));
+            }
+
+            if (property_exists(static::class, 'ownerColumn') && Schema::hasColumn($model->getTable(), static::$ownerColumn)) {
+                return $query->where(static::$ownerColumn, $user->email);
+            }
+        }
+
+        return $query;
+    }
 
     public static function table(Table $table): Table
     {
         $totalAttendance = Attendance::count();
         return $table
             ->columns([
-                TextColumn::make('employee.employee_id')->label('Employee ID'),
+                TextColumn::make('employee.employee_id')->label('NIK'),
                 TextColumn::make('employee.first_name')
                     ->label('Nama')
                     ->getStateUsing(fn($record) => $record->employee?->full_name ?? '-')
@@ -221,9 +251,9 @@ class AttendanceResource extends Resource
                             $direction
                         );
                     }),
-                TextColumn::make('attendance_date')->date(),
-                TextColumn::make('check_in_time')->dateTime(),
-                TextColumn::make('check_out_time')->dateTime(),
+                TextColumn::make('attendance_date')->label('Tanggal')->date(),
+                TextColumn::make('check_in_time')->label('Check In')->dateTime(),
+                TextColumn::make('check_out_time')->label('Check Out')->dateTime(),
                 TextColumn::make('working_hours')
                     ->label('Working Hours')
                     ->getStateUsing(function ($record) {
@@ -259,6 +289,7 @@ class AttendanceResource extends Resource
                         ->label('Status')
                         ->formatStateUsing(fn($state) => match((int)$state) {
                             0 => 'On Time',
+                            1 => 'Late Approved',
                             2 => 'Late',
                             3 => 'Alpha',
                             default => 'Unknown',
@@ -266,6 +297,7 @@ class AttendanceResource extends Resource
                         ->badge()
                         ->color(fn($state) => match((int)$state) {
                             0 => 'success',
+                            1 => 'success',
                             2 => 'warning',
                             3 => 'danger',
                             default => 'secondary',
@@ -274,7 +306,8 @@ class AttendanceResource extends Resource
                     TextColumn::make('notes')
                         ->label('Catatan')
                         ->wrap()
-                        ->limit(50),
+                        ->limit(null) 
+                        ->extraAttributes(['style' => 'white-space: pre-wrap; max-width: 600px;'])
                     
             ])->defaultSort('attendance_date', 'desc')
             ->filters([
@@ -306,6 +339,9 @@ class AttendanceResource extends Resource
             'index' => Pages\ListAttendances::route('/'),
             'create' => Pages\CreateAttendance::route('/create'),
             'edit' => Pages\EditAttendance::route('/{record}/edit'),
+            'late-list' => Pages\LateList::route('/late-list'),
         ];
     }
+
+   
 }

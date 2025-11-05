@@ -15,6 +15,14 @@ class AttendanceSummary extends BaseWidget
     protected static bool $isLazy = false;
     protected static ?string $pollingInterval = null;
     
+    protected  ?string $heading = null;
+    public function mount(): void
+    {
+        $user = Auth::user();
+
+        $this->heading = "Total Kehadiran — {$user->name}";
+    }
+    
 
 
     protected function getStats(): array

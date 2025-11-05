@@ -9,6 +9,7 @@ use App\Models\SalaryComponent;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Filament\Notifications\Notification;
+use App\Traits\HasNavigationPolicy;
 
 
 class SalarySlip extends Model

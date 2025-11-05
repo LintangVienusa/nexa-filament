@@ -30,9 +30,16 @@ use App\Models\SalaryComponent;
 use App\Models\Employee;
 use App\Models\Payroll;
 use App\Services\HariKerjaService;
+use App\Traits\HasOwnRecordPolicy;
+use Spatie\Permission\Traits\HasPermissions;
+use App\Traits\HasNavigationPolicy;
 
 class SalarySlipResource extends Resource
 {
+
+    
+     use HasPermissions, HasOwnRecordPolicy, HasNavigationPolicy;
+
     protected static ?string $model = SalarySlip::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';

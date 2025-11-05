@@ -23,10 +23,12 @@ use Filament\Tables\Actions;
 use App\Models\Employee;
 use Filament\Notifications\Notification;
 use Filament\Forms\Components\FileUpload;
+use Spatie\Permission\Traits\HasPermissions;
+use App\Traits\HasNavigationPolicy;
 
 class OvertimeResource extends Resource
 {
-    // use HasOwnRecordPolicy;
+    use HasPermissions, HasOwnRecordPolicy, HasNavigationPolicy;
 
     protected static ?string $model = Overtime::class;
     protected static ?string $navigationIcon = 'heroicon-o-clock';

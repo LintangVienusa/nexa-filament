@@ -21,9 +21,14 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\Select;
 use Filament\Notifications\Notification;
 use App\Services\DownloadInvoiceService;
+use App\Traits\HasOwnRecordPolicy;
+use Spatie\Permission\Traits\HasPermissions;
+use App\Traits\HasNavigationPolicy;
 
 class InvoiceResource extends Resource
 {
+    
+    use HasPermissions, HasOwnRecordPolicy, HasNavigationPolicy;
     protected static ?string $model = Invoice::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-document-text';

@@ -30,7 +30,7 @@ class AutoCheckout extends Command
      */
     public function handle()
     {
-        $now = Carbon::now();
+        $now = Carbon::now('Asia/Jakarta');
         $date = now()->toDateString();
         $currentTime = now()->format('H:i:s');
 

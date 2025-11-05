@@ -10,9 +10,15 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use App\Traits\HasOwnRecordPolicy;
+use Spatie\Permission\Traits\HasPermissions;
+use App\Traits\HasNavigationPolicy;
+
 
 class AssetMovementResource extends Resource
 {
+    
+    use HasPermissions, HasOwnRecordPolicy, HasNavigationPolicy;
     protected static ?string $model = AssetMovement::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-arrows-right-left';
