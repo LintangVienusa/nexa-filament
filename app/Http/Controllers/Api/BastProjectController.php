@@ -134,6 +134,15 @@ class BastProjectController extends Controller
         $bastId = $validated['bast_id'];
         $poleSn = $validated['pole_sn'] ?? null;
 
+        $bast = BastProject::on('mysql_inventory')->where('bast_id', $bastId)->first();
+
+        if (! $bast) {
+            return response()->json([
+                'status' => 'error',
+                'message' => "BAST dengan ID {$bastId} tidak ditemukan",
+            ], 404);
+        }
+
         $query = PoleDetail::where('bast_id', $bastId);
         if ($poleSn) {
             $query->where('pole_sn', $poleSn);
@@ -186,16 +195,14 @@ class BastProjectController extends Controller
                     $path = 'poles/' . $fileName;
                     // $folder = public_path('storage/poles');
 
-                    // ✅ fix: gunakan $poleDetail, bukan $pole
+                    
                     $poleDetail->$field = $path;
                 } else {
-                    // Kalau bukan base64 (misal path lama)
                     $poleDetail->$field = $filePhoto;
                 }
             }
         }
 
-        // Update lokasi jika dikirim
         if ($request->filled('latitude')) {
             $poleDetail->latitude = $validated['latitude'] ?? 0;
         }
@@ -213,6 +220,13 @@ class BastProjectController extends Controller
 
         $poleDetail->updated_by = $user->email ?? null;
         $poleDetail->save();
+
+        if ($bast) {
+            $bast->info_pole = 1;
+            $bast->status = 'in progress';
+            $bast->updated_by = $user->email;
+            $bast->save();
+        }
 
         return response()->json([
             'status' => 'success',

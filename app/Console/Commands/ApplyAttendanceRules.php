@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\Attendance;
 use Illuminate\Console\Command;
 use App\Services\AttendanceRuleService;
+use Carbon\Carbon;
 
 class ApplyAttendanceRules extends Command
 {
@@ -28,7 +29,10 @@ class ApplyAttendanceRules extends Command
      */
     public function handle()
     {
-        $date = $this->option('date') ?? now()->toDateString();
+        // $date = $this->option('date') ?? now()->toDateString();
+        $date = $this->option('date') 
+                ? Carbon::parse($this->option('date'), 'Asia/Jakarta')->toDateString()
+                : Carbon::now('Asia/Jakarta')->toDateString();
 
         $this->info("🔄 Memproses aturan attendance untuk tanggal {$date}...");
 
