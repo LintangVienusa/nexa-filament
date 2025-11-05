@@ -24,15 +24,23 @@ class BastProject extends Model
         'PIC',
         'email',
         'technici',
+        'pass',
         'status',
         'progress_percentage',
         'notes',
         'bast_date',
+        'info_pole',
+        'info_rbs',
+        'info_feeder',
+        'info_odc',
+        'info_odp',
+        'info_homeconnect',
         'created_by',
         'updated_by',
     ];
 
     protected $attributes = [
+        'pass' => 'HOMEPASS',
         'status' => 'not started',
         'progress_percentage' => 0,
     ];

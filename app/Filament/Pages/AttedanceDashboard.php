@@ -10,7 +10,7 @@ use App\Traits\HasNavigationPolicy;
 
 class AttedanceDashboard extends Page
 {
-    use HasPermissions, HasOwnRecordPolicy, HasNavigationPolicy;
+    use HasOwnRecordPolicy, HasNavigationPolicy;
     protected static ?string $title = 'Attendance Report';
     
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-check';
