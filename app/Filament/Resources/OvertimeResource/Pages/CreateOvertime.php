@@ -24,20 +24,20 @@ class CreateOvertime extends CreateRecord
         }
         $data['created_by'] = auth()->user()->email ?? null;
 
-        $exists = Overtime::where('employee_id', $data['employee_id'])
-                ->where('attendance_id', $data['attendance_id'])
-                ->exists();
+        // $exists = Overtime::where('employee_id', $data['employee_id'])
+        //         ->where('attendance_id', $data['attendance_id'])
+        //         ->exists();
 
-            if ($exists) {
+        //     if ($exists) {
                 
-                 Notification::make()
-                        ->title('Overtime di tgl '.$data['overtime_date']. ' sudah ada!')
-                        ->body('Overtime di tgl '.$data['overtime_date']. ' sudah ada!')
-                        ->danger()
-                        ->send();
+        //          Notification::make()
+        //                 ->title('Overtime di tgl '.$data['overtime_date']. ' sudah ada!')
+        //                 ->body('Overtime di tgl '.$data['overtime_date']. ' sudah ada!')
+        //                 ->danger()
+        //                 ->send();
 
-                    $this->halt(); 
-            }
+        //             $this->halt(); 
+        //     }
 
 
         $todayf = Carbon::parse($data['overtime_date'], 'Asia/Jakarta');

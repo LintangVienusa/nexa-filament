@@ -173,6 +173,9 @@ class SalarySlipResource extends Resource
                                         // ];
 
                                         if ($overtimeHours > 0) {
+                                            if($overtimeHours > 60){
+                                                $overtimeHours = 60;
+                                            }
                                             $components[] = [
                                                 'salary_component_id' => $overtimeId,
                                                 'component_type' => \App\Models\SalaryComponent::where('component_name', 'Overtime')->value('component_type'),

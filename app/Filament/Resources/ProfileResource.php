@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class ProfileResource extends Resource
 {
+    
     protected static ?string $model = Profile::class;
 
     protected static bool $shouldRegisterNavigation = false;

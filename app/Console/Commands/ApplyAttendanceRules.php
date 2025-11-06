@@ -30,9 +30,12 @@ class ApplyAttendanceRules extends Command
     public function handle()
     {
         // $date = $this->option('date') ?? now()->toDateString();
-        $date = $this->option('date') 
-                ? Carbon::parse($this->option('date'), 'Asia/Jakarta')->toDateString()
-                : Carbon::now('Asia/Jakarta')->toDateString();
+        // $date = $this->option('date') 
+        //         ? Carbon::parse($this->option('date'), 'Asia/Jakarta')->toDateString()
+        //         : Carbon::now('Asia/Jakarta')->toDateString();
+        $now = Carbon::now('Asia/Jakarta');
+        $date = $this->option('date') ?? $now->toDateString();
+        $time = $now->format('H:i:s');
 
         $this->info("🔄 Memproses aturan attendance untuk tanggal {$date}...");
 
