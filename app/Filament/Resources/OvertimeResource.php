@@ -5,6 +5,10 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\OvertimeResource\Pages;
 use App\Filament\Resources\OvertimeResource\RelationManagers;
 use App\Models\Overtime;
+use App\Models\Employee;
+use App\Models\Attendance;
+use App\Models\Timesheet;
+use App\Models\Organization;
 use App\Traits\HasOwnRecordPolicy;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -16,11 +20,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Columns\BadgeColumn;
 use Illuminate\Support\Facades\Auth;
-use App\Models\Attendance;
-use App\Models\Timesheet;
-use App\Models\Organization;
 use Filament\Tables\Actions;
-use App\Models\Employee;
 use Filament\Notifications\Notification;
 use Filament\Forms\Components\FileUpload;
 use Spatie\Permission\Traits\HasPermissions;
@@ -89,7 +89,6 @@ class OvertimeResource extends Resource
     
                     ->default(fn($component) => auth()->user()->employee?->employee_id)
                     ->afterStateHydrated(function ($component, $state) {
-                        // Set placeholder/label agar default terlihat full_name
                         if ($state) {
                             $employee = Employee::find($state);
                             if ($employee) {
@@ -97,6 +96,33 @@ class OvertimeResource extends Resource
                             }
                         }
                     })
+                    ->afterStateUpdated(function ($state, callable $get, callable $set) {
+                            $employeeId = $state;
+                            $overtimeDate = $get('overtime_date');
+
+
+                            $todayf = Carbon::parse($overtimeDate, 'Asia/Jakarta');
+
+                            if ($todayf->day >= 28) {
+                                $startPeriod = $todayf->copy()->day(28)->startOfDay();
+                                $endPeriod   = $todayf->copy()->addMonthNoOverflow()->day(27)->endOfDay();
+                            } else {
+                                $startPeriod = $todayf->copy()->subMonthNoOverflow()->day(28)->startOfDay();
+                                $endPeriod   = $todayf->copy()->day(27)->endOfDay();
+                            }
+
+                            $totalOvertime = Overtime::query()
+                                ->join('Attendances', 'Overtimes.attendance_id', '=', 'Attendances.id')
+                                ->where('Overtimes.employee_id', $employeeId)
+                                ->whereBetween('Attendances.attendance_date', [$startPeriod, $endPeriod])
+                                ->sum('Overtimes.working_hours');
+
+                            $remainingMinutes = max(0, (60 * 60) - ($totalOvertime * 60));
+                            $hours = intdiv($remainingMinutes, 60);
+                            $minutes = $remainingMinutes % 60;
+
+                            $set('remaining_overtime', sprintf('%02d jam %02d menit', $hours, $minutes));
+                        })
                     ->disabled(fn() => $jobTitle === 'Staff')
                     ->dehydrated(true)
                     ->reactive(),
@@ -139,7 +165,7 @@ class OvertimeResource extends Resource
                     ->label('Start Time')
                     ->reactive()
                     ->format('H:i')
-                    ->seconds(false) 
+                    ->seconds(false)
                     ->required()
                     ->default('18:00')
                     ->rules(['after_or_equal:17:00', 'before_or_equal:18:00'])
@@ -152,10 +178,16 @@ class OvertimeResource extends Resource
                         $end = $get('end_time');
                         if ($state && $end) {
                             $start = Carbon::createFromFormat('H:i', $state);
-                            $e = Carbon::createFromFormat('H:i',$end);
+                            $e = Carbon::createFromFormat('H:i', $end);
                             if ($e->lessThan($start)) $e->addDay();
                             $minutes = $start->diffInMinutes($e);
-                            $set('working_hours', round($minutes / 60, 2));
+
+                            // Hitung total jam dan menit
+                            $hours = floor($minutes / 60);
+                            $mins  = $minutes % 60;
+                            $formatted = sprintf('%02d jam %02d menit', $hours, $mins);
+
+                            $set('working_hours', $formatted);
                         }
                     }),
 
@@ -167,61 +199,201 @@ class OvertimeResource extends Resource
                     ->required()
                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
                         $start = $get('start_time');
+                        $employeeId = $get('employee_id');
+                        $overtimeDate = $get('overtime_date');
+
                         if ($start && $state) {
-                            $s = Carbon::createFromFormat('H:i',$start);
-                            $end = Carbon::createFromFormat('H:i',$state);
-                            if ($end->lessThan($s)) $end->addDay();
-                            $minutes = $s->diffInMinutes($end);
-                            $set('working_hours', round($minutes / 60, 2));
-                        }
-                    }),
+                            $s = Carbon::createFromFormat('H:i', $start);
+                            $end = Carbon::createFromFormat('H:i', $state);
 
-                Forms\Components\TextInput::make('working_hours')
-                    ->label('Working Hours')
-                    ->numeric()
-                    ->disabled()
-                    ->required()
-                    ->afterStateHydrated(function ($state, $set, $get) {
-                            $start = $get('start_time');
-                            $end = $get('end_time');
-                            if ($start && $end) {
-                                $s = Carbon::createFromFormat('H:i', $start);
-                                $e = Carbon::createFromFormat('H:i', $end);
-                                if ($e->lessThan($s)) $e->addDay();
-                                $minutes = $s->diffInMinutes($e);
-                                $set('working_hours', round($minutes / 60, 2));
+                            // Jika end time lebih kecil dari start, tambahkan 1 hari
+                            if ($end->lessThan($s)) {
+                                $end->addDay();
                             }
-                        })
-                        ->afterStateUpdated(function ($state, $set, $get) {
-                            $employeeId = $get('employee_id');
-                            $overtimeHours = $state; 
-                            $overtimeDate = $get('overtime_date');
-                            $todayf = Carbon::parse($overtimeDate, 'Asia/Jakarta');
 
+                            $minutes = $s->diffInMinutes($end);
+                            $hours = $minutes / 60;
+                            $set('working_hours', sprintf('%02d jam %02d menit', intdiv($minutes, 60), $minutes % 60));
+
+                            // 🔥 Logika tambahan: batasi durasi jika total lembur sudah > 50 jam
                             if ($employeeId && $overtimeDate) {
+                                $todayf = Carbon::parse($overtimeDate, 'Asia/Jakarta');
+
+                                // Tentukan periode aktif (28 -> 27)
                                 if ($todayf->day >= 28) {
-                                    $startPeriod = $todayf->copy()->day(28)->startOfDay(); 
-                                    $endPeriod   = $todayf->copy()->addMonthNoOverflow()->day(27)->endOfDay(); 
+                                    $startPeriod = $todayf->copy()->day(28)->startOfDay();
+                                    $endPeriod   = $todayf->copy()->addMonthNoOverflow()->day(27)->endOfDay();
                                 } else {
                                     $startPeriod = $todayf->copy()->subMonthNoOverflow()->day(28)->startOfDay();
-                                    $endPeriod   = $todayf->copy()->day(27)->endOfDay(); 
+                                    $endPeriod   = $todayf->copy()->day(27)->endOfDay();
                                 }
 
+                                // Total lembur periode berjalan
                                 $totalOvertime = Overtime::query()
                                     ->join('Attendances', 'Overtimes.attendance_id', '=', 'Attendances.id')
                                     ->where('Overtimes.employee_id', $employeeId)
                                     ->whereBetween('Attendances.attendance_date', [$startPeriod, $endPeriod])
                                     ->sum('Overtimes.working_hours');
 
-                                if (($totalOvertime + $overtimeHours) > 60) {
-                                    // $set('working_hours', 0); 
-                                    Notification::make()
-                                        ->title('Total overtime tidak boleh lebih dari 60 jam!')
-                                        ->danger()
-                                        ->send();
+                                if ($totalOvertime > 50) {
+                                     $start = Carbon::parse($get('start_time'));
+                                    $sisa = 60-$totalOvertime;
+                                    $maxEnd = $start->copy()->addHours($sisa);
+
+                                    // Jika end lebih dari 10 jam dari start
+                                    if ($end->greaterThan($maxEnd)) {
+                                        $endnew = $maxEnd->format('H:i');
+                                        $set('end_time', $maxEnd->format('H:i'));
+                                        $minutes = $s->diffInMinutes($endnew);
+                                        $hours = $minutes / 60;
+                                        $set('working_hours', sprintf('%02d jam %02d menit', intdiv($minutes, 60), $minutes % 60));
+
+                                        Notification::make()
+                                            ->title('Maksimal durasi lembur 60 jam')
+                                            ->warning()
+                                            ->send();
+                                    }
+                                    
+                                    $set('remaining_overtime', $sisa);
                                 }
                             }
-                        }),
+                        }
+                    }),
+
+                Forms\Components\TextInput::make('remaining_overtime')
+                    ->label('Sisa Saldo Overtime')
+                    ->disabled()
+                    ->reactive()
+                    ->afterStateHydrated(function ($state, callable $set, callable $get) {
+                        $employeeId = $get('employee_id');
+                        $overtimeDate = $get('overtime_date');
+
+                        // if (! $employeeId || ! $overtimeDate) {
+                        //     $set('remaining_overtime', 70);
+                        //     return;
+                        // }
+
+                        $todayf = Carbon::parse($overtimeDate, 'Asia/Jakarta');
+
+                        if ($todayf->day >= 28) {
+                            $startPeriod = $todayf->copy()->day(28)->startOfDay();
+                            $endPeriod   = $todayf->copy()->addMonthNoOverflow()->day(27)->endOfDay();
+                        } else {
+                            $startPeriod = $todayf->copy()->subMonthNoOverflow()->day(28)->startOfDay();
+                            $endPeriod   = $todayf->copy()->day(27)->endOfDay();
+                        }
+
+                        // Hitung total overtime pada periode
+                        $totalOvertime = Overtime::query() 
+                            ->join('Attendances', 'Overtimes.attendance_id', '=', 'Attendances.id')
+                            ->where('Overtimes.employee_id', $employeeId)
+                            ->whereBetween('Attendances.attendance_date', [$startPeriod, $endPeriod])
+                            ->sum('Overtimes.working_hours');
+
+                        $totalMinutes = $totalOvertime * 60;
+                        $remainingMinutes = max(0, (60 * 60) - $totalMinutes); // 60 jam dikonversi ke menit
+
+                        // Ubah ke format "xx jam xx menit"
+                        $hours = intdiv($remainingMinutes, 60);
+                        $minutes = $remainingMinutes % 60;
+                        $formatted = sprintf('%02d jam %02d menit', $hours, $minutes);
+
+                        $set('remaining_overtime', $formatted);
+                    })
+                    ->afterStateUpdated(function (callable $get, callable $set) {
+                        $employeeId = $get('employee_id');
+                        $overtimeDate = $get('overtime_date');
+
+                        if (! $employeeId || ! $overtimeDate) {
+                            $set('remaining_overtime', '-');
+                            return;
+                        }
+
+                        $todayf = Carbon::parse($overtimeDate, 'Asia/Jakarta');
+
+                        if ($todayf->day >= 28) {
+                            $startPeriod = $todayf->copy()->day(28)->startOfDay();
+                            $endPeriod   = $todayf->copy()->addMonthNoOverflow()->day(27)->endOfDay();
+                        } else {
+                            $startPeriod = $todayf->copy()->subMonthNoOverflow()->day(28)->startOfDay();
+                            $endPeriod   = $todayf->copy()->day(27)->endOfDay();
+                        }
+
+                        $totalOvertime = Overtime::query()
+                            ->join('Attendances', 'Overtimes.attendance_id', '=', 'Attendances.id')
+                            ->where('Overtimes.employee_id', $employeeId)
+                            ->whereBetween('Attendances.attendance_date', [$startPeriod, $endPeriod])
+                            ->sum('Overtimes.working_hours');
+
+                        $remainingMinutes = max(0, (60 * 60) - ($totalOvertime * 60));
+                        $hours = intdiv($remainingMinutes, 60);
+                        $minutes = $remainingMinutes % 60;
+
+                        $set('remaining_overtime', sprintf('%02d jam %02d menit', $hours, $minutes));
+                    }),
+
+
+                Forms\Components\TextInput::make('working_hours')
+                    ->label('Working Hours')
+                    ->disabled()
+                    ->reactive()
+                    ->required()
+                    ->afterStateHydrated(function ($state, $set, $get) {
+                        $start = $get('start_time');
+                        $end = $get('end_time');
+                        if ($start && $end) {
+                            $s = Carbon::createFromFormat('H:i', $start);
+                            $e = Carbon::createFromFormat('H:i', $end);
+                            if ($e->lessThan($s)) $e->addDay();
+                            $minutes = $s->diffInMinutes($e);
+
+                            $hours = floor($minutes / 60);
+                            $mins  = $minutes % 60;
+                            $formatted = sprintf('%02d jam %02d menit', $hours, $mins);
+
+                            $set('working_hours', $formatted);
+                        }
+                    })
+                    ->afterStateUpdated(function ($state, $set, $get) {
+                        $employeeId = $get('employee_id');
+                        $overtimeDate = $get('overtime_date');
+                        $todayf = Carbon::parse($overtimeDate, 'Asia/Jakarta');
+
+                        // Ambil angka dari teks (misalnya "02 jam 30 menit" → 2.5)
+                        if (preg_match('/(\d+)\s*jam\s*(\d+)\s*menit/', $state, $match)) {
+                            $overtimeHours = (int)$match[1] + ((int)$match[2] / 60);
+                        } else {
+                            $overtimeHours = 0;
+                        }
+
+                        if ($employeeId && $overtimeDate) {
+                            if ($todayf->day >= 28) {
+                                $startPeriod = $todayf->copy()->day(28)->startOfDay();
+                                $endPeriod   = $todayf->copy()->addMonthNoOverflow()->day(27)->endOfDay();
+                            } else {
+                                $startPeriod = $todayf->copy()->subMonthNoOverflow()->day(28)->startOfDay();
+                                $endPeriod   = $todayf->copy()->day(27)->endOfDay();
+                            }
+
+                            $totalOvertime = Overtime::query()
+                                ->join('Attendances', 'Overtimes.attendance_id', '=', 'Attendances.id')
+                                ->where('Overtimes.employee_id', $employeeId)
+                                ->whereBetween('Attendances.attendance_date', [$startPeriod, $endPeriod])
+                                ->sum('Overtimes.working_hours');
+
+                            $remaining = 60 - ($totalOvertime + $overtimeHours);
+                            $set('remaining_overtime', max($remaining, 0));
+
+                            if (($totalOvertime + $overtimeHours) > 60) {
+                                Notification::make()
+                                    ->title('Total overtime tidak boleh lebih dari 60 jam!')
+                                    ->danger()
+                                    ->send();
+                            }
+                        }
+                    }),
+
+            
 
                 Forms\Components\Textarea::make('description')
                     ->required()
