@@ -16,11 +16,14 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Tables\Columns\TextColumn;
 use Spatie\Permission\Traits\HasPermissions;
 use Filament\Forms\Components\FileUpload;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Forms\Components\Hidden;
 use App\Traits\HasNavigationPolicy;
+use Illuminate\Database\Eloquent\Builder;
+use Filament\Tables\Filters\SelectFilter;
 
 
 class EmployeeResource extends Resource
@@ -300,13 +303,73 @@ class EmployeeResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\ImageColumn::make('file_photo')->label('Photo'),
-                Tables\Columns\TextColumn::make('employee_id'),
-                Tables\Columns\TextColumn::make('first_name')->formatStateUsing(fn ($state) => strtoupper($state)),
-                Tables\Columns\TextColumn::make('last_name')->formatStateUsing(fn ($state) => strtoupper($state)),
-                Tables\Columns\TextColumn::make('organization.divisi_name')->label('Organization'),
+                TextColumn::make('employee_id')->searchable(),
+                TextColumn::make('employee.first_name')
+                    ->label('Nama')
+                    ->getStateUsing(fn($record) => $record->employee?->full_name ?? '-')
+                    ->searchable(query: function ($query, $search) {
+                        $query->whereHas('employee', function ($q) use ($search) {
+                            $q->whereRaw("CONCAT(first_name, ' ', middle_name,' ', last_name) LIKE ?", ["%{$search}%"]);
+                        });
+                    })
+                    ->sortable(function (Builder $query) {
+                        $direction = request()->input('tableSortDirection', 'asc');
+                        return $query->orderBy(
+                            Employee::selectRaw("CONCAT(first_name,' ', middle_name, ' ', last_name)")
+                                ->whereColumn('employees.employee_id', 'attendances.employee_id')
+                                ->limit(1),
+                            $direction
+                        );
+                    }),
+                TextColumn::make('organization.divisi_name')->label('Divisi')->searchable()->sortable(),
+                TextColumn::make('organization.unit_name')->label('Unit')->searchable()->sortable(),
+                TextColumn::make('job_title')->label('Jabatan')->searchable()->sortable(),
             ])
             ->filters([
-                //
+                 SelectFilter::make('divisi_name')
+                    ->label('Divisi')
+                    ->options(
+                        Organization::query()
+                            ->whereNotNull('divisi_name')
+                            ->distinct()
+                            ->pluck('divisi_name', 'divisi_name')
+                            ->toArray()
+                    )
+                    ->query(function ($query, array $data) {
+                        if (filled($data['value'])) {
+                            $query->whereHas('organization', fn($q) => $q->where('divisi_name', $data['value']));
+                        }
+                    }),
+
+                SelectFilter::make('unit_name')
+                    ->label('Unit')
+                    ->options(
+                        Organization::query()
+                            ->whereNotNull('unit_name')
+                            ->distinct()
+                            ->pluck('unit_name', 'unit_name')
+                            ->toArray()
+                    )
+                    ->query(function ($query, array $data) {
+                        if (filled($data['value'])) {
+                            $query->whereHas('organization', fn($q) => $q->where('unit_name', $data['value']));
+                        }
+                    }),
+
+                SelectFilter::make('job_title')
+                    ->label('Jabatan')
+                    ->options(
+                        Employee::query()
+                            ->whereNotNull('job_title')
+                            ->distinct()
+                            ->pluck('job_title', 'job_title')
+                            ->toArray()
+                    )
+                    ->query(function ($query, array $data) {
+                        if (filled($data['value'])) {
+                            $query->where('job_title', $data['value']);
+                        }
+                    }),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

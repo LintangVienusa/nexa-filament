@@ -22,6 +22,9 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Hidden;
 use Filament\Tables\Columns\TextColumn;
+use App\Exports\BastPoleExport;
+use Maatwebsite\Excel\Facades\Excel;
+use Filament\Tables\Actions\Action;
 
 class BastProjectResource extends Resource
 {
@@ -202,6 +205,11 @@ class BastProjectResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Action::make('export_implementation')
+                    ->label('Export Implementation Sheet')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->action(fn ($record) => Excel::download(new BastPoleExport($record), "Implementation_{$record->kode}.xlsx")),
+        
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
