@@ -40,7 +40,7 @@ class ListAttendances extends ListRecords
             // $icon = 'heroicon-o-login';
             
             $route = AttendanceResource::getUrl('create');
-        } elseif (!$attendance->check_out_time === '') {
+        } elseif ($attendance->check_out_time === null || $attendance->check_out_time === '') {
 
             $hasOnProgressTimesheet =Timesheet::where('attendance_id', $attendance->id)
             ->where('status', '0')
