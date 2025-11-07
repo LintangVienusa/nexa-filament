@@ -193,7 +193,34 @@ class BastProjectController extends Controller
                     // Storage::disk('public')->put($path, $decoded);
                     $fileName = $field . '_' . time() . '.' . $type;
                     $path = 'poles/' . $fileName;
-                    // $folder = public_path('storage/poles');
+                    $folder = public_path('storage/poles');
+
+                    if (!file_exists($folder)) {
+                        mkdir($folder, 0777, true);
+                    }
+
+                    $tempImage = imagecreatefromstring($decoded);
+                    if ($tempImage === false) {
+                        return response()->json(['error' => 'Failed to create image from data'], 400);
+                    }
+
+                    $width = imagesx($tempImage);
+                    $height = imagesy($tempImage);
+
+                    $maxWidth = 800;
+                    $maxHeight = 800;
+                    $ratio = min($maxWidth / $width, $maxHeight / $height, 1);
+                    $newWidth = (int)($width * $ratio);
+                    $newHeight = (int)($height * $ratio);
+
+                    $compressedImage = imagecreatetruecolor($newWidth, $newHeight);
+                    imagecopyresampled($compressedImage, $tempImage, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+
+                    imagejpeg($compressedImage, $folder . '/' . $fileName, 75);
+
+                    imagedestroy($tempImage);
+                    imagedestroy($compressedImage);
+
 
                     
                     $poleDetail->$field = $path;
