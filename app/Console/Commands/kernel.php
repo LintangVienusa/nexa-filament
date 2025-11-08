@@ -31,7 +31,7 @@ class Kernel extends ConsoleKernel
         //         ->between('8:00', '23:30')
         //         ->withoutOverlapping()
         //         ->evenInMaintenanceMode();
-        $schedule->command('attendance:apply-rules')->dailyAt('00:36')
+        $schedule->command('attendance:apply-rules')->dailyAt('09:36')
         ->appendOutputTo('/var/www/html/apps/logs_cron/schedule_attendance_rules.log');
         $schedule->command('app:auto-checkout')->twiceDaily(20, 23)
         ->appendOutputTo('/var/www/html/apps/logs_cron/auto_checkout.log');
