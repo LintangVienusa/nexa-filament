@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('bast_id');
             $table->foreign('bast_id')->references('bast_id')->on('BastProject')->onDelete('cascade');
+            $table->string('rbs_name')->nullable();  
             $table->string('hasil_otdr')->nullable();         
             $table->string('penyambungan_core')->nullable();  
             $table->decimal('latitude', 10, 8)->nullable();
@@ -25,7 +26,7 @@ return new class extends Migration
             $table->string('updated_by')->nullable();       
             $table->timestamps();
             
-            $table->unique(['id', 'bast_id']);
+            $table->unique(['id', 'bast_id','rbs_name']);
             $table->index('created_by');
             $table->index('updated_by');
         });
