@@ -13,9 +13,10 @@ return new class extends Migration
     {
         Schema::connection('mysql_inventory')->create('ODCDetail', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('bast_id')->constrained('BastProject')->onDelete('cascade');
+            $table->string('bast_id');
+            $table->foreign('bast_id')->references('bast_id')->on('BastProject')->onDelete('cascade');
             $table->string('instalasi')->nullable();
-            $table->foreignId('feeder_name')->constrained('FeederDetail')->onDelete('cascade');
+            $table->string('feeder_name');
             $table->string('odc_terbuka')->nullable();
             $table->string('odc_tertutup')->nullable();
             $table->string('hasil_ukur_opm')->nullable();
@@ -32,7 +33,7 @@ return new class extends Migration
 
             
             $table->unique(['id', 'bast_id']);
-            $table->index(['odc_id', 'odc_name']);
+            $table->unique(['bast_id', 'feeder_name', 'odc_name'],'odcdetail_unique_idx');
             $table->index('created_by');
             $table->index('updated_by');
         });

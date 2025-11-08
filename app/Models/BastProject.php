@@ -35,6 +35,8 @@ class BastProject extends Model
         'info_odc',
         'info_odp',
         'info_homeconnect',
+        'list_pole',
+        'list_feeder_odc_odp',
         'created_by',
         'updated_by',
     ];

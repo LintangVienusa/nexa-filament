@@ -25,6 +25,7 @@ use Filament\Tables\Columns\TextColumn;
 use App\Exports\BastPoleExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Filament\Tables\Actions\Action;
+use Filament\Forms\Components\FileUpload;
 
 class BastProjectResource extends Resource
 {
@@ -118,7 +119,7 @@ class BastProjectResource extends Resource
                                 'HOMEPASS' => 'HOMEPASS',
                                 'HOMECONNECT' => 'HOMECONNECT',
                             ])
-                            ->default('not started')
+                            ->reactive()
                             ->required(),
                         Select::make('status')
                             ->options([
@@ -131,6 +132,31 @@ class BastProjectResource extends Resource
                             ->required(),
                         
                     ])->columns(2),
+
+                    Section::make('Upload Data Homepass')
+                        ->schema([
+                            FileUpload::make('list_pole')
+                                ->label('Upload Excel Tiang')
+                                ->acceptedFileTypes([
+                                    'application/vnd.ms-excel',
+                                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                                    'application/octet-stream',
+                                ])
+                                ->directory('homepass_excels/tiang')
+                                ->required(fn (callable $get) => $get('pass') === 'HOMEPASS')
+                                ->visible(fn (callable $get) => $get('pass') === 'HOMEPASS')->dehydrated(true),
+                            FileUpload::make('list_feeder_odc_odp')
+                                ->label('Upload Excel FEEDER-ODC-ODP')
+                                ->acceptedFileTypes([
+                                    'application/vnd.ms-excel',
+                                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                                    'application/octet-stream',
+                                ])
+                                ->directory('homepass_excels/feeder_odc_odp')
+                                ->required(fn (callable $get) => $get('pass') === 'HOMEPASS')
+                                ->visible(fn (callable $get) => $get('pass') === 'HOMEPASS')->dehydrated(true),
+                        ])
+                        ->visible(fn (callable $get) => $get('pass') === 'HOMEPASS'),
 
                 Section::make('Other Details')
                     ->schema([
@@ -206,7 +232,7 @@ class BastProjectResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Action::make('export_implementation')
-                    ->label('Export Implementation Sheet')
+                    ->label('Tiang')
                     ->icon('heroicon-o-document-arrow-down')
                     ->action(fn ($record) => Excel::download(new BastPoleExport($record), "Implementation_{$record->kode}.xlsx")),
         
