@@ -51,7 +51,7 @@ class AdminPanelProvider extends PanelProvider
                     }),
             ])
             ->renderHook(PanelsRenderHook::HEAD_END, function () {
-                $favicon = asset('assets/images/LOGO PT DAPOER POESAT NUSANTARA-07.png'); // path ke favicon
+                $favicon = asset('assets/images/Harmonis icon-07.png'); // path ke favicon
                 return <<<HTML
                 <title>HRMS - DPN</title>
                     <link rel="icon" type="image/png" href="{$favicon}" />
@@ -59,11 +59,11 @@ class AdminPanelProvider extends PanelProvider
                 HTML;
             })
             ->login()
-            ->brandLogo(asset('assets/images/LOGO PT DAPOER POESAT NUSANTARA-03.png'))
-            ->brandLogoHeight('10rem')
+            ->brandLogo(asset('assets/images/Harmonis-01_v3.png'))
+            ->brandLogoHeight('22rem')
             ->renderHook(PanelsRenderHook::HEAD_END, function () {
-                $logoLight = asset('assets/images/LOGO PT DAPOER POESAT NUSANTARA-03.png');
-                $logoDark = asset('assets/images/LOGO PT DAPOER POESAT NUSANTARA-05.png');
+                $logoLight = asset('assets/images/Harmonis icon-07.png');
+                $logoDark = asset('assets/images/Harmonis icon-07.png');
 
                 return <<<HTML
                 <script>
@@ -101,8 +101,8 @@ class AdminPanelProvider extends PanelProvider
             
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->renderHook(PanelsRenderHook::BODY_END, function () {
-                $logo = asset('assets/images/LOGO PT DAPOER POESAT NUSANTARA-07.png');
-                $logoWhite = asset('assets/images/LOGO PT DAPOER POESAT NUSANTARA-07.png');
+                $logo = asset('assets/images/Harmonis icon-07.png');
+                $logoWhite = asset('assets/images/Harmonis icon-07.png');
 
                 return <<<HTML
                 <div id="watermark-container"
@@ -146,7 +146,7 @@ class AdminPanelProvider extends PanelProvider
                                     img.style.top = posY + 'px';
                                     img.style.width = imgWidthPx + 'px';
                                     img.style.height = 'auto';
-                                    img.style.opacity = 0.03;
+                                    img.style.opacity = 0.07;
                                     img.style.pointerEvents = 'none';
                                     img.style.transform = 'rotate(-65deg)';
 
