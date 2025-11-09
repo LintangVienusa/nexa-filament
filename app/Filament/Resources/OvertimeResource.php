@@ -342,8 +342,10 @@ class OvertimeResource extends Resource
                         $start = $get('start_time');
                         $end = $get('end_time');
                         if ($start && $end) {
-                            $s = Carbon::createFromFormat('H:i', $start);
-                            $e = Carbon::createFromFormat('H:i', $end);
+                            // $s = Carbon::createFromFormat('H:i:s', $start);
+                            // $e = Carbon::createFromFormat('H:i:s', $end);
+                            $s = Carbon::parse($start);
+                            $e = Carbon::parse($end);
                             if ($e->lessThan($s)) $e->addDay();
                             $minutes = $s->diffInMinutes($e);
 

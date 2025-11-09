@@ -11,6 +11,7 @@ use App\Models\ODCDetail;
 use App\Models\FeederDetail;
 use App\Models\RBSDetail;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class BastProjectController extends Controller
 {
@@ -27,27 +28,34 @@ class BastProjectController extends Controller
             ], 401);
         }
 
-        // Ambil parameter filter (semua opsional)
-        $provinceName = $request->query('province_name');
-        $regencyName  = $request->query('regency_name');
-        $villageName  = $request->query('village_name');
-        $projectName  = $request->query('project_name');
+        $validated = $request->validate([
+            'site' => 'required|string',
+            
+        ]);
 
-        // Query dasar
-        $query = BastProject::query();
 
-        // Filter dinamis berdasarkan input
-        if ($provinceName) {
-            $query->where('province_name', 'like', "%{$provinceName}%");
-        }
-        if ($regencyName) {
-            $query->where('regency_name', 'like', "%{$regencyName}%");
-        }
-        if ($villageName) {
-            $query->where('village_name', 'like', "%{$villageName}%");
-        }
-        if ($projectName) {
-            $query->where('project_name', 'like', "%{$projectName}%");
+        // $provinceName = $request->query('province_name');
+        // $regencyName  = $request->query('regency_name');
+        // $villageName  = $request->query('village_name');
+        // $projectName  = $request->query('project_name');
+        $site  = $validated['site'];
+
+        $query = BastProject::query()->where('status', '!=', 'completed');
+
+        // if ($provinceName) {
+        //     $query->where('province_name', 'like', "%{$provinceName}%");
+        // }
+        // if ($regencyName) {
+        //     $query->where('regency_name', 'like', "%{$regencyName}%");
+        // }
+        // if ($villageName) {
+        //     $query->where('village_name', 'like', "%{$villageName}%");
+        // }
+        // if ($projectName) {
+        //     $query->where('project_name', 'like', "%{$projectName}%");
+        // }
+        if ($site) {
+            $query->where('site', 'like', "%{$site}%");
         }
 
         // Urutkan berdasarkan waktu terbaru
@@ -59,6 +67,35 @@ class BastProjectController extends Controller
             'data' => $basts,
         ]);
     }
+
+    public function listsite(Request $request)
+    {
+        date_default_timezone_set('Asia/Jakarta');
+
+        $user = Auth::user();
+        if (! $user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthorized',
+            ], 401);
+        }
+
+        $query = BastProject::select('site', DB::raw('COUNT(bast_id) as total_bast'))
+                ->where('status', '!=', 'completed')
+                ->groupBy('site')
+                ->orderBy('site', 'asc')
+                ->get();
+
+        
+        // $basts = $query->orderBy('created_at', 'desc')->get();
+
+        return response()->json([
+            'status' => 'success',
+            'total' => $query->count(),
+            'data' => $query,
+        ]);
+    }
+
 
     public function create(Request $request)
     {

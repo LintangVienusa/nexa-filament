@@ -24,6 +24,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     #BAST
     Route::post('/bast/list', [BastProjectController::class, 'index']);
+    Route::post('/bast/listsite', [BastProjectController::class, 'listsite']);
     Route::post('/bast/create', [BastProjectController::class, 'create']);
     Route::post('/bast/updatepole', [BastProjectController::class, 'updatepole']);
     Route::post('/bast/listpole', [BastProjectController::class, 'listpole']);
