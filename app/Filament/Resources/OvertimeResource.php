@@ -438,9 +438,9 @@ class OvertimeResource extends Resource
                             $jobTitle = $user->employee->job_title ?? null;
                             $allowedJobTitles = [
                                 'Manager',
-                                'VP',
-                                'CEO',
-                                'CTO',
+                                // 'VP',
+                                // 'CEO',
+                                // 'CTO',
                             ];
                             return in_array($jobTitle, $allowedJobTitles);
                         }),

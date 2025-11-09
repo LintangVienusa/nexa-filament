@@ -60,7 +60,8 @@ trait HasOwnRecordPolicy
     {
         $user = auth()->user()->setConnection('mysql'); // pastikan roles query aman
         
-        $hasRole = $user->setConnection('mysql')->hasRole('employee');
+        // $hasRole = $user->setConnection('mysql')->hasRole('employee');
+        $hasRole = $user->hasRole('employee');
 
         $query = parent::getEloquentQuery();
         $model = new static::$model;
