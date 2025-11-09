@@ -34,37 +34,43 @@ class BastProjectController extends Controller
         ]);
 
 
-        // $provinceName = $request->query('province_name');
-        // $regencyName  = $request->query('regency_name');
-        // $villageName  = $request->query('village_name');
-        // $projectName  = $request->query('project_name');
         $site  = $validated['site'];
 
-        $query = BastProject::query()->where('status', '!=', 'completed');
+        // Ambil semua data yang status-nya bukan 'completed'
+        $basts = BastProject::where('status', '!=', 'completed')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->groupBy('site'); // grupkan berdasarkan site
 
-        // if ($provinceName) {
-        //     $query->where('province_name', 'like', "%{$provinceName}%");
-        // }
-        // if ($regencyName) {
-        //     $query->where('regency_name', 'like', "%{$regencyName}%");
-        // }
-        // if ($villageName) {
-        //     $query->where('village_name', 'like', "%{$villageName}%");
-        // }
-        // if ($projectName) {
-        //     $query->where('project_name', 'like', "%{$projectName}%");
-        // }
-        if ($site) {
-            $query->where('site', 'like', "%{$site}%");
-        }
-
-        // Urutkan berdasarkan waktu terbaru
-        $basts = $query->orderBy('created_at', 'desc')->get();
+        // Ubah hasilnya jadi struktur yang lebih rapi
+        $data = $basts->map(function ($items, $site) {
+            return [
+                'site' => $site,
+                'total_bast' => $items->count(),
+                'details' => $items->map(function ($item) {
+                    return [
+                        'bast_id' => $item->bast_id,
+                        'project_name' => $item->project_name,
+                        'notes' => $item->notes,
+                        'pass' => $item->pass,
+                        'PIC' => $item->pic,
+                        'status' => $item->status,
+                        'progress_percentage' => $item->progress_percentage,
+                        'presentase_tian' => 0,
+                        'presentase_rbs' => 0,
+                        'presentase_odc' => 0,
+                        'presentase_odp' => 0,
+                        'presentase_feeder' => 0,
+                        'created_at' => $item->created_at->format('Y-m-d H:i:s'),
+                    ];
+                })->values(),
+            ];
+        })->values();
 
         return response()->json([
             'status' => 'success',
-            'total' => $basts->count(),
-            'data' => $basts,
+            'total' => $data->count(),
+            'data' => $data,
         ]);
     }
 
