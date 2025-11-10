@@ -41,6 +41,8 @@ class AdminPanelProvider extends PanelProvider
             ->brandName('HRMS - DPNG')
             ->profile()
             ->font('Roboto')
+            ->brandLogo(asset('assets/images/Harmonis-01_v4.png') . '?v=sidebar')
+            ->brandLogoHeight('4rem')
             ->userMenuItems([
                 'profile' => UserMenuItem::make()
                     ->label('Profil Saya')
@@ -59,8 +61,8 @@ class AdminPanelProvider extends PanelProvider
                 HTML;
             })
             ->login()
-            ->brandLogo(asset('assets/images/Harmonis-01_v3.png'))
-            ->brandLogoHeight('22rem')
+            ->brandLogo(asset('assets/images/Harmonis-01_v4.png'))
+            ->brandLogoHeight('4rem')
             ->renderHook(PanelsRenderHook::HEAD_END, function () {
                 $logoLight = asset('assets/images/Harmonis icon-07.png');
                 $logoDark = asset('assets/images/Harmonis icon-07.png');
