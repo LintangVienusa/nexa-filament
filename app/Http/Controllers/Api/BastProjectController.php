@@ -10,6 +10,7 @@ use App\Models\ODPDetail;
 use App\Models\ODCDetail;
 use App\Models\FeederDetail;
 use App\Models\RBSDetail;
+use App\Models\HomeConnect;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -28,28 +29,29 @@ class BastProjectController extends Controller
             ], 401);
         }
 
-        $validated = $request->validate([
-            'site' => 'required|string',
+        // $validated = $request->validate([
+        //     'village_name' => 'required|string',
             
-        ]);
+        // ]);
 
 
-        $site  = $validated['site'];
+        // $village_name  = $validated['village_name'];s
 
-        // Ambil semua data yang status-nya bukan 'completed'
         $basts = BastProject::where('status', '!=', 'completed')
             ->orderBy('created_at', 'desc')
             ->get()
-            ->groupBy('site'); // grupkan berdasarkan site
+            ->groupBy('village_name'); 
 
-        // Ubah hasilnya jadi struktur yang lebih rapi
-        $data = $basts->map(function ($items, $site) {
+        $data = $basts->map(function ($items, $village_name) {
             return [
-                'site' => $site,
+                'village_name' => $village_name,
                 'total_bast' => $items->count(),
                 'details' => $items->map(function ($item) {
                     return [
                         'bast_id' => $item->bast_id,
+                        'province_name' => $item->province_name,
+                        'regency_name' => $item->regency_name,
+                        'village_name' => $item->village_name,
                         'project_name' => $item->project_name,
                         'notes' => $item->notes,
                         'pass' => $item->pass,
@@ -86,10 +88,10 @@ class BastProjectController extends Controller
             ], 401);
         }
 
-        $query = BastProject::select('site', DB::raw('COUNT(bast_id) as total_bast'))
+        $query = BastProject::select('village_name', DB::raw('COUNT(bast_id) as total_bast'))
                 ->where('status', '!=', 'completed')
-                ->groupBy('site')
-                ->orderBy('site', 'asc')
+                ->groupBy('village_name')
+                ->orderBy('village_name', 'asc')
                 ->get();
 
         
@@ -349,6 +351,81 @@ class BastProjectController extends Controller
         
     }
 
+    public function detailpole(Request $request)
+    {
+        date_default_timezone_set('Asia/Jakarta');
+        $user = Auth::user();
+
+        if (! $user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthorized',
+            ], 401);
+        }
+
+        $validated = $request->validate([
+            'bast_id' => 'required|string|exists:mysql_inventory.BastProject,bast_id',
+            'pole_sn' => 'nullable|string',
+            
+        ]);
+
+        $bastId = $validated['bast_id'];
+        $poleSn = $validated['pole_sn'] ?? null;
+
+        $bast = BastProject::on('mysql_inventory')->where('bast_id', $bastId)->first();
+
+        if (! $bast) {
+            return response()->json([
+                'status' => 'error',
+                'message' => "BAST dengan ID {$bastId} tidak ditemukan",
+            ], 404);
+        }
+
+        $query = PoleDetail::where('bast_id', $bastId);
+        if ($poleSn) {
+             $query->where('pole_sn', $poleSn);
+
+            $record = $query->first();
+
+            $fileKeys = [
+                'digging',
+                'instalasi',
+                'coran',
+                'tiang_berdiri',
+                'labeling_tiang',
+                'aksesoris_tiang',
+            ];
+
+            $base64Files = [];
+
+            foreach ($fileKeys as $key) {
+                $file = $record->$key ?? null;
+
+                if (!empty($file)) {
+                    $filePath = storage_path('app/public/' . $file);
+                    $base64Files[$key] = file_exists($filePath)
+                        ? 'data:image/' . pathinfo($filePath, PATHINFO_EXTENSION) . ';base64,' . base64_encode(file_get_contents($filePath))
+                        : null;
+                } else {
+                    $base64Files[$key] = null;
+                }
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $base64Files,
+            ]);
+        }else{
+            $poleDetail = $query->first();
+            return response()->json([
+                'status' => 'error',
+                'message' => "BAST dengan ID {$bastId} tidak ditemukan",
+            ], 404);
+        }
+        
+        
+    }
+
     public function listodp(Request $request)
     {
         date_default_timezone_set('Asia/Jakarta');
@@ -539,6 +616,80 @@ class BastProjectController extends Controller
         
     }
 
+    public function detailodp(Request $request)
+    {
+        date_default_timezone_set('Asia/Jakarta');
+        $user = Auth::user();
+
+        if (! $user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthorized',
+            ], 401);
+        }
+
+        $validated = $request->validate([
+            'bast_id' => 'required|string|exists:mysql_inventory.BastProject,bast_id',
+            'odp_name' => 'nullable|string',
+            
+        ]);
+
+        $bastId = $validated['bast_id'];
+        $odp_name = $validated['odp_name'] ?? null;
+
+        $bast = BastProject::on('mysql_inventory')->where('bast_id', $bastId)->first();
+
+        if (! $bast) {
+            return response()->json([
+                'status' => 'error',
+                'message' => "BAST dengan ID {$bastId} tidak ditemukan",
+            ], 404);
+        }
+
+        $query = ODPDetail::where('bast_id', $bastId);
+        if ($odp_name) {
+             $query->where('odp_name', $odp_name);
+
+            $record = $query->first();
+
+            $fileKeys = [
+                'instalasi',
+                'odp_terbuka',
+                'odp_tertutup',
+                'hasil_ukur_opm',
+                'labeling_odp',
+            ];
+
+            $base64Files = [];
+
+            foreach ($fileKeys as $key) {
+                $file = $record->$key ?? null;
+
+                if (!empty($file)) {
+                    $filePath = storage_path('app/public/' . $file);
+                    $base64Files[$key] = file_exists($filePath)
+                        ? 'data:image/' . pathinfo($filePath, PATHINFO_EXTENSION) . ';base64,' . base64_encode(file_get_contents($filePath))
+                        : null;
+                } else {
+                    $base64Files[$key] = null;
+                }
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $base64Files,
+            ]);
+        }else{
+            $poleDetail = $query->first();
+            return response()->json([
+                'status' => 'error',
+                'message' => "BAST dengan ID {$bastId} tidak ditemukan",
+            ], 404);
+        }
+        
+        
+    }
+
 
     public function listodc(Request $request)
     {
@@ -578,6 +729,80 @@ class BastProjectController extends Controller
             'message' => 'List ODC',
             'list_odc' => $query,
         ]);
+        
+    }
+
+    public function detailodc(Request $request)
+    {
+        date_default_timezone_set('Asia/Jakarta');
+        $user = Auth::user();
+
+        if (! $user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthorized',
+            ], 401);
+        }
+
+        $validated = $request->validate([
+            'bast_id' => 'required|string|exists:mysql_inventory.BastProject,bast_id',
+            'odc_name' => 'nullable|string',
+            
+        ]);
+
+        $bastId = $validated['bast_id'];
+        $odc_name = $validated['odc_name'] ?? null;
+
+        $bast = BastProject::on('mysql_inventory')->where('bast_id', $bastId)->first();
+
+        if (! $bast) {
+            return response()->json([
+                'status' => 'error',
+                'message' => "BAST dengan ID {$bastId} tidak ditemukan",
+            ], 404);
+        }
+
+        $query = ODCDetail::where('bast_id', $bastId);
+        if ($odc_name) {
+             $query->where('odc_name', $odc_name);
+
+            $record = $query->first();
+
+            $fileKeys = [
+                'instalasi',
+                'odc_terbuka',
+                'odc_tertutup',
+                'hasil_ukur_opm',
+                'labeling_odc',
+            ];
+
+            $base64Files = [];
+
+            foreach ($fileKeys as $key) {
+                $file = $record->$key ?? null;
+
+                if (!empty($file)) {
+                    $filePath = storage_path('app/public/' . $file);
+                    $base64Files[$key] = file_exists($filePath)
+                        ? 'data:image/' . pathinfo($filePath, PATHINFO_EXTENSION) . ';base64,' . base64_encode(file_get_contents($filePath))
+                        : null;
+                } else {
+                    $base64Files[$key] = null;
+                }
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $base64Files,
+            ]);
+        }else{
+            $poleDetail = $query->first();
+            return response()->json([
+                'status' => 'error',
+                'message' => "BAST dengan ID {$bastId} tidak ditemukan",
+            ], 404);
+        }
+        
         
     }
 
@@ -727,6 +952,79 @@ class BastProjectController extends Controller
             'message' => 'ODC data updated successfully',
             'data' => $odcDetail,
         ]);
+        
+    }
+
+    public function detailfeeder(Request $request)
+    {
+        date_default_timezone_set('Asia/Jakarta');
+        $user = Auth::user();
+
+        if (! $user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthorized',
+            ], 401);
+        }
+
+        $validated = $request->validate([
+            'bast_id' => 'required|string|exists:mysql_inventory.BastProject,bast_id',
+            'feeder_name' => 'nullable|string',
+            
+        ]);
+
+        $bastId = $validated['bast_id'];
+        $feeder_name = $validated['feeder_name'] ?? null;
+
+        $bast = BastProject::on('mysql_inventory')->where('bast_id', $bastId)->first();
+
+        if (! $bast) {
+            return response()->json([
+                'status' => 'error',
+                'message' => "BAST dengan ID {$bastId} tidak ditemukan",
+            ], 404);
+        }
+
+        $query = FeederDetail::where('bast_id', $bastId);
+        if ($feeder_name) {
+             $query->where('feeder_name', $feeder_name);
+
+            $record = $query->first();
+
+            $fileKeys = [
+                'foto_utara',
+                'foto_barat',
+                'foto_selatan',
+                'foto_timur',
+            ];
+
+            $base64Files = [];
+
+            foreach ($fileKeys as $key) {
+                $file = $record->$key ?? null;
+
+                if (!empty($file)) {
+                    $filePath = storage_path('app/public/' . $file);
+                    $base64Files[$key] = file_exists($filePath)
+                        ? 'data:image/' . pathinfo($filePath, PATHINFO_EXTENSION) . ';base64,' . base64_encode(file_get_contents($filePath))
+                        : null;
+                } else {
+                    $base64Files[$key] = null;
+                }
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $base64Files,
+            ]);
+        }else{
+            $poleDetail = $query->first();
+            return response()->json([
+                'status' => 'error',
+                'message' => "BAST dengan ID {$bastId} tidak ditemukan",
+            ], 404);
+        }
+        
         
     }
 
@@ -1113,6 +1411,291 @@ class BastProjectController extends Controller
             'message' => 'RBS data updated successfully',
             'data' => $RBSDetail,
         ]);
+        
+    }
+
+    public function detailrbs(Request $request)
+    {
+        date_default_timezone_set('Asia/Jakarta');
+        $user = Auth::user();
+
+        if (! $user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthorized',
+            ], 401);
+        }
+
+        $validated = $request->validate([
+            'bast_id' => 'required|string|exists:mysql_inventory.BastProject,bast_id',
+            'rbs_name' => 'nullable|string',
+            
+        ]);
+
+        $bastId = $validated['bast_id'];
+        $rbs_name = $validated['rbs_name'] ?? null;
+
+        $bast = BastProject::on('mysql_inventory')->where('bast_id', $bastId)->first();
+
+        if (! $bast) {
+            return response()->json([
+                'status' => 'error',
+                'message' => "BAST dengan ID {$bastId} tidak ditemukan",
+            ], 404);
+        }
+
+        $query = RBSDetail::where('bast_id', $bastId);
+        if ($rbs_name) {
+             $query->where('rbs_name', $rbs_name);
+
+            $record = $query->first();
+
+            $fileKeys = [
+                'hasil_otdr',
+                'penyambungan_core',
+            ];
+
+            $base64Files = [];
+
+            foreach ($fileKeys as $key) {
+                $file = $record->$key ?? null;
+
+                if (!empty($file)) {
+                    $filePath = storage_path('app/public/' . $file);
+                    $base64Files[$key] = file_exists($filePath)
+                        ? 'data:image/' . pathinfo($filePath, PATHINFO_EXTENSION) . ';base64,' . base64_encode(file_get_contents($filePath))
+                        : null;
+                } else {
+                    $base64Files[$key] = null;
+                }
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $base64Files,
+            ]);
+        }else{
+            $poleDetail = $query->first();
+            return response()->json([
+                'status' => 'error',
+                'message' => "BAST dengan ID {$bastId} tidak ditemukan",
+            ], 404);
+        }
+        
+        
+    }
+
+    public function updatehomeconnect(Request $request)
+    {
+        date_default_timezone_set('Asia/Jakarta');
+        $user = Auth::user();
+
+        if (! $user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthorized',
+            ], 401);
+        }
+
+        $validated = $request->validate([
+            'bast_id' => 'required|string|exists:mysql_inventory.BastProject,bast_id',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
+            
+        ]);
+
+        $bastId = $validated['bast_id'];
+
+        $bast = BastProject::on('mysql_inventory')->where('bast_id', $bastId)->where('pass', 'HOMECONNECT')->first();
+
+        if (! $bast) {
+            return response()->json([
+                'status' => 'error',
+                'message' => "BAST dengan ID {$bastId} tidak ditemukan",
+            ], 404);
+        }
+
+        $query = HomeConnect::where('bast_id', $bastId);
+        $HomeConnect = $query->first();
+
+         
+
+        if (! $HomeConnect) {
+            $HomeConnect = new HomeConnect();
+            $HomeConnect->bast_id = $bastId;
+            $HomeConnect->created_by = $user->email;
+        }
+
+    
+        $photoFields = [
+            'foto_label_odp',
+            'foto_hasil_ukur_odp',
+            'foto_penarikan_outdoor',
+            'foto_aksesoris_ikr',
+            'foto_sn_ont',
+            'foto_depan_rumah',
+        ];
+
+        foreach ($photoFields as $field) {
+            $filePhoto = $request->input($field);
+
+            if (!empty($filePhoto)) {
+                $filePhoto = "data:image/png;base64," . $filePhoto;
+                if (preg_match('/^data:image\/(\w+);base64,/', $filePhoto, $type)) {
+                    $filePhoto = substr($filePhoto, strpos($filePhoto, ',') + 1);
+                    $type = strtolower($type[1]);
+                    $decoded = base64_decode($filePhoto);
+
+                    if ($decoded === false) {
+                        return response()->json([
+                            'status' => 'error',
+                            'message' => "Invalid base64 format for {$field}",
+                        ], 400);
+                    }
+
+                    // $fileName = $field . '_' . time() . '.' . $type;
+                    // Storage::disk('public')->put($path, $decoded);
+                    $fileName = $field . '_' . time() . '.' . $type;
+                    $path = 'homeconnect/' . $fileName;
+                    $folder = public_path('storage/homeconnect');
+
+                    if (!file_exists($folder)) {
+                        mkdir($folder, 0777, true);
+                    }
+
+                    $tempImage = imagecreatefromstring($decoded);
+                    if ($tempImage === false) {
+                        return response()->json(['error' => 'Failed to create image from data'], 400);
+                    }
+
+                    $width = imagesx($tempImage);
+                    $height = imagesy($tempImage);
+
+                    $maxWidth = 800;
+                    $maxHeight = 800;
+                    $ratio = min($maxWidth / $width, $maxHeight / $height, 1);
+                    $newWidth = (int)($width * $ratio);
+                    $newHeight = (int)($height * $ratio);
+
+                    $compressedImage = imagecreatetruecolor($newWidth, $newHeight);
+                    imagecopyresampled($compressedImage, $tempImage, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+
+                    imagejpeg($compressedImage, $folder . '/' . $fileName, 75);
+
+                    imagedestroy($tempImage);
+                    imagedestroy($compressedImage);
+
+
+                    
+                    $HomeConnect->$field = $path;
+                } else {
+                    $HomeConnect->$field = $filePhoto;
+                }
+            }
+        }
+
+        if ($request->filled('latitude')) {
+            $HomeConnect->latitude = $validated['latitude'] ?? 0;
+        }
+        // else{
+        //     $pole->latitude = 0;
+        // }
+
+        if ($request->filled('longitude')) {
+            $HomeConnect->longitude = $validated['longitude']  ?? 0;
+        }
+        // else{
+            
+        //     $pole->longitude = 0;
+        // }
+
+        $HomeConnect->updated_by = $user->email ?? null;
+        $HomeConnect->save();
+
+        if ($bast) {
+            $bast->info_pole = 1;
+            $bast->status = 'in progress';
+            $bast->updated_by = $user->email;
+            $bast->save();
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Pole data updated successfully',
+            'data' => $HomeConnect,
+        ]);
+        
+    }
+
+    public function detailhomeconnect(Request $request)
+    {
+        date_default_timezone_set('Asia/Jakarta');
+        $user = Auth::user();
+
+        if (! $user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthorized',
+            ], 401);
+        }
+
+        $validated = $request->validate([
+            'bast_id' => 'required|string|exists:mysql_inventory.BastProject,bast_id',
+            
+        ]);
+
+        $bastId = $validated['bast_id'];
+
+        $bast = BastProject::on('mysql_inventory')->where('bast_id', $bastId)->first();
+
+        if (! $bast) {
+            return response()->json([
+                'status' => 'error',
+                'message' => "BAST dengan ID {$bastId} tidak ditemukan",
+            ], 404);
+        }
+
+        $query = HomeConnect::where('bast_id', $bastId);
+        if ($bastId) {
+             
+            $record = $query->first();
+
+            $fileKeys = [
+                'foto_label_odp',
+                'foto_hasil_ukur_odp',
+                'foto_penarikan_outdoor',
+                'foto_aksesoris_ikr',
+                'foto_sn_ont',
+                'foto_depan_rumah',
+            ];
+
+            $base64Files = [];
+
+            foreach ($fileKeys as $key) {
+                $file = $record->$key ?? null;
+
+                if (!empty($file)) {
+                    $filePath = storage_path('app/public/' . $file);
+                    $base64Files[$key] = file_exists($filePath)
+                        ? 'data:image/' . pathinfo($filePath, PATHINFO_EXTENSION) . ';base64,' . base64_encode(file_get_contents($filePath))
+                        : null;
+                } else {
+                    $base64Files[$key] = null;
+                }
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $base64Files,
+            ]);
+        }else{
+            $poleDetail = $query->first();
+            return response()->json([
+                'status' => 'error',
+                'message' => "BAST dengan ID {$bastId} tidak ditemukan",
+            ], 404);
+        }
+        
         
     }
 

@@ -15,7 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('bast_id');
             $table->foreign('bast_id')->references('bast_id')->on('BastProject')->onDelete('cascade');
-            $table->foreignId('odp_name')->constrained('ODPDetail')->onDelete('cascade');  
+            $table->string('bast_id');
+            $table->foreign('odp_name')->constrained('ODPDetail')->onDelete('cascade');  
             $table->string('sn_ont')->nullable();
             $table->string('province_name')->nullable();
             $table->string('regency_name')->nullable();
@@ -36,8 +37,7 @@ return new class extends Migration
             $table->timestamps();
 
             
-            $table->unique(['id', 'bast_id']);
-            $table->index('sn_ont');
+            $table->unique(['id', 'bast_id','sn_ont','odp_name']);
             $table->index(['province_name', 'regency_name', 'village_name']);
             $table->index('created_by');
             $table->index('updated_by');
