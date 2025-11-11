@@ -226,11 +226,11 @@ class InvoiceItemResource extends Resource
                         ->label('PO Number')
                         ->numeric()
                        ->getStateUsing(function ($record) {
-        return "
-            <div class='text-xl font-semibold'>Invoice</div>
-        ";
-    })
-    ->html()
+                                return "
+                                    <div class='text-xl font-semibold'>Invoice</div>
+                                ";
+                            })
+                            ->html()
                         ->sortable(),
                     TextColumn::make('invoice.invoice_number')
                         ->label('Invoice ID')
@@ -277,7 +277,7 @@ class InvoiceItemResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    // Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }

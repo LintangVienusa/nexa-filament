@@ -19,6 +19,7 @@ class BastProject extends Model
         'province_name',
         'regency_name',
         'village_name',
+        'station_name',
         'project_name',
         'site',
         'PIC',
@@ -46,5 +47,10 @@ class BastProject extends Model
         'status' => 'not started',
         'progress_percentage' => 0,
     ];
+
+    public function poles()
+    {
+        return $this->hasMany(PoleDetail::class, 'bast_id', 'bast_id'); 
+    }
 
 }

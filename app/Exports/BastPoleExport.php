@@ -29,7 +29,12 @@ class BastPoleExport implements WithEvents
         return [
             AfterSheet::class => function (AfterSheet $event) {
                 $project = $this->project;
-                $details = PoleDetail::where('bast_id', $this->project->bast_id)->first();
+                $details = PoleDetail::where('bast_id', $this->project->bast_id)
+                    ->where('pole_sn', $this->project->pole_sn)
+                    ->first();
+                
+                $bastproject = BastProject::where('bast_id', $this->project->bast_id)
+                    ->first();
 
 
                 $sheet = $event->sheet->getDelegate();
@@ -76,24 +81,22 @@ class BastPoleExport implements WithEvents
 
                 // === Info Proyek ===
                 $sheet->fromArray([
-                    ['Lokasi Pekerjaan','', ': ' . $this->project->village_name],
-                    ['Stasiun','', ': ' . $this->project->village_name ]
+                    ['Lokasi Pekerjaan','', ': ' . $bastproject->village_name],
+                    ['Stasiun','', ': ' . $bastproject->station_name ]
                 ], null, 'C9', true);
 
                 $sheet->fromArray([
                     [ 'Koordinat','', ': ' . $details->latitude.', '. $details->longitude],
-                    ['Hari/ Tanggal','', ': ' . $this->project->bast_date, '', '']
+                    ['Hari/ Tanggal','', ': ' . $bastproject->bast_date, '', '']
                 ], null, 'H9', true);
 
                 $sheet->fromArray([
-                    [  'Keterangan','', ': ' . $this->project->notes],
+                    [  'Keterangan','', ': ' . $bastproject->notes],
                 ], null, 'M9', true);
 
-                // === Warna highlight Jawa Barat ===
                 $sheet->getStyle('E9:G9')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('FFFF00');
                 $sheet->getStyle('E10:G10')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('FFFF00');
 
-                // === Tabel Header Box ===
                 // $headers = [
                 //     [$details->pole_sn.' Digging Hole', $details->pole_sn.' Measuring Hole', $details->pole_sn.' Solid Fill'],
                 //     [$details->pole_sn.' Pole Installation', $details->pole_sn.' Pole Casting', $details->pole_sn.' Pole Accessories Installation'],
@@ -109,9 +112,9 @@ class BastPoleExport implements WithEvents
                     ]
                 ])->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
                 
-                $sheet->getStyle('C12')->getFont()->setBold(true)->setSize(14);
+                $sheet->getStyle('C12')->getFont()->setBold(true)->setSize(11);
                 
-                $sheet->getStyle('C12:F13')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('DAF2D0');
+                $sheet->getStyle('C12:F13')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('C5EFCA');
 
                 $sheet->mergeCells('C12:F13');
                 $sheet->fromArray([
@@ -138,12 +141,11 @@ class BastPoleExport implements WithEvents
                                     $photoPath = public_path('storage/' . $details->digging);
                                     $sheet->setCellValue('C14', '');
 
-                                    if (file_exists($photoPath)) {
+                    if (file_exists($photoPath) && $details->digging !='' ) {
 
-                        // Hitung lebar & tinggi area merge dalam pixel (approx)
                         $colWidth = 0;
                         foreach (range($startCol, $endCol) as $col) {
-                            $colWidth += $sheet->getColumnDimension($col)->getWidth() * 7; // 1 kolom ≈ 7px
+                            $colWidth += $sheet->getColumnDimension($col)->getWidth() * 7;
                         }
 
                         $rowHeight = 0;
@@ -151,13 +153,23 @@ class BastPoleExport implements WithEvents
                             $rowHeight += $sheet->getRowDimension($r)->getRowHeight() ?: 15;
                         }
 
-                        // Ambil ukuran asli gambar
-                        [$imgWidth, $imgHeight] = getimagesize($photoPath);
+                        // [$imgWidth, $imgHeight] = getimagesize($photoPath);
 
-                        // Skala agar gambar proporsional dalam kotak
-                        $scale = min(($colWidth - 10) / $imgWidth, ($rowHeight - 10) / $imgHeight);
+                        // $scale = min(($colWidth - 10) / $imgWidth, ($rowHeight - 10) / $imgHeight);
+                        $imgWidth = 0;
+                        $imgHeight = 0;
+                        $scale = 1;
 
-                        // === Tambahkan gambar ke Excel ===
+                        if (file_exists($photoPath)) {
+                            $size = getimagesize($photoPath);
+                            if ($size) {
+                                [$imgWidth, $imgHeight] = $size;
+                                if ($imgWidth > 0 && $imgHeight > 0) {
+                                    $scale = min(($colWidth - 10) / $imgWidth, ($rowHeight - 10) / $imgHeight);
+                                }
+                            }
+                        }
+
                         $drawing = new Drawing();
                         $drawing->setPath(public_path('storage/' . $details->digging));
                         $drawing->setCoordinates($startCol . $startRow);
@@ -180,8 +192,8 @@ class BastPoleExport implements WithEvents
                     ]
                 ])->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
                 
-                $sheet->getStyle('C31')->getFont()->setBold(true)->setSize(14);
-                $sheet->getStyle('C31:F32')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('DAF2D0');
+                $sheet->getStyle('C31')->getFont()->setBold(true)->setSize(11);
+                $sheet->getStyle('C31:F32')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('C5EFCA');
 
                 $sheet->mergeCells('C31:F32');
                 $sheet->fromArray([
@@ -211,8 +223,8 @@ class BastPoleExport implements WithEvents
                     ]
                 ])->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
                 
-                $sheet->getStyle('C50')->getFont()->setBold(true)->setSize(14);
-                $sheet->getStyle('C50:F51')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('DAF2D0');
+                $sheet->getStyle('C50')->getFont()->setBold(true)->setSize(11);
+                $sheet->getStyle('C50:F51')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('C5EFCA');
 
                 
                 $sheet->mergeCells('C50:F51');
@@ -243,8 +255,8 @@ class BastPoleExport implements WithEvents
                         ]
                     ]
                 ])->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
-                $sheet->getStyle('H12')->getFont()->setBold(true)->setSize(14);
-                $sheet->getStyle('H12:K13')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('DAF2D0');
+                $sheet->getStyle('H12')->getFont()->setBold(true)->setSize(11);
+                $sheet->getStyle('H12:K13')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('C5EFCA');
 
                 $sheet->mergeCells('H12:K13');
                 $sheet->fromArray([
@@ -275,8 +287,8 @@ class BastPoleExport implements WithEvents
                     ]
                 ])->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
                 
-                $sheet->getStyle('H31')->getFont()->setBold(true)->setSize(14);
-                $sheet->getStyle('H31:K32')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('DAF2D0');
+                $sheet->getStyle('H31')->getFont()->setBold(true)->setSize(11);
+                $sheet->getStyle('H31:K32')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('C5EFCA');
 
                 
 
@@ -310,8 +322,8 @@ class BastPoleExport implements WithEvents
                     ]
                 ])->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
                 
-                $sheet->getStyle('H50')->getFont()->setBold(true)->setSize(14);
-                $sheet->getStyle('H50:K51')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('DAF2D0');
+                $sheet->getStyle('H50')->getFont()->setBold(true)->setSize(11);
+                $sheet->getStyle('H50:K51')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('C5EFCA');
 
                 
 
@@ -336,7 +348,7 @@ class BastPoleExport implements WithEvents
                 ], null, 'H52', true);
 
                 
-                $sheet->getStyle('M12:Q13')->applyFromArray([
+                $sheet->getStyle('M12:P13')->applyFromArray([
                     'borders' => [
                         'outline' => [
                             'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
@@ -345,15 +357,15 @@ class BastPoleExport implements WithEvents
                     ]
                 ])->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
                 
-                $sheet->getStyle('M12')->getFont()->setBold(true)->setSize(14);
-                $sheet->getStyle('M12:Q13')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('DAF2D0');
+                $sheet->getStyle('M12')->getFont()->setBold(true)->setSize(11);
+                $sheet->getStyle('M12:P13')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('C5EFCA');
 
-                $sheet->mergeCells('M12:Q13');
+                $sheet->mergeCells('M12:P13');
                 $sheet->fromArray([
                     [  $details->pole_sn.' Solid Fill'],
                 ], null, 'M12', true);
 
-                $sheet->getStyle('M14:Q30')->applyFromArray([
+                $sheet->getStyle('M14:P30')->applyFromArray([
                     'borders' => [
                         'outline' => [
                             'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
@@ -361,12 +373,12 @@ class BastPoleExport implements WithEvents
                         ]
                     ]
                 ]);
-                $sheet->mergeCells('M14:Q30');
+                $sheet->mergeCells('M14:P30');
                 $sheet->fromArray([
                     [ '' ],
                 ], null, 'M14', true);
                 
-                $sheet->getStyle('M31:Q32')->applyFromArray([
+                $sheet->getStyle('M31:P32')->applyFromArray([
                     'borders' => [
                         'outline' => [
                             'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
@@ -375,15 +387,15 @@ class BastPoleExport implements WithEvents
                     ]
                 ])->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
                 
-                $sheet->getStyle('M31')->getFont()->setBold(true)->setSize(14);
-                $sheet->getStyle('M31:Q32')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('DAF2D0');
+                $sheet->getStyle('M31')->getFont()->setBold(true)->setSize(11);
+                $sheet->getStyle('M31:P32')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('C5EFCA');
 
-                $sheet->mergeCells('M31:Q32');
+                $sheet->mergeCells('M31:P32');
                 $sheet->fromArray([
                     [  $details->pole_sn.' Pole Accessories Installation'],
                 ], null, 'M31', true);
 
-                 $sheet->getStyle('M33:Q49')->applyFromArray([
+                 $sheet->getStyle('M33:P49')->applyFromArray([
                     'borders' => [
                         'outline' => [
                             'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
@@ -392,12 +404,12 @@ class BastPoleExport implements WithEvents
                     ]
                 ]);
                 
-                $sheet->mergeCells('M33:Q49');
+                $sheet->mergeCells('M33:P49');
                 $sheet->fromArray([
                     [ '' ],
                 ], null, 'M33', true);
 
-                $sheet->getStyle('M50:Q51')->applyFromArray([
+                $sheet->getStyle('M50:P51')->applyFromArray([
                     'borders' => [
                         'outline' => [
                             'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
@@ -406,15 +418,15 @@ class BastPoleExport implements WithEvents
                     ]
                 ])->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
                 
-                $sheet->getStyle('M50')->getFont()->setBold(true)->setSize(14);
-                $sheet->getStyle('M50:Q51')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('DAF2D0');
+                $sheet->getStyle('M50')->getFont()->setBold(true)->setSize(11);
+                $sheet->getStyle('M50:P51')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('C5EFCA');
 
-                $sheet->mergeCells('M50:Q51');
+                $sheet->mergeCells('M50:P51');
                 $sheet->fromArray([
                     [  $details->pole_sn.' ODP Integration'],
                 ], null, 'M50', true);
 
-                $sheet->getStyle('M52:Q68')->applyFromArray([
+                $sheet->getStyle('M52:P68')->applyFromArray([
                     'borders' => [
                         'outline' => [
                             'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
@@ -422,7 +434,7 @@ class BastPoleExport implements WithEvents
                         ]
                     ]
                 ]);
-                $sheet->mergeCells('M52:Q68');
+                $sheet->mergeCells('M52:P68');
                 $sheet->fromArray([
                     [ '' ],
                 ], null, 'M52', true);
@@ -439,7 +451,7 @@ class BastPoleExport implements WithEvents
                     ]
                 ])->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
                 
-                $sheet->getStyle('C71')->getFont()->setBold(true)->setSize(14);
+                $sheet->getStyle('C71')->getFont()->setBold(true)->setSize(11);
 
                 $sheet->mergeCells('C71:I72');
                 $sheet->fromArray([
@@ -460,7 +472,7 @@ class BastPoleExport implements WithEvents
                     [ '' ],
                 ], null, 'C73', true);
 
-                $sheet->getStyle('K71:Q72')->applyFromArray([
+                $sheet->getStyle('K71:P72')->applyFromArray([
                     'borders' => [
                         'outline' => [
                             'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
@@ -469,9 +481,9 @@ class BastPoleExport implements WithEvents
                     ]
                 ])->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
                 
-                $sheet->getStyle('K71')->getFont()->setBold(true)->setSize(14);
+                $sheet->getStyle('K71')->getFont()->setBold(true)->setSize(11);
 
-                $sheet->mergeCells('K71:Q72');
+                $sheet->mergeCells('K71:P72');
                 $sheet->fromArray([
                     [  'PT. Integrasi Jaringan Ekosistem (WEAVE)'],
                 ], null, 'K71', true);
@@ -487,13 +499,13 @@ class BastPoleExport implements WithEvents
 
                 $sheet->getStyle('K77:M78')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
 
-                $sheet->getStyle('K77')->getFont()->setBold(true)->setSize(14);
+                $sheet->getStyle('K77')->getFont()->setBold(true)->setSize(11);
                 $sheet->mergeCells('K77:M78');
                 $sheet->fromArray([
                     [ '(                                            )' ],
                 ], null, 'K77', true);
 
-                $sheet->getStyle('N73:Q78')->applyFromArray([
+                $sheet->getStyle('N73:P78')->applyFromArray([
                     'borders' => [
                         'outline' => [
                             'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
@@ -502,10 +514,10 @@ class BastPoleExport implements WithEvents
                     ]
                 ]);
 
-                $sheet->getStyle('N77:Q78')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+                $sheet->getStyle('N77:P78')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
 
-                $sheet->getStyle('N77')->getFont()->setBold(true)->setSize(14);
-                $sheet->mergeCells('N77:Q78');
+                $sheet->getStyle('N77')->getFont()->setBold(true)->setSize(11);
+                $sheet->mergeCells('N77:P78');
                 $sheet->fromArray([
                     [ '(                                             )' ],
                 ], null, 'N77', true);
