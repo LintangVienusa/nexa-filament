@@ -46,6 +46,11 @@ class Profile extends Model
         return $this->belongsTo(Employee::class, 'employee_id', 'employee_id');
     }
 
+    public function organization()
+    {
+        return $this->belongsTo(Organizations::class, 'id', 'org_id');
+    }
+
     public function user(): BelongsTo
     {
         return $this->setConnection('mysql')->belongsTo(User::class, 'email', 'email');

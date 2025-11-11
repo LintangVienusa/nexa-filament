@@ -15,8 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('bast_id');
             $table->foreign('bast_id')->references('bast_id')->on('BastProject')->onDelete('cascade');
-            $table->string('bast_id');
-            $table->foreign('odp_name')->constrained('ODPDetail')->onDelete('cascade');  
+            $table->string('odp_name')->constrained('ODCDetail')->onDelete('cascade');   
             $table->string('sn_ont')->nullable();
             $table->string('province_name')->nullable();
             $table->string('regency_name')->nullable();
