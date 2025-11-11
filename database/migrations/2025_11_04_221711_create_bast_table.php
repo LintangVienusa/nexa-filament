@@ -14,9 +14,10 @@ return new class extends Migration
         Schema::connection('mysql_inventory')->create('BastProject', function (Blueprint $table) {
             $table->id();
             $table->string('bast_id')->unique();
-            $table->string('province_name')->nullable();
-            $table->string('regency_name')->nullable();
-            $table->string('village_name')->nullable();
+            $table->string('province_name',50)->nullable();
+            $table->string('regency_name',50)->nullable();
+            $table->string('village_name',50)->nullable();
+            $table->string('station_name',50)->nullable();
             $table->string('project_name');
             $table->string('site')->nullable();
             $table->string('PIC')->nullable();
@@ -26,19 +27,22 @@ return new class extends Migration
             $table->unsignedTinyInteger('progress_percentage')->default(0);
             $table->text('notes')->nullable();
             $table->date('bast_date');
-            $table->tinyInteger('info_pole')->default(0)->comment('0=NO,1=YES');
-            $table->tinyInteger('info_rbs')->default(0)->comment('0=NO,1=YES');
-            $table->tinyInteger('info_feeder')->default(0)->comment('0=NO,1=YES');
-            $table->tinyInteger('info_odc')->default(0)->comment('0=NO,1=YES');
-            $table->tinyInteger('info_odp')->default(0)->comment('0=NO,1=YES');
-            $table->tinyInteger('info_homeconnect')->default(0)->comment('0=NO,1=YES');
+            $table->tinyInteger('info_pole')->default(0)->comment('0=NO,1=YES,2=COMPLETED');
+            $table->tinyInteger('info_rbs')->default(0)->comment('0=NO,1=YES,2=COMPLETED');
+            $table->tinyInteger('info_feeder')->default(0)->comment('0=NO,1=YES,2=COMPLETED');
+            $table->tinyInteger('info_odc')->default(0)->comment('0=NO,1=YES,2=COMPLETED');
+            $table->tinyInteger('info_odp')->default(0)->comment('0=NO,1=YES,2=COMPLETED');
+            $table->tinyInteger('info_homeconnect')->default(0)->comment('0=NO,1=YES,2=COMPLETED');
+            $table->string('list_pole')->nullable();
+            $table->string('list_feeder_odc_odp')->nullable();
+            $table->string('list_homeconnect')->nullable();
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();
             $table->timestamps();
 
             $table->index('PIC');
             $table->index('technici');
-            $table->index(['province_name', 'regency_name', 'village_name']);
+            $table->index(['province_name', 'regency_name', 'village_name','station_name'],'region_idx');
             $table->index('site');
             $table->index('status');
             $table->index('pass');
@@ -48,6 +52,8 @@ return new class extends Migration
             $table->index('info_feeder');
             $table->index('info_odc');
             $table->index('info_odp');
+            $table->index('list_pole');
+            $table->index('list_feeder_odc_odp');
             $table->index('info_homeconnect');
             $table->index('created_by');
             $table->index('updated_by');

@@ -27,7 +27,7 @@ return new class extends Migration
             $table->timestamps();
             
             $table->unique(['id', 'bast_id']);
-            $table->index('feeder_name');
+            $table->unique(['bast_id', 'feeder_name']);
             $table->index('created_by');
             $table->index('updated_by');
         });

@@ -15,13 +15,13 @@ return new class extends Migration
             $table->id();
             $table->string('bast_id');
             $table->foreign('bast_id')->references('bast_id')->on('BastProject')->onDelete('cascade');
+            $table->string('odp_name')->constrained('ODCDetail')->onDelete('cascade');   
             $table->string('sn_ont')->nullable();
             $table->string('province_name')->nullable();
             $table->string('regency_name')->nullable();
             $table->string('village_name')->nullable();    
             $table->string('import_excel')->nullable();
             $table->string('foto_label_odp')->nullable();
-            $table->foreignId('odp_name')->constrained('ODPDetail')->onDelete('cascade');  
             $table->string('foto_hasil_ukur_odp')->nullable();
             $table->string('foto_penarikan_outdoor')->nullable();
             $table->string('foto_aksesoris_ikr')->nullable();
@@ -36,8 +36,7 @@ return new class extends Migration
             $table->timestamps();
 
             
-            $table->unique(['id', 'bast_id']);
-            $table->index('sn_ont');
+            $table->unique(['id', 'bast_id','sn_ont','odp_name']);
             $table->index(['province_name', 'regency_name', 'village_name']);
             $table->index('created_by');
             $table->index('updated_by');

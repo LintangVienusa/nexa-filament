@@ -21,4 +21,9 @@ class Organization extends Model
     {
         return $this->hasMany(Employee::class, 'org_id');
     }
+
+    public function profiles()
+    {
+        return $this->hasMany(Profile::class, 'org_id', 'id');
+    }
 }

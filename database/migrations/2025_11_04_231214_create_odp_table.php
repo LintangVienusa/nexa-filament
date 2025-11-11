@@ -33,7 +33,7 @@ return new class extends Migration
 
             
             $table->unique(['id', 'bast_id']);
-            $table->index(['odp_id', 'odp_name']);
+            $table->unique(['bast_id', 'odc_name', 'odp_name']);
             $table->index('created_by');
             $table->index('updated_by');
         });

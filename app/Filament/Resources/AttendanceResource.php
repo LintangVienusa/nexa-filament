@@ -197,36 +197,36 @@ class AttendanceResource extends Resource
             ]);
     }
 
-    public static function getEloquentQuery(): Builder
-    {
-        $user = auth()->user();
-        $hasRole = $user->setConnection('mysql');
-        $query = parent::getEloquentQuery();
-        $model = new static::$model;
+    // public static function getEloquentQuery(): Builder
+    // {
+    //     $user = auth()->user();
+    //     $hasRole = $user->setConnection('mysql');
+    //     $query = parent::getEloquentQuery();
+    //     $model = new static::$model;
 
-        $jobTitle = $user->employee?->job_title;
-        $orgId = $user->employee?->org_id;
+    //     $jobTitle = $user->employee?->job_title;
+    //     $orgId = $user->employee?->org_id;
 
-        if ($user->hasAnyRole(['superadmin','admin']) || in_array($jobTitle, ['CEO','CTO'])) {
-            return $query;
-        }
+    //     if ($user->hasAnyRole(['superadmin','admin']) || in_array($jobTitle, ['CEO','CTO'])) {
+    //         return $query;
+    //     }
 
-        if (in_array($jobTitle, ['VP','Manager','SPV']) && $orgId && method_exists($model, 'employee')) {
-            return $query->whereHas('employee', fn($q) => $q->where('org_id', $orgId));
-        }
+    //     if (in_array($jobTitle, ['VP','Manager','SPV']) && $orgId && method_exists($model, 'employee')) {
+    //         return $query->whereHas('employee', fn($q) => $q->where('org_id', $orgId));
+    //     }
 
-        if ($user->hasRole('employee') || $jobTitle === 'Staff') {
-            if (method_exists($model, 'employee')) {
-                return $query->whereHas('employee', fn($q) => $q->where('email', $user->email));
-            }
+    //     if ($user->hasRole('employee') || $jobTitle === 'Staff') {
+    //         if (method_exists($model, 'employee')) {
+    //             return $query->whereHas('employee', fn($q) => $q->where('email', $user->email));
+    //         }
 
-            if (property_exists(static::class, 'ownerColumn') && Schema::hasColumn($model->getTable(), static::$ownerColumn)) {
-                return $query->where(static::$ownerColumn, $user->email);
-            }
-        }
+    //         if (property_exists(static::class, 'ownerColumn') && Schema::hasColumn($model->getTable(), static::$ownerColumn)) {
+    //             return $query->where(static::$ownerColumn, $user->email);
+    //         }
+    //     }
 
-        return $query;
-    }
+    //     return $query;
+    // }
 
     public static function table(Table $table): Table
     {

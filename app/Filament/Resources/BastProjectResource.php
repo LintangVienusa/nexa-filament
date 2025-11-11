@@ -25,6 +25,12 @@ use Filament\Tables\Columns\TextColumn;
 use App\Exports\BastPoleExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Filament\Tables\Actions\Action;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Placeholder;
+use Illuminate\Support\HtmlString;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\DateFilter;
+use Filament\Tables\Filters\Filter;
 
 class BastProjectResource extends Resource
 {
@@ -67,6 +73,17 @@ class BastProjectResource extends Resource
                                     ->pluck('village_name','village_name');
                             })
                             ->required(),
+
+                        Select::make('station_name')
+                            ->label('Stasiun')
+                            ->searchable()
+                            ->options(function(callable $get){
+                                $village_name = $get('village_name');
+                                if(!$village_name) return [];
+                                return MappingRegion::where('village_name', $village_name)
+                                    ->pluck('station_name','station_name');
+                            })
+                            ->required(),
                     ])->columns(2),
 
                 Section::make('Project Info')
@@ -100,25 +117,25 @@ class BastProjectResource extends Resource
                                     }
                                 })
                                 ->dehydrated(true),
-                        Select::make('technici')
-                            ->label('Teknisi')
-                            ->options(
-                                Employee::whereHas('Organization', fn($q) => $q->where('unit_name', 'Technician'))
-                                    ->get()
-                                    ->mapWithKeys(fn ($emp) => [
-                                        $emp->email => $emp->full_name
-                                    ])
-                            )
-                            ->reactive()
-                            ->searchable()
-                            ->required()
-                            ->dehydrated(true),
+                        // Select::make('technici')
+                        //     ->label('Teknisi')
+                        //     ->options(
+                        //         Employee::whereHas('Organization', fn($q) => $q->where('unit_name', 'Technician'))
+                        //             ->get()
+                        //             ->mapWithKeys(fn ($emp) => [
+                        //                 $emp->email => $emp->full_name
+                        //             ])
+                        //     )
+                        //     ->reactive()
+                        //     ->searchable()
+                        //     ->required()
+                        //     ->dehydrated(true),
                         Select::make('pass')
                             ->options([
-                                'HOMEPASS' => 'HOMEPASS',
-                                'HOMECONNECT' => 'HOMECONNECT',
+                                'HOMEPASS' => 'HOME PASS',
+                                'HOMECONNECT' => 'HOME CONNECT',
                             ])
-                            ->default('not started')
+                            ->reactive()
                             ->required(),
                         Select::make('status')
                             ->options([
@@ -131,6 +148,66 @@ class BastProjectResource extends Resource
                             ->required(),
                         
                     ])->columns(2),
+
+                    Section::make('Upload Data Homepass')
+                        ->schema([
+                            Placeholder::make('photo')
+                                ->label('Contoh Format Excel List Tiang')
+                                 ->content(function () {
+                                        $url = asset('storage/homepass_excels/list_tiang_ct.jpg');
+                                        return new HtmlString('<img src="' . $url . '" style="width:200px; border-radius:10px;">');
+                                    }),
+
+                            FileUpload::make('list_pole')
+                                ->label('Upload Excel Tiang')
+                                ->acceptedFileTypes([
+                                    'application/vnd.ms-excel',
+                                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                                    'application/octet-stream',
+                                ])
+                                ->directory('homepass_excels/tiang')
+                                ->required(fn (callable $get) => $get('pass') === 'HOMEPASS')
+                                ->visible(fn (callable $get) => $get('pass') === 'HOMEPASS')->dehydrated(true),
+                            
+                            Placeholder::make('photo')
+                                ->label('Contoh Format Excel List FEEDER-ODC-ODP')
+                                 ->content(function () {
+                                        $url = asset('storage/homepass_excels/list_feeder_odc_odp.jpg');
+                                        return new HtmlString('<img src="' . $url . '" style="width:200px; border-radius:10px;">');
+                                    }),
+
+                            FileUpload::make('list_feeder_odc_odp')
+                                ->label('Upload Excel FEEDER-ODC-ODP')
+                                ->acceptedFileTypes([
+                                    'application/vnd.ms-excel',
+                                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                                    'application/octet-stream',
+                                ])
+                                ->directory('homepass_excels/feeder_odc_odp')
+                                ->required(fn (callable $get) => $get('pass') === 'HOMEPASS')
+                                ->visible(fn (callable $get) => $get('pass') === 'HOMEPASS')->dehydrated(true),
+                        ])->columns(2)
+                        ->visible(fn (callable $get) => $get('pass') === 'HOMEPASS'),
+                    Section::make('Upload Data Homepass')
+                        ->schema([
+                            Placeholder::make('photo')
+                                ->label('Contoh Format Excel List FEEDER-ODC-ODP')
+                                 ->content(function () {
+                                        $url = asset('storage/homeconnect_excels/list_homeconnect.jpg');
+                                        return new HtmlString('<img src="' . $url . '" style="width:200px; border-radius:10px;">');
+                                    }),
+                            FileUpload::make('list_homeconnect')
+                                ->label('Upload Excel Home Connect')
+                                ->acceptedFileTypes([
+                                    'application/vnd.ms-excel',
+                                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                                    'application/octet-stream',
+                                ])
+                                ->directory('homeconnect_excels')
+                                ->required(fn (callable $get) => $get('pass') === 'HOMECONNECT')
+                                ->visible(fn (callable $get) => $get('pass') === 'HOMECONNECT')->dehydrated(true),
+                        ])->columns(2)
+                        ->visible(fn (callable $get) => $get('pass') === 'HOMECONNECT'),
 
                 Section::make('Other Details')
                     ->schema([
@@ -153,6 +230,8 @@ class BastProjectResource extends Resource
                 TextColumn::make('regency_name')
                     ->searchable(),
                 TextColumn::make('village_name')
+                    ->searchable(),
+                TextColumn::make('station_name')
                     ->searchable(),
                 TextColumn::make('project_name')
                     ->searchable(),
@@ -186,34 +265,96 @@ class BastProjectResource extends Resource
                     ->sortable(),
                 TextColumn::make('bast_date')
                     ->date()
-                    ->sortable(),
-                TextColumn::make('created_by')
-                    ->searchable(),
-                TextColumn::make('updated_by')
-                    ->searchable(),
-                TextColumn::make('created_at')
-                    ->dateTime()
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                SelectFilter::make('status')
+                        ->options([
+                            'not started' => 'Not Started',
+                            'in progress' => 'In Progress',
+                            'pending' => 'Pending',
+                            'completed' => 'Completed',
+                        ])
+                        ->label('Status'),
+
+                Filter::make('province_regency_village_station')
+            ->form([
+                Select::make('province_name')
+                    ->label('Province')
+                    ->options(fn() => \App\Models\BastProject::distinct()
+                        ->whereNotNull('province_name') // hanya ambil yang ada
+                        ->pluck('province_name', 'province_name')
+                        ->toArray()
+                    )
+                    ->reactive(),
+
+                Select::make('regency_name')
+                    ->label('Regency')
+                    ->options(function ($get) {
+                        $province = $get('province_name');
+                        return \App\Models\MappingRegion::when($province, fn($q) => $q->where('province_name', $province))
+                            ->whereNotNull('regency_name')
+                            ->distinct()
+                            ->pluck('regency_name', 'regency_name')
+                            ->toArray();
+                    })
+                    ->reactive(),
+
+                Select::make('village_name')
+                    ->label('Village')
+                    ->options(function ($get) {
+                        $province = $get('province_name');
+                        $regency = $get('regency_name');
+                        return \App\Models\MappingRegion::when($province, fn($q) => $q->where('province_name', $province))
+                            ->when($regency, fn($q) => $q->where('regency_name', $regency))
+                            ->whereNotNull('village_name')
+                            ->distinct()
+                            ->pluck('village_name', 'village_name')
+                            ->toArray();
+                    })
+                    ->reactive(),
+
+                Select::make('station_name')
+                    ->label('Station')
+                    ->options(function ($get) {
+                        $province = $get('province_name');
+                        $regency = $get('regency_name');
+                        $village = $get('village_name');
+                        return \App\Models\MappingRegion::when($province, fn($q) => $q->where('province_name', $province))
+                            ->when($regency, fn($q) => $q->where('regency_name', $regency))
+                            ->when($village, fn($q) => $q->where('village_name', $village))
+                            ->whereNotNull('station_name')
+                            ->distinct()
+                            ->pluck('station_name', 'station_name')
+                            ->toArray();
+                    })
+                    ->reactive(),
+                    ])
+                    ->query(function ($query, array $data) {
+                        return $query
+                            ->when($data['province_name'] ?? null, fn($q, $v) => $q->where('province_name', $v))
+                            ->when($data['regency_name'] ?? null, fn($q, $v) => $q->where('regency_name', $v))
+                            ->when($data['village_name'] ?? null, fn($q, $v) => $q->where('village_name', $v))
+                            ->when($data['station_name'] ?? null, fn($q, $v) => $q->where('station_name', $v));
+                    }),
+
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Action::make('export_implementation')
-                    ->label('Export Implementation Sheet')
-                    ->icon('heroicon-o-document-arrow-down')
-                    ->action(fn ($record) => Excel::download(new BastPoleExport($record), "Implementation_{$record->kode}.xlsx")),
+               Action::make('view')
+                    ->label('View Detail')
+                    ->icon('heroicon-o-eye')
+                    ->url(fn ($record) => url('/admin/bast-projects/list-pole-details/'.$record->bast_id))
+                    ->openUrlInNewTab(true),
+                // Action::make('export_implementation')
+                //     ->label('Tiang')
+                //     ->icon('heroicon-o-document-arrow-down')
+                //     ->action(fn ($record) => Excel::download(new BastPoleExport($record), "Implementation_{$record->kode}.xlsx")),
         
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    // Tables\Actions\DeleteBulkAction::make(),s
                 ]),
             ]);
     }
@@ -231,6 +372,7 @@ class BastProjectResource extends Resource
             'index' => Pages\ListBastProjects::route('/'),
             'create' => Pages\CreateBastProject::route('/create'),
             'edit' => Pages\EditBastProject::route('/{record}/edit'),
+            'list-pole-details' => Pages\ListPoleDetails::route('/list-pole-details/{record}'),
         ];
     }
 }

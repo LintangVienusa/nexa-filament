@@ -16,6 +16,7 @@ use Carbon\Carbon;
 use App\Filament\Resources\AttendanceResource\Widgets\AttendanceSummary;
 use App\Filament\Resources\AttendanceResource\Widgets\AttendanceLateWidget;
 
+
 class ListAttendances extends ListRecords
 {
     protected static string $resource = AttendanceResource::class;
@@ -76,14 +77,15 @@ class ListAttendances extends ListRecords
 
     protected function getHeaderWidgets(): array
     {
-        $widgets = [
-            AttendanceSummary::class,
-        ];
-
-        // Jika user yang login superadmin, tambahkan widget AttendanceLateWidget
-        if (auth()->user()?->role === 'superadmin') {
+        $widgets = [];
+        if (auth()->user()?->role === 'Superadmin') {
+            $widgets[] = AttendanceLateWidget::class;
+        }elseif(in_array(auth()->user()?->employee?->job_title, ['CEO', 'CTO','VP'])) {
             $widgets[] = AttendanceLateWidget::class;
         }
+        $widgets[] =  AttendanceSummary::class;
+
+        
 
         return $widgets;
     }
