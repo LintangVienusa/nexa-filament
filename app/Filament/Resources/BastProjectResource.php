@@ -68,6 +68,17 @@ class BastProjectResource extends Resource
                                     ->pluck('village_name','village_name');
                             })
                             ->required(),
+
+                        Select::make('station_name')
+                            ->label('Stasiun')
+                            ->searchable()
+                            ->options(function(callable $get){
+                                $village_name = $get('village_name');
+                                if(!$village_name) return [];
+                                return MappingRegion::where('village_name', $village_name)
+                                    ->pluck('station_name','station_name');
+                            })
+                            ->required(),
                     ])->columns(2),
 
                 Section::make('Project Info')
@@ -101,23 +112,23 @@ class BastProjectResource extends Resource
                                     }
                                 })
                                 ->dehydrated(true),
-                        Select::make('technici')
-                            ->label('Teknisi')
-                            ->options(
-                                Employee::whereHas('Organization', fn($q) => $q->where('unit_name', 'Technician'))
-                                    ->get()
-                                    ->mapWithKeys(fn ($emp) => [
-                                        $emp->email => $emp->full_name
-                                    ])
-                            )
-                            ->reactive()
-                            ->searchable()
-                            ->required()
-                            ->dehydrated(true),
+                        // Select::make('technici')
+                        //     ->label('Teknisi')
+                        //     ->options(
+                        //         Employee::whereHas('Organization', fn($q) => $q->where('unit_name', 'Technician'))
+                        //             ->get()
+                        //             ->mapWithKeys(fn ($emp) => [
+                        //                 $emp->email => $emp->full_name
+                        //             ])
+                        //     )
+                        //     ->reactive()
+                        //     ->searchable()
+                        //     ->required()
+                        //     ->dehydrated(true),
                         Select::make('pass')
                             ->options([
-                                'HOMEPASS' => 'HOMEPASS',
-                                'HOMECONNECT' => 'HOMECONNECT',
+                                'HOMEPASS' => 'HOME PASS',
+                                'HOMECONNECT' => 'HOME CONNECT',
                             ])
                             ->reactive()
                             ->required(),
@@ -157,6 +168,20 @@ class BastProjectResource extends Resource
                                 ->visible(fn (callable $get) => $get('pass') === 'HOMEPASS')->dehydrated(true),
                         ])
                         ->visible(fn (callable $get) => $get('pass') === 'HOMEPASS'),
+                    Section::make('Upload Data Homepass')
+                        ->schema([
+                            FileUpload::make('list_homeconnect')
+                                ->label('Upload Excel Home Connect')
+                                ->acceptedFileTypes([
+                                    'application/vnd.ms-excel',
+                                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                                    'application/octet-stream',
+                                ])
+                                ->directory('homeconnect_excels')
+                                ->required(fn (callable $get) => $get('pass') === 'HOMECONNECT')
+                                ->visible(fn (callable $get) => $get('pass') === 'HOMECONNECT')->dehydrated(true),
+                        ])
+                        ->visible(fn (callable $get) => $get('pass') === 'HOMECONNECT'),
 
                 Section::make('Other Details')
                     ->schema([
