@@ -29,18 +29,27 @@ class BastProjectController extends Controller
             ], 401);
         }
 
-        // $validated = $request->validate([
-        //     'village_name' => 'required|string',
+        $validated = $request->validate([
+            'village_name' => 'nullable|string',
             
-        // ]);
+        ]);
 
 
-        // $village_name  = $validated['village_name'];s
-
-        $basts = BastProject::where('status', '!=', 'completed')
+        $village_name  = $validated['village_name'];
+        if($village_name != ''){
+            $basts = BastProject::where('status', '!=', 'completed')
+            ->where('village_name', $village_name)
             ->orderBy('created_at', 'desc')
             ->get()
             ->groupBy('village_name'); 
+        }else{
+            $basts = BastProject::where('status', '!=', 'completed')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->groupBy('village_name'); 
+        }
+
+        
 
         $data = $basts->map(function ($items, $village_name) {
             return [
@@ -58,11 +67,11 @@ class BastProjectController extends Controller
                         'PIC' => $item->pic,
                         'status' => $item->status,
                         'progress_percentage' => $item->progress_percentage,
-                        'presentase_tian' => 0,
-                        'presentase_rbs' => 0,
-                        'presentase_odc' => 0,
-                        'presentase_odp' => 0,
-                        'presentase_feeder' => 0,
+                        // 'presentase_tian' => 0,
+                        // 'presentase_rbs' => 0,
+                        // 'presentase_odc' => 0,
+                        // 'presentase_odp' => 0,
+                        // 'presentase_feeder' => 0,
                         'created_at' => $item->created_at->format('Y-m-d H:i:s'),
                     ];
                 })->values(),
@@ -1551,6 +1560,56 @@ class BastProjectController extends Controller
         
     }
 
+    public function listodphc(Request $request)
+    {
+        date_default_timezone_set('Asia/Jakarta');
+        $user = Auth::user();
+
+        if (! $user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthorized',
+            ], 401);
+        }
+
+        $validated = $request->validate([
+            'village_name' => 'nullable|string|exists:mysql_inventory.BastProject,village_name',
+        ]);
+
+        $village_name = $validated['village_name'];
+        
+        if($village_name!=''){
+            $odpNames = ODPDetail::join('BastProject as bp', 'bp.bast_id', '=', 'ODPDetail.bast_id')
+                ->where('bp.village_name', $village_name)
+                ->groupBy('ODPDetail.odp_name')
+                ->pluck('ODPDetail.odp_name')
+                ->toArray();
+        }else{
+            $odpNames = ODPDetail::join('BastProject as bp', 'bp.bast_id', '=', 'ODPDetail.bast_id')
+                ->groupBy('ODPDetail.odp_name')
+                ->pluck('ODPDetail.odp_name')
+                ->toArray();
+        }
+        
+
+       if (empty($odpNames)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'ODP tidak ditemukan',
+            ], 404);
+        }
+
+        
+        
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'List ODP',
+            'list_odp' => $odpNames,
+        ]);
+        
+    }
+
     public function updatehomeconnect(Request $request)
     {
         date_default_timezone_set('Asia/Jakarta');
@@ -1565,12 +1624,22 @@ class BastProjectController extends Controller
 
         $validated = $request->validate([
             'bast_id' => 'required|string|exists:mysql_inventory.BastProject,bast_id',
+            'id_pelanggan' => 'required|string|exists:mysql_inventory.Homeconnect,id_pelanggan',
+            'name_pelanggan' => 'required|string|exists:mysql_inventory.Homeconnect,name_pelanggan',
+            'odp_name' => 'required|string|exists:mysql_inventory.Homeconnect,odp_name',
+            'port_odp' => 'nullable|string',
+            'sn_ont' => 'required|string|exists:mysql_inventory.Homeconnect,sn_ont',
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
             
         ]);
 
         $bastId = $validated['bast_id'];
+        $id_pelanggan = $validated['id_pelanggan'];
+        $name_pelanggan = $validated['name_pelanggan'];
+        $odp_name = $validated['odp_name'];
+        $port_odp = $validated['port_odp'];
+        $sn_ont = $validated['sn_ont'];
 
         $bast = BastProject::on('mysql_inventory')->where('bast_id', $bastId)->where('pass', 'HOMECONNECT')->first();
 
@@ -1589,6 +1658,11 @@ class BastProjectController extends Controller
         if (! $HomeConnect) {
             $HomeConnect = new HomeConnect();
             $HomeConnect->bast_id = $bastId;
+            $HomeConnect->id_pelanggan = $id_pelanggan;
+            $HomeConnect->name_pelanggan = $name_pelanggan;
+            $HomeConnect->odp_name = $odp_name;
+            $HomeConnect->port_odp = $port_odp;
+            $HomeConnect->sn_ont = $sn_ont;
             $HomeConnect->created_by = $user->email;
         }
 
@@ -1747,6 +1821,8 @@ class BastProjectController extends Controller
                 'foto_aksesoris_ikr',
                 'foto_sn_ont',
                 'foto_depan_rumah',
+                'foto_label_id_plg',
+                'foto_qr',
             ];
 
             $base64Files = [];
@@ -1763,10 +1839,17 @@ class BastProjectController extends Controller
                     $base64Files[$key] = null;
                 }
             }
+            $detail=[
+                'id_pelanggan'=> $record->id_pelanggan,
+                'name_pelanggan'=> $record->name_pelanggan,
+                'odp_name'=> $record->odp_name,
+                'port_odp'=> $record->port_odp,
+                'sn_ont'=> $record->sn_ont,
+            ];
 
             return response()->json([
                 'status' => 'success',
-                'data' => $base64Files,
+                'data' => array_merge($base64Files, $detail),
             ]);
         }else{
             $poleDetail = $query->first();

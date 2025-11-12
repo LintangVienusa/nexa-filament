@@ -42,5 +42,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/bast/updaterbs', [BastProjectController::class, 'updaterbs']);
     Route::post('/bast/detailrbs', [BastProjectController::class, 'detailrbs']);
     Route::post('/bast/updatehomeconnect', [BastProjectController::class, 'updatehomeconnect']);
+    Route::post('/bast/listodphc', [BastProjectController::class, 'listodphc']);
     Route::post('/bast/detailhomeconnect', [BastProjectController::class, 'detailhomeconnect']);
 });
