@@ -26,6 +26,11 @@ use App\Exports\BastPoleExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Filament\Tables\Actions\Action;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Placeholder;
+use Illuminate\Support\HtmlString;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\DateFilter;
+use Filament\Tables\Filters\Filter;
 
 class BastProjectResource extends Resource
 {
@@ -146,6 +151,13 @@ class BastProjectResource extends Resource
 
                     Section::make('Upload Data Homepass')
                         ->schema([
+                            Placeholder::make('photo')
+                                ->label('Contoh Format Excel List Tiang')
+                                 ->content(function () {
+                                        $url = asset('storage/homepass_excels/list_tiang_ct.jpg');
+                                        return new HtmlString('<img src="' . $url . '" style="width:200px; border-radius:10px;">');
+                                    }),
+
                             FileUpload::make('list_pole')
                                 ->label('Upload Excel Tiang')
                                 ->acceptedFileTypes([
@@ -156,6 +168,14 @@ class BastProjectResource extends Resource
                                 ->directory('homepass_excels/tiang')
                                 ->required(fn (callable $get) => $get('pass') === 'HOMEPASS')
                                 ->visible(fn (callable $get) => $get('pass') === 'HOMEPASS')->dehydrated(true),
+                            
+                            Placeholder::make('photo')
+                                ->label('Contoh Format Excel List FEEDER-ODC-ODP')
+                                 ->content(function () {
+                                        $url = asset('storage/homepass_excels/list_feeder_odc_odp.jpg');
+                                        return new HtmlString('<img src="' . $url . '" style="width:200px; border-radius:10px;">');
+                                    }),
+
                             FileUpload::make('list_feeder_odc_odp')
                                 ->label('Upload Excel FEEDER-ODC-ODP')
                                 ->acceptedFileTypes([
@@ -166,10 +186,16 @@ class BastProjectResource extends Resource
                                 ->directory('homepass_excels/feeder_odc_odp')
                                 ->required(fn (callable $get) => $get('pass') === 'HOMEPASS')
                                 ->visible(fn (callable $get) => $get('pass') === 'HOMEPASS')->dehydrated(true),
-                        ])
+                        ])->columns(2)
                         ->visible(fn (callable $get) => $get('pass') === 'HOMEPASS'),
                     Section::make('Upload Data Homepass')
                         ->schema([
+                            Placeholder::make('photo')
+                                ->label('Contoh Format Excel List FEEDER-ODC-ODP')
+                                 ->content(function () {
+                                        $url = asset('storage/homeconnect_excels/list_homeconnect.jpg');
+                                        return new HtmlString('<img src="' . $url . '" style="width:200px; border-radius:10px;">');
+                                    }),
                             FileUpload::make('list_homeconnect')
                                 ->label('Upload Excel Home Connect')
                                 ->acceptedFileTypes([
@@ -180,7 +206,7 @@ class BastProjectResource extends Resource
                                 ->directory('homeconnect_excels')
                                 ->required(fn (callable $get) => $get('pass') === 'HOMECONNECT')
                                 ->visible(fn (callable $get) => $get('pass') === 'HOMECONNECT')->dehydrated(true),
-                        ])
+                        ])->columns(2)
                         ->visible(fn (callable $get) => $get('pass') === 'HOMECONNECT'),
 
                 Section::make('Other Details')
@@ -204,6 +230,8 @@ class BastProjectResource extends Resource
                 TextColumn::make('regency_name')
                     ->searchable(),
                 TextColumn::make('village_name')
+                    ->searchable(),
+                TextColumn::make('station_name')
                     ->searchable(),
                 TextColumn::make('project_name')
                     ->searchable(),
@@ -233,38 +261,144 @@ class BastProjectResource extends Resource
                         default => 'gray',
                     }),
                 TextColumn::make('progress_percentage')
-                    ->numeric()
+                    ->label('Progress (%)')
+                    ->formatStateUsing(fn ($state) => '
+                        <div style="width:300%; background:#e5e7eb; border-radius:8px; overflow:hidden;">
+                            <div style="width:'.$state.'%; background:'.
+                                ($state < 30 ? '#ef4444' : ($state < 70 ? '#f59e0b' : '#10b981')).
+                                '; height:8px;"></div>
+                        </div>
+                        <div style="font-size:12px; text-align:center; margin-top:2px;">'.number_format($state,0).'%</div>
+                    ')
+                    ->html() 
                     ->sortable(),
                 TextColumn::make('bast_date')
                     ->date()
-                    ->sortable(),
-                TextColumn::make('created_by')
-                    ->searchable(),
-                TextColumn::make('updated_by')
-                    ->searchable(),
-                TextColumn::make('created_at')
-                    ->dateTime()
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                SelectFilter::make('status')
+                        ->options([
+                            'not started' => 'Not Started',
+                            'in progress' => 'In Progress',
+                            'pending' => 'Pending',
+                            'completed' => 'Completed',
+                        ])
+                        ->label('Status'),
+
+                Filter::make('province_regency_village_station')
+            ->form([
+                Select::make('province_name')
+                    ->label('Province')
+                    ->options(fn() => \App\Models\BastProject::distinct()
+                        ->whereNotNull('province_name') // hanya ambil yang ada
+                        ->pluck('province_name', 'province_name')
+                        ->toArray()
+                    )
+                    ->reactive(),
+
+                Select::make('regency_name')
+                    ->label('Regency')
+                    ->options(function ($get) {
+                        $province = $get('province_name');
+                        return \App\Models\MappingRegion::when($province, fn($q) => $q->where('province_name', $province))
+                            ->whereNotNull('regency_name')
+                            ->distinct()
+                            ->pluck('regency_name', 'regency_name')
+                            ->toArray();
+                    })
+                    ->reactive(),
+
+                Select::make('village_name')
+                    ->label('Village')
+                    ->options(function ($get) {
+                        $province = $get('province_name');
+                        $regency = $get('regency_name');
+                        return \App\Models\MappingRegion::when($province, fn($q) => $q->where('province_name', $province))
+                            ->when($regency, fn($q) => $q->where('regency_name', $regency))
+                            ->whereNotNull('village_name')
+                            ->distinct()
+                            ->pluck('village_name', 'village_name')
+                            ->toArray();
+                    })
+                    ->reactive(),
+
+                Select::make('station_name')
+                    ->label('Station')
+                    ->options(function ($get) {
+                        $province = $get('province_name');
+                        $regency = $get('regency_name');
+                        $village = $get('village_name');
+                        return \App\Models\MappingRegion::when($province, fn($q) => $q->where('province_name', $province))
+                            ->when($regency, fn($q) => $q->where('regency_name', $regency))
+                            ->when($village, fn($q) => $q->where('village_name', $village))
+                            ->whereNotNull('station_name')
+                            ->distinct()
+                            ->pluck('station_name', 'station_name')
+                            ->toArray();
+                    })
+                    ->reactive(),
+                    ])
+                    ->query(function ($query, array $data) {
+                        return $query
+                            ->when($data['province_name'] ?? null, fn($q, $v) => $q->where('province_name', $v))
+                            ->when($data['regency_name'] ?? null, fn($q, $v) => $q->where('regency_name', $v))
+                            ->when($data['village_name'] ?? null, fn($q, $v) => $q->where('village_name', $v))
+                            ->when($data['station_name'] ?? null, fn($q, $v) => $q->where('station_name', $v));
+                    }),
+
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Action::make('export_implementation')
+               Action::make('view_tiang')
                     ->label('Tiang')
-                    ->icon('heroicon-o-document-arrow-down')
-                    ->action(fn ($record) => Excel::download(new BastPoleExport($record), "Implementation_{$record->kode}.xlsx")),
+                    ->icon('heroicon-o-eye')
+                    ->visible(fn ($record) => $record->pass === 'HOMEPASS')
+                    ->url(fn ($record) => url('/admin/bast-projects/list-pole-details/'.$record->bast_id))
+                    ->openUrlInNewTab(true),
+
+                Action::make('view_odc')
+                    ->label('ODC')
+                    ->icon('heroicon-o-eye')
+                    ->visible(fn ($record) => $record->pass === 'HOMEPASS')
+                    ->url(fn ($record) => url('/admin/bast-projects/list-odc-details/'.$record->bast_id))
+                    ->openUrlInNewTab(true),
+
+                Action::make('view_odp')
+                    ->label('ODP')
+                    ->icon('heroicon-o-eye')
+                    ->visible(fn ($record) => $record->pass === 'HOMEPASS')
+                    ->url(fn ($record) => url('/admin/bast-projects/list-odp-details/'.$record->bast_id))
+                    ->openUrlInNewTab(true),
+                Action::make('view_feeder')
+                    ->label('FE')
+                    ->icon('heroicon-o-eye')
+                    ->visible(fn ($record) => $record->pass === 'HOMEPASS')
+                    ->url(fn ($record) => url('/admin/bast-projects/list-feeder-details/'.$record->bast_id))
+                    ->openUrlInNewTab(true),
+
+                Action::make('view_rbs')
+                    ->label('RBS')
+                    ->icon('heroicon-o-eye')
+                    ->visible(fn ($record) => $record->pass === 'HOMEPASS')
+                    ->url(fn ($record) => url('/admin/bast-projects/list-rbs-details/'.$record->bast_id))
+                    ->openUrlInNewTab(true),
+
+                Action::make('view_homeconnect')
+                    ->label('Home Connect')
+                    ->icon('heroicon-o-eye')
+                    ->visible(fn ($record) => $record->pass === 'HOMECONNECT')
+                    ->url(fn ($record) => url('/admin/bast-projects/list-homeconnect-details/'.$record->bast_id))
+                    ->openUrlInNewTab(true),
+                // Action::make('export_implementation')
+                //     ->label('Tiang')
+                //     ->icon('heroicon-o-document-arrow-down')
+                //     ->action(fn ($record) => Excel::download(new BastPoleExport($record), "Implementation_{$record->kode}.xlsx")),
         
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    // Tables\Actions\DeleteBulkAction::make(),s
                 ]),
             ]);
     }
@@ -282,6 +416,12 @@ class BastProjectResource extends Resource
             'index' => Pages\ListBastProjects::route('/'),
             'create' => Pages\CreateBastProject::route('/create'),
             'edit' => Pages\EditBastProject::route('/{record}/edit'),
+            'list-pole-details' => Pages\ListPoleDetails::route('/list-pole-details/{record}'),
+            'list-odc-details' => Pages\ListOdcDetails::route('/list-odc-details/{record}'),
+            'list-odp-details' => Pages\ListOdpDetails::route('/list-odp-details/{record}'),
+            'list-feeder-details' => Pages\ListFeederDetails::route('/list-feeder-details/{record}'),
+            'list-rbs-details' => Pages\ListRbsDetails::route('/list-rbs-details/{record}'),
+            'list-homeconnect-details' => Pages\ListHomeConnectDetails::route('/list-homeconnect-details/{record}'),
         ];
     }
 }
