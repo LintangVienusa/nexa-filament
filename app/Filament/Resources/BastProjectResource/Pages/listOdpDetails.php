@@ -4,7 +4,7 @@ namespace App\Filament\Resources\BastProjectResource\Pages;
 
 use App\Filament\Resources\BastProjectResource;
 use App\Models\BastProject;
-use App\Models\PoleDetail;
+use App\Models\ODPDetail;
 use Filament\Pages\Page;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -17,34 +17,32 @@ use Maatwebsite\Excel\Facades\Excel;
 use Filament\Tables\Actions\Action;
 use App\Exports\BastPoleExport;
 use Filament\Tables\Columns\ImageColumn;
-use Illuminate\Support\Facades\DB;
-use Filament\Tables\Columns\ProgressColumn;
 
-
-class ListPoleDetails extends ListRecords
+class listOdpDetails extends ListRecords
 {
     use InteractsWithTable;
     protected static string $resource = BastProjectResource::class;
 
-    protected static ?string $title = 'List Pole Details';
+    protected static ?string $title = 'List ODP Details';
 
-    protected static ?string $navigationLabel = 'Pole Details';
+    protected static ?string $navigationLabel = 'ODP Details';
     protected static ?string $navigationIcon = 'heroicon-o-collection';
-    protected static ?string $slug = 'list-pole-details';
-     public ?int $bastId = null;
-     public function mount(?string $bastId = null): void
+    protected static ?string $slug = 'list-odp-details';
+    public ?int $bastId = null;
+
+    public function mount(?string $bastId = null): void
     {
         $this->bastId = $bastId;
     }
 
     protected function getTableQuery(): Builder
     {
-        return PoleDetail::query()
-                ->Join('BastProject', 'PoleDetail.bast_id', '=', 'BastProject.bast_id')
+        return ODPDetail::query()
+                ->Join('BastProject', 'ODPDetail.bast_id', '=', 'BastProject.bast_id')
                 ->when($this->bastId, fn($query) => 
-                        $query->where('PoleDetail.bast_id', $this->bastId)
+                        $query->where('ODPDetail.bast_id', $this->bastId)
                     )
-                    ->select('PoleDetail.*', 'BastProject.site');
+                    ->select('ODPDetail.*', 'BastProject.site');
     }
 
     protected function getTableColumns(): array
@@ -52,47 +50,42 @@ class ListPoleDetails extends ListRecords
         return [
             TextColumn::make('bast_id')->label('BAST ID')->searchable(),
             TextColumn::make('site')->label('Site')->searchable(),
-            TextColumn::make('pole_sn')->searchable(),
+            TextColumn::make('odc_name')->searchable(),
+            TextColumn::make('odp_name')->searchable(),
             TextColumn::make('notes')->searchable(),
-            ImageColumn::make('digging')
-                ->label('digging')
-                ->disk('public')
-                ->getStateUsing(fn($record) => $record->digging ? asset('storage/'.$record->digging) : null)
-                ->width(150)
-                ->height(150),
             ImageColumn::make('instalasi')
                 ->label('Instalasi')
                 ->disk('public')
                 ->getStateUsing(fn($record) => $record->instalasi ? asset('storage/'.$record->instalasi) : null)
                 ->width(150)
                 ->height(150),
-            ImageColumn::make('coran')
-                ->label('Coran')
+            ImageColumn::make('odp_terbuka')
+                ->label('ODP Terbuka')
                 ->disk('public')
-                ->getStateUsing(fn($record) => $record->coran ? asset('storage/'.$record->coran) : null)
+                ->getStateUsing(fn($record) => $record->odp_terbuka ? asset('storage/'.$record->odp_terbuka) : null)
+                ->width(150)
+                ->height(150),
+            ImageColumn::make('odp_tertutup')
+                ->label('ODP Tertutup')
+                ->disk('public')
+                ->getStateUsing(fn($record) => $record->odp_tertutup ? asset('storage/'.$record->odp_tertutup) : null)
                 ->width(150)
                 ->height(150),
 
-            ImageColumn::make('tiang_berdiri')
-                ->label('Tiang Berdiri')
+            ImageColumn::make('hasil_ukur_opm')
+                ->label('Hasil Ukur OPM')
                 ->disk('public')
-                ->getStateUsing(fn($record) => $record->tiang_berdiri ? asset('storage/'.$record->tiang_berdiri) : null)
+                ->getStateUsing(fn($record) => $record->hasil_ukur_opm ? asset('storage/'.$record->hasil_ukur_opm) : null)
                 ->width(150)
                 ->height(150),
 
-            ImageColumn::make('labeling_tiang')
-                ->label('Labeling Tiang')
+            ImageColumn::make('labeling_odp')
+                ->label('Labeling ODP')
                 ->disk('public')
-                ->getStateUsing(fn($record) => $record->labeling_tiang ? asset('storage/'.$record->labeling_tiang) : null)
+                ->getStateUsing(fn($record) => $record->labeling_odp ? asset('storage/'.$record->labeling_odp) : null)
                 ->width(150)
                 ->height(150),
 
-            ImageColumn::make('aksesoris_tiang')
-                ->label('Aksesoris Tiang')
-                ->disk('public')
-                ->getStateUsing(fn($record) => $record->aksesoris_tiang ? asset('storage/'.$record->aksesoris_tiang) : null)
-                ->width(150)
-                ->height(150),
             TextColumn::make('progress_percentage')
                 ->label('Progress (%)')
                 ->formatStateUsing(fn ($state) => '
@@ -112,10 +105,10 @@ class ListPoleDetails extends ListRecords
     {
         return [
             // Tables\Actions\ViewAction::make(),
-            Action::make('export_implementation')
-                    ->label('Tiang')
-                    ->icon('heroicon-o-document-arrow-down')
-                    ->action(fn ($record) => Excel::download(new BastPoleExport($record), "Implementation_{$record->kode}.xlsx")),
+            // Action::make('export_implementation')
+            //         ->label('Tiang')
+            //         ->icon('heroicon-o-document-arrow-down')
+            //         ->action(fn ($record) => Excel::download(new BastPoleExport($record), "Implementation_{$record->kode}.xlsx")),
         ];
     }
 

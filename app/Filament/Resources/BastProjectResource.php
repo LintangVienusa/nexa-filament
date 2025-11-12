@@ -261,7 +261,16 @@ class BastProjectResource extends Resource
                         default => 'gray',
                     }),
                 TextColumn::make('progress_percentage')
-                    ->numeric()
+                    ->label('Progress (%)')
+                    ->formatStateUsing(fn ($state) => '
+                        <div style="width:300%; background:#e5e7eb; border-radius:8px; overflow:hidden;">
+                            <div style="width:'.$state.'%; background:'.
+                                ($state < 30 ? '#ef4444' : ($state < 70 ? '#f59e0b' : '#10b981')).
+                                '; height:8px;"></div>
+                        </div>
+                        <div style="font-size:12px; text-align:center; margin-top:2px;">'.number_format($state,0).'%</div>
+                    ')
+                    ->html() 
                     ->sortable(),
                 TextColumn::make('bast_date')
                     ->date()
@@ -341,10 +350,45 @@ class BastProjectResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-               Action::make('view')
-                    ->label('View Detail')
+               Action::make('view_tiang')
+                    ->label('Tiang')
                     ->icon('heroicon-o-eye')
+                    ->visible(fn ($record) => $record->pass === 'HOMEPASS')
                     ->url(fn ($record) => url('/admin/bast-projects/list-pole-details/'.$record->bast_id))
+                    ->openUrlInNewTab(true),
+
+                Action::make('view_odc')
+                    ->label('ODC')
+                    ->icon('heroicon-o-eye')
+                    ->visible(fn ($record) => $record->pass === 'HOMEPASS')
+                    ->url(fn ($record) => url('/admin/bast-projects/list-odc-details/'.$record->bast_id))
+                    ->openUrlInNewTab(true),
+
+                Action::make('view_odp')
+                    ->label('ODP')
+                    ->icon('heroicon-o-eye')
+                    ->visible(fn ($record) => $record->pass === 'HOMEPASS')
+                    ->url(fn ($record) => url('/admin/bast-projects/list-odp-details/'.$record->bast_id))
+                    ->openUrlInNewTab(true),
+                Action::make('view_feeder')
+                    ->label('FE')
+                    ->icon('heroicon-o-eye')
+                    ->visible(fn ($record) => $record->pass === 'HOMEPASS')
+                    ->url(fn ($record) => url('/admin/bast-projects/list-feeder-details/'.$record->bast_id))
+                    ->openUrlInNewTab(true),
+
+                Action::make('view_rbs')
+                    ->label('RBS')
+                    ->icon('heroicon-o-eye')
+                    ->visible(fn ($record) => $record->pass === 'HOMEPASS')
+                    ->url(fn ($record) => url('/admin/bast-projects/list-rbs-details/'.$record->bast_id))
+                    ->openUrlInNewTab(true),
+
+                Action::make('view_homeconnect')
+                    ->label('Home Connect')
+                    ->icon('heroicon-o-eye')
+                    ->visible(fn ($record) => $record->pass === 'HOMECONNECT')
+                    ->url(fn ($record) => url('/admin/bast-projects/list-homeconnect-details/'.$record->bast_id))
                     ->openUrlInNewTab(true),
                 // Action::make('export_implementation')
                 //     ->label('Tiang')
@@ -373,6 +417,11 @@ class BastProjectResource extends Resource
             'create' => Pages\CreateBastProject::route('/create'),
             'edit' => Pages\EditBastProject::route('/{record}/edit'),
             'list-pole-details' => Pages\ListPoleDetails::route('/list-pole-details/{record}'),
+            'list-odc-details' => Pages\ListOdcDetails::route('/list-odc-details/{record}'),
+            'list-odp-details' => Pages\ListOdpDetails::route('/list-odp-details/{record}'),
+            'list-feeder-details' => Pages\ListFeederDetails::route('/list-feeder-details/{record}'),
+            'list-rbs-details' => Pages\ListRbsDetails::route('/list-rbs-details/{record}'),
+            'list-homeconnect-details' => Pages\ListHomeConnectDetails::route('/list-homeconnect-details/{record}'),
         ];
     }
 }

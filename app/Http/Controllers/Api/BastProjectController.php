@@ -216,6 +216,7 @@ class BastProjectController extends Controller
         $validated = $request->validate([
             'bast_id' => 'required|string|exists:mysql_inventory.BastProject,bast_id',
             'pole_sn' => 'nullable|string',
+            'notes' => 'nullable|string',
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
             
@@ -259,6 +260,9 @@ class BastProjectController extends Controller
             'labeling_tiang',
             'aksesoris_tiang',
         ];
+        $p=0;
+        $percentage =0;
+        $poleDetail->progress_percentage = 0;
 
         foreach ($photoFields as $field) {
             $filePhoto = $request->input($field);
@@ -309,10 +313,12 @@ class BastProjectController extends Controller
                     imagedestroy($tempImage);
                     imagedestroy($compressedImage);
 
-
+                    $p = $p+1;
                     
                     $poleDetail->$field = $path;
                 } else {
+                    
+                    $p = $p+1;
                     $poleDetail->$field = $filePhoto;
                 }
             }
@@ -326,12 +332,18 @@ class BastProjectController extends Controller
         // }
 
         if ($request->filled('longitude')) {
+            $p = $p+1;
             $poleDetail->longitude = $validated['longitude']  ?? 0;
+        }
+        if ($request->filled('notes')) {
+            $poleDetail->notes = $validated['notes']  ?? '';
         }
         // else{
             
         //     $pole->longitude = 0;
         // }
+        $percentage = ($p/7)*100;
+        $poleDetail->progress_percentage = $percentage;
 
         $poleDetail->updated_by = $user->email ?? null;
         $poleDetail->save();
@@ -342,6 +354,8 @@ class BastProjectController extends Controller
             $bast->updated_by = $user->email;
             $bast->save();
         }
+        
+        $this->updateBastProgress($bastId);
 
         return response()->json([
             'status' => 'success',
@@ -525,6 +539,9 @@ class BastProjectController extends Controller
             'labeling_odp',
         ];
 
+        $po = 0;
+        $percentage = 0;
+
         foreach ($photoFields as $field) {
             $filePhoto = $request->input($field);
 
@@ -575,9 +592,10 @@ class BastProjectController extends Controller
                     imagedestroy($compressedImage);
 
 
-                    
+                    $po = $po+1;
                     $odpDetail->$field = $path;
                 } else {
+                    $po = $po+1;
                     $odpDetail->$field = $filePhoto;
                 }
             }
@@ -591,13 +609,18 @@ class BastProjectController extends Controller
         // }
 
         if ($request->filled('longitude')) {
+            $po = $po+1;
             $odpDetail->longitude = $validated['longitude']  ?? 0;
+        }
+        if ($request->filled('notes')) {
+            $odpDetail->notes = $validated['notes']  ?? '';
         }
         // else{
             
         //     $pole->longitude = 0;
         // }
-
+        $percentage = ($po/6)*100;
+        $odpDetail->progress_percentage = $percentage;
         $odpDetail->updated_by = $user->email ?? null;
         $odpDetail->save();
 
@@ -607,6 +630,8 @@ class BastProjectController extends Controller
             $bast->updated_by = $user->email;
             $bast->save();
         }
+        
+        $this->updateBastProgress($bastId);
 
         return response()->json([
             'status' => 'success',
@@ -863,6 +888,9 @@ class BastProjectController extends Controller
             'hasil_ukur_opm',
             'labeling_odc',
         ];
+        
+        $po = 0;
+        $percentage=0;
 
         foreach ($photoFields as $field) {
             $filePhoto = $request->input($field);
@@ -913,10 +941,13 @@ class BastProjectController extends Controller
                     imagedestroy($tempImage);
                     imagedestroy($compressedImage);
 
-
+                    
+                    $po = $po+1;
                     
                     $odcDetail->$field = $path;
                 } else {
+                    
+                    $po = $po+1;
                     $odcDetail->$field = $filePhoto;
                 }
             }
@@ -930,13 +961,19 @@ class BastProjectController extends Controller
         // }
 
         if ($request->filled('longitude')) {
+            $po = $po+1;
             $odcDetail->longitude = $validated['longitude']  ?? 0;
+        }
+
+        if ($request->filled('notes')) {
+            $odcDetail->notes = $validated['notes']  ?? '';
         }
         // else{
             
         //     $pole->longitude = 0;
         // }
-
+        $percentage = ($po/6)*100;
+        $odcDetail->progress_percentage = $percentage;
         $odcDetail->updated_by = $user->email ?? null;
         $odcDetail->save();
 
@@ -946,6 +983,7 @@ class BastProjectController extends Controller
             $bast->updated_by = $user->email;
             $bast->save();
         }
+        $this->updateBastProgress($bastId);
 
         return response()->json([
             'status' => 'success',
@@ -1127,6 +1165,9 @@ class BastProjectController extends Controller
             'foto_selatan',
             'foto_timur',
         ];
+        
+            $po= 0;
+            $percentage =0;
 
         foreach ($photoFields as $field) {
             $filePhoto = $request->input($field);
@@ -1179,8 +1220,11 @@ class BastProjectController extends Controller
 
 
                     
+                    $po= $po+1;
                     $feederDetail->$field = $path;
                 } else {
+                    
+                    $po= $po+1;
                     $feederDetail->$field = $filePhoto;
                 }
             }
@@ -1194,13 +1238,19 @@ class BastProjectController extends Controller
         // }
 
         if ($request->filled('longitude')) {
+            $po= $po+1;
             $feederDetail->longitude = $validated['longitude']  ?? 0;
+        }
+
+        if ($request->filled('notes')) {
+            $feederDetail->notes = $validated['notes']  ?? '';
         }
         // else{
             
         //     $pole->longitude = 0;
         // }
-
+        $percentage = ($po/4)*100;
+        $feederDetail->progress_percentage = $percentage;
         $feederDetail->updated_by = $user->email ?? null;
         $feederDetail->save();
 
@@ -1210,6 +1260,8 @@ class BastProjectController extends Controller
             $bast->updated_by = $user->email;
             $bast->save();
         }
+        
+        $this->updateBastProgress($bastId);
 
         return response()->json([
             'status' => 'success',
@@ -1322,6 +1374,8 @@ class BastProjectController extends Controller
             'hasil_ukur_otdr',
             'pengambungan_core',
         ];
+        $po=0;
+        $percentage=0;
 
         foreach ($photoFields as $field) {
             $filePhoto = $request->input($field);
@@ -1374,8 +1428,11 @@ class BastProjectController extends Controller
 
 
                     
+                    $po=$po+1;
                     $RBSDetail->$field = $path;
                 } else {
+                    
+                    $po=$po+1;
                     $RBSDetail->$field = $filePhoto;
                 }
             }
@@ -1389,12 +1446,19 @@ class BastProjectController extends Controller
         // }
 
         if ($request->filled('longitude')) {
+            $po=$po+1;
             $RBSDetail->longitude = $validated['longitude']  ?? 0;
+        }
+
+        if ($request->filled('notes')) {
+            $RBSDetail->notes = $validated['notes']  ?? '';
         }
         // else{
             
         //     $pole->longitude = 0;
         // }
+        $percentage = ($po/3)*100;
+        $RBSDetail->progress_percentage = $percentage;
 
         $RBSDetail->updated_by = $user->email ?? null;
         $RBSDetail->save();
@@ -1405,6 +1469,8 @@ class BastProjectController extends Controller
             $bast->updated_by = $user->email;
             $bast->save();
         }
+        
+        $this->updateBastProgress($bastId);
 
         return response()->json([
             'status' => 'success',
@@ -1535,6 +1601,9 @@ class BastProjectController extends Controller
             'foto_sn_ont',
             'foto_depan_rumah',
         ];
+        
+            $po = 0;
+            $percentage = 0;
 
         foreach ($photoFields as $field) {
             $filePhoto = $request->input($field);
@@ -1587,8 +1656,11 @@ class BastProjectController extends Controller
 
 
                     
+                    $po = $po+1;
                     $HomeConnect->$field = $path;
                 } else {
+                    
+                    $po = $po+1;
                     $HomeConnect->$field = $filePhoto;
                 }
             }
@@ -1602,13 +1674,19 @@ class BastProjectController extends Controller
         // }
 
         if ($request->filled('longitude')) {
+            $po = $po+1;
             $HomeConnect->longitude = $validated['longitude']  ?? 0;
+        }
+
+        if ($request->filled('notes')) {
+            $HomeConnect->notes = $validated['notes']  ?? '';
         }
         // else{
             
         //     $pole->longitude = 0;
         // }
-
+        $percentage = ($po/7)*100;
+        $HomeConnect->progress_percentage = $percentage;
         $HomeConnect->updated_by = $user->email ?? null;
         $HomeConnect->save();
 
@@ -1618,6 +1696,8 @@ class BastProjectController extends Controller
             $bast->updated_by = $user->email;
             $bast->save();
         }
+        
+        $this->updateBastProgress($bastId);
 
         return response()->json([
             'status' => 'success',
@@ -1697,6 +1777,108 @@ class BastProjectController extends Controller
         }
         
         
+    }
+
+    private function updateBastProgress($bastId)
+    {
+        $bast = BastProject::on('mysql_inventory')->where('bast_id', $bastId)->first();
+        if($bast->pass==="HOMEPASS"){
+            $poleProgress = PoleDetail::where('bast_id', $bastId)
+                    ->select(
+                        DB::raw('(
+                            (
+                                (CASE WHEN digging IS NOT NULL AND digging <> "" THEN 1 ELSE 0 END) +
+                                (CASE WHEN instalasi IS NOT NULL AND instalasi <> "" THEN 1 ELSE 0 END) +
+                                (CASE WHEN coran IS NOT NULL AND coran <> "" THEN 1 ELSE 0 END) +
+                                (CASE WHEN tiang_berdiri IS NOT NULL AND tiang_berdiri <> "" THEN 1 ELSE 0 END) +
+                                (CASE WHEN labeling_tiang IS NOT NULL AND labeling_tiang <> "" THEN 1 ELSE 0 END) +
+                                (CASE WHEN aksesoris_tiang IS NOT NULL AND aksesoris_tiang <> "" THEN 1 ELSE 0 END) +
+                                (CASE WHEN latitude IS NOT NULL AND latitude <> "" AND longitude IS NOT NULL AND longitude <> "" THEN 1 ELSE 0 END)
+                            ) 
+                        ) as jml'))
+                    ->value('jml') ?? 0;
+            $odcProgress = ODCDetail::where('bast_id', $bastId)
+                    ->select(
+                        'ODCDetail.*',
+                        DB::raw('(
+                            (
+                                (CASE WHEN instalasi IS NOT NULL AND instalasi <> "" THEN 1 ELSE 0 END) +
+                                (CASE WHEN odc_terbuka IS NOT NULL AND odc_terbuka <> "" THEN 1 ELSE 0 END) +
+                                (CASE WHEN odc_tertutup IS NOT NULL AND odc_tertutup <> "" THEN 1 ELSE 0 END) +
+                                (CASE WHEN hasil_ukur_opm IS NOT NULL AND hasil_ukur_opm <> "" THEN 1 ELSE 0 END) +
+                                (CASE WHEN labeling_odc IS NOT NULL AND labeling_odc <> "" THEN 1 ELSE 0 END) +
+                                (CASE WHEN latitude IS NOT NULL AND latitude <> "" AND longitude IS NOT NULL AND longitude <> "" THEN 1 ELSE 0 END)
+                            ) 
+                        ) as jml'))
+                    ->value('jml') ?? 0;
+            $odpProgress = ODPDetail::where('bast_id', $bastId)
+                        ->select(
+                                'ODPDetail.*',
+                                DB::raw('(
+                                    (
+                                        (CASE WHEN instalasi IS NOT NULL AND instalasi <> "" THEN 1 ELSE 0 END) +
+                                        (CASE WHEN odp_terbuka IS NOT NULL AND odp_terbuka <> "" THEN 1 ELSE 0 END) +
+                                        (CASE WHEN odp_tertutup IS NOT NULL AND odp_tertutup <> "" THEN 1 ELSE 0 END) +
+                                        (CASE WHEN hasil_ukur_opm IS NOT NULL AND hasil_ukur_opm <> "" THEN 1 ELSE 0 END) +
+                                        (CASE WHEN labeling_odp IS NOT NULL AND labeling_odp <> "" THEN 1 ELSE 0 END) +
+                                        (CASE WHEN latitude IS NOT NULL AND latitude <> "" AND longitude IS NOT NULL AND longitude <> "" THEN 1 ELSE 0 END)
+                                    ) 
+                                ) as jml'))
+                    ->value('jml') ?? 0;
+            $rbsProgress = RBSDetail::where('bast_id', $bastId)
+                        ->select(
+                                'RBSDetail.*',
+                                DB::raw('(
+                                    (
+                                        (CASE WHEN hasil_otdr IS NOT NULL AND hasil_otdr <> "" THEN 1 ELSE 0 END) +
+                                        (CASE WHEN penyambungan_core IS NOT NULL AND penyambungan_core <> "" THEN 1 ELSE 0 END) +
+                                        (CASE WHEN latitude IS NOT NULL AND latitude <> "" AND longitude IS NOT NULL AND longitude <> "" THEN 1 ELSE 0 END)
+                                    ) 
+                                ) as jml'))
+                    ->value('jml') ?? 0;
+            $feederProgress = FeederDetail::where('bast_id', $bastId)
+                        ->select(
+                                'FeederDetail.*',
+                                DB::raw('(
+                                    (
+                                        (CASE WHEN foto_utara IS NOT NULL AND foto_utara <> "" THEN 1 ELSE 0 END) +
+                                        (CASE WHEN foto_barat IS NOT NULL AND foto_barat <> "" THEN 1 ELSE 0 END) +
+                                        (CASE WHEN foto_selatan IS NOT NULL AND foto_selatan <> "" THEN 1 ELSE 0 END) +
+                                        (CASE WHEN foto_timur IS NOT NULL AND foto_timur <> "" THEN 1 ELSE 0 END) 
+                                    ) 
+                                ) as jml'))
+                    ->value('jml') ?? 0;
+                            
+            $jml_all = $poleProgress + $odcProgress + $odpProgress + $rbsProgress + $feederProgress;
+            $presen = ($jml_all/26)*100;
+        }else{
+            $HomeConnectprog = HomeConnect::where('bast_id', $bastId)
+                        ->select(
+                                'HomeConnect.*',
+                                DB::raw('(
+                                    (
+                                        (CASE WHEN foto_label_odp IS NOT NULL AND foto_label_odp <> "" THEN 1 ELSE 0 END) +
+                                        (CASE WHEN foto_hasil_ukur_odp IS NOT NULL AND foto_hasil_ukur_odp <> "" THEN 1 ELSE 0 END) +
+                                        (CASE WHEN foto_penarikan_outdoor IS NOT NULL AND foto_penarikan_outdoor <> "" THEN 1 ELSE 0 END) +
+                                        (CASE WHEN foto_aksesoris_ikr IS NOT NULL AND foto_aksesoris_ikr <> "" THEN 1 ELSE 0 END) +
+                                        (CASE WHEN foto_sn_ont IS NOT NULL AND foto_sn_ont <> "" THEN 1 ELSE 0 END) +
+                                        (CASE WHEN foto_depan_rumah IS NOT NULL AND foto_depan_rumah <> "" THEN 1 ELSE 0 END) +
+                                        (CASE WHEN latitude IS NOT NULL AND latitude <> "" AND longitude IS NOT NULL AND longitude <> "" THEN 1 ELSE 0 END)
+                                    ) 
+                                ) as jml'))
+                    ->value('jml') ?? 0;
+                            
+            $jml_all = $HomeConnectprog;
+            $presen = ($jml_all/7)*100;
+        }
+        
+
+        
+        if ($bast) {
+            $bast->progress_percentage = $presen;
+            $bast->updated_at = now();
+            $bast->save();
+        }
     }
 
     

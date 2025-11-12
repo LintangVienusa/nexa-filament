@@ -4,7 +4,7 @@ namespace App\Filament\Resources\BastProjectResource\Pages;
 
 use App\Filament\Resources\BastProjectResource;
 use App\Models\BastProject;
-use App\Models\PoleDetail;
+use App\Models\FeederDetail;
 use Filament\Pages\Page;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -17,34 +17,31 @@ use Maatwebsite\Excel\Facades\Excel;
 use Filament\Tables\Actions\Action;
 use App\Exports\BastPoleExport;
 use Filament\Tables\Columns\ImageColumn;
-use Illuminate\Support\Facades\DB;
-use Filament\Tables\Columns\ProgressColumn;
 
-
-class ListPoleDetails extends ListRecords
+class listFeederDetails extends ListRecords
 {
     use InteractsWithTable;
     protected static string $resource = BastProjectResource::class;
 
-    protected static ?string $title = 'List Pole Details';
+    protected static ?string $title = 'List Feeder Details';
 
-    protected static ?string $navigationLabel = 'Pole Details';
+    protected static ?string $navigationLabel = 'Feeder Details';
     protected static ?string $navigationIcon = 'heroicon-o-collection';
-    protected static ?string $slug = 'list-pole-details';
-     public ?int $bastId = null;
-     public function mount(?string $bastId = null): void
+    protected static ?string $slug = 'list-feeder-details';
+    public ?int $bastId = null;
+    public function mount(?string $bastId = null): void
     {
         $this->bastId = $bastId;
     }
 
     protected function getTableQuery(): Builder
     {
-        return PoleDetail::query()
-                ->Join('BastProject', 'PoleDetail.bast_id', '=', 'BastProject.bast_id')
+        return FeederDetail::query()
+                ->Join('BastProject', 'FeederDetail.bast_id', '=', 'BastProject.bast_id')
                 ->when($this->bastId, fn($query) => 
-                        $query->where('PoleDetail.bast_id', $this->bastId)
+                        $query->where('FeederDetail.bast_id', $this->bastId)
                     )
-                    ->select('PoleDetail.*', 'BastProject.site');
+                    ->select('FeederDetail.*', 'BastProject.site');
     }
 
     protected function getTableColumns(): array
@@ -52,47 +49,34 @@ class ListPoleDetails extends ListRecords
         return [
             TextColumn::make('bast_id')->label('BAST ID')->searchable(),
             TextColumn::make('site')->label('Site')->searchable(),
-            TextColumn::make('pole_sn')->searchable(),
+            TextColumn::make('feeder_name')->searchable(),
             TextColumn::make('notes')->searchable(),
-            ImageColumn::make('digging')
-                ->label('digging')
+            ImageColumn::make('foto_utara')
+                ->label('Utara')
                 ->disk('public')
-                ->getStateUsing(fn($record) => $record->digging ? asset('storage/'.$record->digging) : null)
+                ->getStateUsing(fn($record) => $record->foto_utara ? asset('storage/'.$record->foto_utara) : null)
                 ->width(150)
                 ->height(150),
-            ImageColumn::make('instalasi')
-                ->label('Instalasi')
+            ImageColumn::make('foto_barat')
+                ->label('Barat')
                 ->disk('public')
-                ->getStateUsing(fn($record) => $record->instalasi ? asset('storage/'.$record->instalasi) : null)
+                ->getStateUsing(fn($record) => $record->foto_barat ? asset('storage/'.$record->foto_barat) : null)
                 ->width(150)
                 ->height(150),
-            ImageColumn::make('coran')
-                ->label('Coran')
+            ImageColumn::make('foto_selatan')
+                ->label('Selatan')
                 ->disk('public')
-                ->getStateUsing(fn($record) => $record->coran ? asset('storage/'.$record->coran) : null)
-                ->width(150)
-                ->height(150),
-
-            ImageColumn::make('tiang_berdiri')
-                ->label('Tiang Berdiri')
-                ->disk('public')
-                ->getStateUsing(fn($record) => $record->tiang_berdiri ? asset('storage/'.$record->tiang_berdiri) : null)
+                ->getStateUsing(fn($record) => $record->foto_selatan ? asset('storage/'.$record->foto_selatan) : null)
                 ->width(150)
                 ->height(150),
 
-            ImageColumn::make('labeling_tiang')
-                ->label('Labeling Tiang')
+            ImageColumn::make('foto_timur')
+                ->label('Timur')
                 ->disk('public')
-                ->getStateUsing(fn($record) => $record->labeling_tiang ? asset('storage/'.$record->labeling_tiang) : null)
+                ->getStateUsing(fn($record) => $record->foto_timur ? asset('storage/'.$record->foto_timur) : null)
                 ->width(150)
                 ->height(150),
 
-            ImageColumn::make('aksesoris_tiang')
-                ->label('Aksesoris Tiang')
-                ->disk('public')
-                ->getStateUsing(fn($record) => $record->aksesoris_tiang ? asset('storage/'.$record->aksesoris_tiang) : null)
-                ->width(150)
-                ->height(150),
             TextColumn::make('progress_percentage')
                 ->label('Progress (%)')
                 ->formatStateUsing(fn ($state) => '
@@ -112,10 +96,10 @@ class ListPoleDetails extends ListRecords
     {
         return [
             // Tables\Actions\ViewAction::make(),
-            Action::make('export_implementation')
-                    ->label('Tiang')
-                    ->icon('heroicon-o-document-arrow-down')
-                    ->action(fn ($record) => Excel::download(new BastPoleExport($record), "Implementation_{$record->kode}.xlsx")),
+            // Action::make('export_implementation')
+            //         ->label('Tiang')
+            //         ->icon('heroicon-o-document-arrow-down')
+            //         ->action(fn ($record) => Excel::download(new BastPoleExport($record), "Implementation_{$record->kode}.xlsx")),
         ];
     }
 
@@ -125,4 +109,6 @@ class ListPoleDetails extends ListRecords
             // Tables\Actions\DeleteBulkAction::make(),
         ];
     }
+
+
 }

@@ -210,6 +210,58 @@ class BastPoleExport implements WithEvents
                 ]);
 
                 $sheet->mergeCells('C33:F49');
+
+                $range = 'C33:F49';
+                    [$startCol, $startRow, $endCol, $endRow] = sscanf($range, "%[A-Z]%d:%[A-Z]%d");
+                                    // $sheet->fromArray([
+                                    //     [ '' ],
+                                    // ], null, 'C14', true);
+                                    
+                                    $photoPath = public_path('storage/' . $details->instalasi);
+                                    $sheet->setCellValue('C33', '');
+
+                    if (file_exists($photoPath) && $details->instalasi !='' ) {
+
+                        $colWidth = 0;
+                        foreach (range($startCol, $endCol) as $col) {
+                            $colWidth += $sheet->getColumnDimension($col)->getWidth() * 7;
+                        }
+
+                        $rowHeight = 0;
+                        for ($r = $startRow; $r <= $endRow; $r++) {
+                            $rowHeight += $sheet->getRowDimension($r)->getRowHeight() ?: 15;
+                        }
+
+                        // [$imgWidth, $imgHeight] = getimagesize($photoPath);
+
+                        // $scale = min(($colWidth - 10) / $imgWidth, ($rowHeight - 10) / $imgHeight);
+                        $imgWidth = 0;
+                        $imgHeight = 0;
+                        $scale = 1;
+
+                        if (file_exists($photoPath)) {
+                            $size = getimagesize($photoPath);
+                            if ($size) {
+                                [$imgWidth, $imgHeight] = $size;
+                                if ($imgWidth > 0 && $imgHeight > 0) {
+                                    $scale = min(($colWidth - 10) / $imgWidth, ($rowHeight - 10) / $imgHeight);
+                                }
+                            }
+                        }
+
+                        $drawing = new Drawing();
+                        $drawing->setPath(public_path('storage/' . $details->instalasi));
+                        $drawing->setCoordinates($startCol . $startRow);
+                        $drawing->setOffsetX(5);
+                        $drawing->setOffsetY(5);
+                        // $drawing->setWidth($imgWidth * $scale);
+                        // $drawing->setHeight($imgHeight * $scale);
+                        $drawing->setWidth(190);
+                        $drawing->setHeight(190);
+                        $drawing->setWorksheet($sheet);
+                    }
+
+
                 $sheet->fromArray([
                     [ '' ],
                 ], null, 'C33', true);
@@ -274,6 +326,58 @@ class BastPoleExport implements WithEvents
                 
 
                 $sheet->mergeCells('H14:K30');
+
+                $range = 'H14:K30';
+                    [$startCol, $startRow, $endCol, $endRow] = sscanf($range, "%[A-Z]%d:%[A-Z]%d");
+                                    // $sheet->fromArray([
+                                    //     [ '' ],
+                                    // ], null, 'C14', true);
+                                    
+                                    $photoPath = public_path('storage/' . $details->coran);
+                                    $sheet->setCellValue('H14', '');
+
+                    if (file_exists($photoPath) && $details->coran !='' ) {
+
+                        $colWidth = 0;
+                        foreach (range($startCol, $endCol) as $col) {
+                            $colWidth += $sheet->getColumnDimension($col)->getWidth() * 7;
+                        }
+
+                        $rowHeight = 0;
+                        for ($r = $startRow; $r <= $endRow; $r++) {
+                            $rowHeight += $sheet->getRowDimension($r)->getRowHeight() ?: 15;
+                        }
+
+                        // [$imgWidth, $imgHeight] = getimagesize($photoPath);
+
+                        // $scale = min(($colWidth - 10) / $imgWidth, ($rowHeight - 10) / $imgHeight);
+                        $imgWidth = 0;
+                        $imgHeight = 0;
+                        $scale = 1;
+
+                        if (file_exists($photoPath)) {
+                            $size = getimagesize($photoPath);
+                            if ($size) {
+                                [$imgWidth, $imgHeight] = $size;
+                                if ($imgWidth > 0 && $imgHeight > 0) {
+                                    $scale = min(($colWidth - 10) / $imgWidth, ($rowHeight - 10) / $imgHeight);
+                                }
+                            }
+                        }
+
+                        $drawing = new Drawing();
+                        $drawing->setPath(public_path('storage/' . $details->coran));
+                        $drawing->setCoordinates($startCol . $startRow);
+                        $drawing->setOffsetX(5);
+                        $drawing->setOffsetY(5);
+                        // $drawing->setWidth($imgWidth * $scale);
+                        // $drawing->setHeight($imgHeight * $scale);
+                        $drawing->setWidth(190);
+                        $drawing->setHeight(190);
+                        $drawing->setWorksheet($sheet);
+                    }
+
+
                 $sheet->fromArray([
                     [ '' ],
                 ], null, 'H14', true);
@@ -308,6 +412,57 @@ class BastPoleExport implements WithEvents
                 ]);
 
                 $sheet->mergeCells('H33:K49');
+
+                $range = 'H33:K49';
+                    [$startCol, $startRow, $endCol, $endRow] = sscanf($range, "%[A-Z]%d:%[A-Z]%d");
+                                    // $sheet->fromArray([
+                                    //     [ '' ],
+                                    // ], null, 'C14', true);
+                                    
+                                    $photoPath = public_path('storage/' . $details->labeling_tiang);
+                                    $sheet->setCellValue('H33', '');
+
+                    if (file_exists($photoPath) && $details->labeling_tiang !='' ) {
+
+                        $colWidth = 0;
+                        foreach (range($startCol, $endCol) as $col) {
+                            $colWidth += $sheet->getColumnDimension($col)->getWidth() * 7;
+                        }
+
+                        $rowHeight = 0;
+                        for ($r = $startRow; $r <= $endRow; $r++) {
+                            $rowHeight += $sheet->getRowDimension($r)->getRowHeight() ?: 15;
+                        }
+
+                        // [$imgWidth, $imgHeight] = getimagesize($photoPath);
+
+                        // $scale = min(($colWidth - 10) / $imgWidth, ($rowHeight - 10) / $imgHeight);
+                        $imgWidth = 0;
+                        $imgHeight = 0;
+                        $scale = 1;
+
+                        if (file_exists($photoPath)) {
+                            $size = getimagesize($photoPath);
+                            if ($size) {
+                                [$imgWidth, $imgHeight] = $size;
+                                if ($imgWidth > 0 && $imgHeight > 0) {
+                                    $scale = min(($colWidth - 10) / $imgWidth, ($rowHeight - 10) / $imgHeight);
+                                }
+                            }
+                        }
+
+                        $drawing = new Drawing();
+                        $drawing->setPath(public_path('storage/' . $details->labeling_tiang));
+                        $drawing->setCoordinates($startCol . $startRow);
+                        $drawing->setOffsetX(5);
+                        $drawing->setOffsetY(5);
+                        // $drawing->setWidth($imgWidth * $scale);
+                        // $drawing->setHeight($imgHeight * $scale);
+                        $drawing->setWidth(190);
+                        $drawing->setHeight(190);
+                        $drawing->setWorksheet($sheet);
+                    }
+
                 $sheet->fromArray([
                     [ '' ],
                 ], null, 'H33', true);
@@ -374,6 +529,57 @@ class BastPoleExport implements WithEvents
                     ]
                 ]);
                 $sheet->mergeCells('M14:P30');
+
+                $range = 'M14:P30';
+                    [$startCol, $startRow, $endCol, $endRow] = sscanf($range, "%[A-Z]%d:%[A-Z]%d");
+                                    // $sheet->fromArray([
+                                    //     [ '' ],
+                                    // ], null, 'C14', true);
+                                    
+                                    $photoPath = public_path('storage/' . $details->tiang_berdiri);
+                                    $sheet->setCellValue('M14', '');
+
+                    if (file_exists($photoPath) && $details->tiang_berdiri !='' ) {
+
+                        $colWidth = 0;
+                        foreach (range($startCol, $endCol) as $col) {
+                            $colWidth += $sheet->getColumnDimension($col)->getWidth() * 7;
+                        }
+
+                        $rowHeight = 0;
+                        for ($r = $startRow; $r <= $endRow; $r++) {
+                            $rowHeight += $sheet->getRowDimension($r)->getRowHeight() ?: 15;
+                        }
+
+                        // [$imgWidth, $imgHeight] = getimagesize($photoPath);
+
+                        // $scale = min(($colWidth - 10) / $imgWidth, ($rowHeight - 10) / $imgHeight);
+                        $imgWidth = 0;
+                        $imgHeight = 0;
+                        $scale = 1;
+
+                        if (file_exists($photoPath)) {
+                            $size = getimagesize($photoPath);
+                            if ($size) {
+                                [$imgWidth, $imgHeight] = $size;
+                                if ($imgWidth > 0 && $imgHeight > 0) {
+                                    $scale = min(($colWidth - 10) / $imgWidth, ($rowHeight - 10) / $imgHeight);
+                                }
+                            }
+                        }
+
+                        $drawing = new Drawing();
+                        $drawing->setPath(public_path('storage/' . $details->tiang_berdiri));
+                        $drawing->setCoordinates($startCol . $startRow);
+                        $drawing->setOffsetX(5);
+                        $drawing->setOffsetY(5);
+                        // $drawing->setWidth($imgWidth * $scale);
+                        // $drawing->setHeight($imgHeight * $scale);
+                        $drawing->setWidth(190);
+                        $drawing->setHeight(190);
+                        $drawing->setWorksheet($sheet);
+                    }
+
                 $sheet->fromArray([
                     [ '' ],
                 ], null, 'M14', true);
@@ -405,6 +611,57 @@ class BastPoleExport implements WithEvents
                 ]);
                 
                 $sheet->mergeCells('M33:P49');
+
+                 $range = 'M33:P49';
+                    [$startCol, $startRow, $endCol, $endRow] = sscanf($range, "%[A-Z]%d:%[A-Z]%d");
+                                    // $sheet->fromArray([
+                                    //     [ '' ],
+                                    // ], null, 'C14', true);
+                                    
+                                    $photoPath = public_path('storage/' . $details->aksesoris_tiang);
+                                    $sheet->setCellValue('M33', '');
+
+                    if (file_exists($photoPath) && $details->aksesoris_tiang !='' ) {
+
+                        $colWidth = 0;
+                        foreach (range($startCol, $endCol) as $col) {
+                            $colWidth += $sheet->getColumnDimension($col)->getWidth() * 7;
+                        }
+
+                        $rowHeight = 0;
+                        for ($r = $startRow; $r <= $endRow; $r++) {
+                            $rowHeight += $sheet->getRowDimension($r)->getRowHeight() ?: 15;
+                        }
+
+                        // [$imgWidth, $imgHeight] = getimagesize($photoPath);
+
+                        // $scale = min(($colWidth - 10) / $imgWidth, ($rowHeight - 10) / $imgHeight);
+                        $imgWidth = 0;
+                        $imgHeight = 0;
+                        $scale = 1;
+
+                        if (file_exists($photoPath)) {
+                            $size = getimagesize($photoPath);
+                            if ($size) {
+                                [$imgWidth, $imgHeight] = $size;
+                                if ($imgWidth > 0 && $imgHeight > 0) {
+                                    $scale = min(($colWidth - 10) / $imgWidth, ($rowHeight - 10) / $imgHeight);
+                                }
+                            }
+                        }
+
+                        $drawing = new Drawing();
+                        $drawing->setPath(public_path('storage/' . $details->aksesoris_tiang));
+                        $drawing->setCoordinates($startCol . $startRow);
+                        $drawing->setOffsetX(5);
+                        $drawing->setOffsetY(5);
+                        // $drawing->setWidth($imgWidth * $scale);
+                        // $drawing->setHeight($imgHeight * $scale);
+                        $drawing->setWidth(190);
+                        $drawing->setHeight(190);
+                        $drawing->setWorksheet($sheet);
+                    }
+
                 $sheet->fromArray([
                     [ '' ],
                 ], null, 'M33', true);
