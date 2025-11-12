@@ -14,7 +14,10 @@ class HomeConnect extends Model
 
     protected $fillable = [
         'bast_id',
+        'id_pelanggan',
+        'name_pelanggan',
         'odp_name',
+        'port_odp',
         'sn_ont',
         'province_name',
         'regency_name',
@@ -26,6 +29,8 @@ class HomeConnect extends Model
         'foto_aksesoris_ikr',
         'foto_sn_ont',
         'foto_depan_rumah',
+        'foto_label_id_plg',
+        'foto_qr',
         'latitude',
         'longitude',
         'notes',

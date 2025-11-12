@@ -11,6 +11,8 @@ use App\Models\PoleDetail;
 use App\Models\FeederDetail;
 use App\Models\ODCDetail;
 use App\Models\ODPDetail;
+use App\Models\HomeConnect;
+
 
 class CreateBastProject extends CreateRecord
 {
@@ -36,7 +38,7 @@ class CreateBastProject extends CreateRecord
                 $sheet = Excel::toArray([], $path)[0] ?? [];
 
                 foreach ($sheet as $row) {
-                    if (empty($row[0]) || trim($row[0])=== 'no_tiang') continue;
+                    if (empty($row[0]) || strtoupper(trim($row[0]))=== 'no_tiang') continue;
 
                     PoleDetail::create([
                         'bast_id' => $record->bast_id,
@@ -55,7 +57,7 @@ class CreateBastProject extends CreateRecord
                 $sheet = Excel::toArray([], $path)[0] ?? [];
 
                 foreach ($sheet as $row) {
-                    if (empty($row[3]) || trim($row[3])=== 'FEEDER') continue;
+                    if (empty($row[3]) || strtoupper(trim($row[3]))=== 'FEEDER') continue;
 
                     FeederDetail::create([
                         'bast_id' => $record->bast_id,
@@ -64,7 +66,7 @@ class CreateBastProject extends CreateRecord
                 }
 
                 foreach ($sheet as $row) {
-                    if (empty($row[2]) || trim($row[2])=== 'ODC') continue;
+                    if (empty($row[2]) || strtoupper(trim($row[2]))=== 'ODC') continue;
 
                     ODCDetail::create([
                         'bast_id' => $record->bast_id,
@@ -74,7 +76,7 @@ class CreateBastProject extends CreateRecord
                 }
 
                 foreach ($sheet as $row) {
-                    if (empty($row[1]) || trim($row[1])=== 'ODP') continue;
+                    if (empty($row[1]) || strtoupper(trim($row[1]))=== 'ODP') continue;
 
                     ODPDetail::create([
                         'bast_id' => $record->bast_id,
@@ -83,6 +85,29 @@ class CreateBastProject extends CreateRecord
                     ]);
                 }
 
+            }
+
+            if ($record->pass === 'HOMECONNECT' && $record->list_homeconnect) {
+
+                 $path = storage_path('app/public/' . $record->list_homeconnect);
+
+                if (!file_exists($path)) return;
+
+                $sheet = Excel::toArray([], $path)[0] ?? [];
+
+                foreach ($sheet as $row) {
+                    if (empty($row[0]) || strtoupper(trim($row[0]))=== 'ID PELANGGAN') continue;
+
+                    HomeConnect::create([
+                        'bast_id' => $record->bast_id,
+                        'id_pelanggan' => trim($row[0]),
+                        'name_pelanggan' => trim($row[1]),
+                        'odp_name' => trim($row[2]),
+                        'sn_ont' => trim($row[3]),
+                    ]);
+                }
+
+                
             }
     }
 }

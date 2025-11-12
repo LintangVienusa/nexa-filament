@@ -154,7 +154,7 @@ class BastProjectResource extends Resource
                             Placeholder::make('photo')
                                 ->label('Contoh Format Excel List Tiang')
                                  ->content(function () {
-                                        $url = asset('storage/homepass_excels/list_tiang_ct.jpg');
+                                        $url = asset('assets/images/list_tiang_ct.jpg');
                                         return new HtmlString('<img src="' . $url . '" style="width:200px; border-radius:10px;">');
                                     }),
 
@@ -172,7 +172,7 @@ class BastProjectResource extends Resource
                             Placeholder::make('photo')
                                 ->label('Contoh Format Excel List FEEDER-ODC-ODP')
                                  ->content(function () {
-                                        $url = asset('storage/homepass_excels/list_feeder_odc_odp.jpg');
+                                        $url = asset('assets/images/list_feeder_odc_odp.jpg');
                                         return new HtmlString('<img src="' . $url . '" style="width:200px; border-radius:10px;">');
                                     }),
 
@@ -191,10 +191,10 @@ class BastProjectResource extends Resource
                     Section::make('Upload Data Homepass')
                         ->schema([
                             Placeholder::make('photo')
-                                ->label('Contoh Format Excel List FEEDER-ODC-ODP')
+                                ->label('Contoh Format Excel List Homeconnect')
                                  ->content(function () {
-                                        $url = asset('storage/homeconnect_excels/list_homeconnect.jpg');
-                                        return new HtmlString('<img src="' . $url . '" style="width:200px; border-radius:10px;">');
+                                        $url = asset('assets/images/list_homeconnect_new.jpg');
+                                        return new HtmlString('<img src="' . $url . '" style="width:300px; border-radius:10px;">');
                                     }),
                             FileUpload::make('list_homeconnect')
                                 ->label('Upload Excel Home Connect')
