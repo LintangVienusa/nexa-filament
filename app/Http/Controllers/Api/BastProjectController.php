@@ -1664,6 +1664,12 @@ class BastProjectController extends Controller
             $HomeConnect->port_odp = $port_odp;
             $HomeConnect->sn_ont = $sn_ont;
             $HomeConnect->created_by = $user->email;
+        }else{
+            $HomeConnect->id_pelanggan = $request->input('id_pelanggan', $HomeConnect->id_pelanggan);
+            $HomeConnect->name_pelanggan = $request->input('name_pelanggan', $HomeConnect->name_pelanggan);
+            $HomeConnect->odp_name = $request->input('odp_name', $HomeConnect->odp_name);
+            $HomeConnect->port_odp = $request->input('port_odp', $HomeConnect->port_odp);
+            $HomeConnect->sn_ont = $request->input('sn_ont', $HomeConnect->sn_ont);
         }
 
     

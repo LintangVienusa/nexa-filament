@@ -204,7 +204,7 @@ class BastProjectResource extends Resource
                                     'application/octet-stream',
                                 ])
                                 ->directory('homeconnect_excels')
-                                ->required(fn (callable $get) => $get('pass') === 'HOMECONNECT')
+                                // ->required(fn (callable $get) => $get('pass') === 'HOMECONNECT')
                                 ->visible(fn (callable $get) => $get('pass') === 'HOMECONNECT')->dehydrated(true),
                         ])->columns(2)
                         ->visible(fn (callable $get) => $get('pass') === 'HOMECONNECT'),
@@ -291,7 +291,7 @@ class BastProjectResource extends Resource
                 Select::make('province_name')
                     ->label('Province')
                     ->options(fn() => \App\Models\BastProject::distinct()
-                        ->whereNotNull('province_name') // hanya ambil yang ada
+                        ->whereNotNull('province_name') 
                         ->pluck('province_name', 'province_name')
                         ->toArray()
                     )
