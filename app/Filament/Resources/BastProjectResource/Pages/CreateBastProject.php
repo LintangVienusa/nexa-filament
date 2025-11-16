@@ -8,6 +8,7 @@ use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Models\PoleDetail;
+use App\Models\CableDetail;
 use App\Models\FeederDetail;
 use App\Models\ODCDetail;
 use App\Models\ODPDetail;
@@ -177,6 +178,11 @@ class CreateBastProject extends CreateRecord
                     if (empty($row[0]) || strtoupper(trim($row[0]))=== 'NO_TIANG') continue;
 
                     PoleDetail::create([
+                        'bast_id' => $record->bast_id,
+                        'pole_sn' => trim($row[0]),
+                    ]);
+
+                     CableDetail::create([
                         'bast_id' => $record->bast_id,
                         'pole_sn' => trim($row[0]),
                     ]);
