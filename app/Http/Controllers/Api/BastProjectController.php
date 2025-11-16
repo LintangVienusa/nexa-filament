@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\BastProject;
+use App\Models\CableDetail;
 use App\Models\PoleDetail;
 use App\Models\ODPDetail;
 use App\Models\ODCDetail;
@@ -169,6 +170,7 @@ class BastProjectController extends Controller
         
     }
 
+    #POLE
     public function listpole(Request $request)
     {
         date_default_timezone_set('Asia/Jakarta');
@@ -449,6 +451,272 @@ class BastProjectController extends Controller
         
     }
 
+
+    #CABLE
+    public function listcable(Request $request)
+    {
+        date_default_timezone_set('Asia/Jakarta');
+        $user = Auth::user();
+
+        if (! $user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthorized',
+            ], 401);
+        }
+
+        $validated = $request->validate([
+            'bast_id' => 'required|string'
+        ]);
+
+        $bastId = $validated['bast_id'];
+        
+
+        $bast = BastProject::on('mysql_inventory')->where('bast_id', $bastId)->first();
+
+        if (! $bast) {
+            return response()->json([
+                'status' => 'error',
+                'message' => "BAST dengan ID {$bastId} tidak ditemukan",
+            ], 404);
+        }
+
+        $query = CableDetail::where('bast_id', $bastId)->pluck('pole_sn')
+                ->toArray();
+        
+        
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'List Cable Pole',
+            'list_Cable_pole' => $query,
+        ]);
+        
+    }
+
+
+    public function updatecable(Request $request)
+    {
+        date_default_timezone_set('Asia/Jakarta');
+        $user = Auth::user();
+
+        if (! $user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthorized',
+            ], 401);
+        }
+
+        $validated = $request->validate([
+            'bast_id' => 'required|string|exists:mysql_inventory.BastProject,bast_id',
+            'pole_sn' => 'nullable|string',
+            'notes' => 'nullable|string',
+            
+        ]);
+
+        $bastId = $validated['bast_id'];
+        $poleSn = $validated['pole_sn'] ?? null;
+
+        $bast = BastProject::on('mysql_inventory')->where('bast_id', $bastId)->first();
+
+        if (! $bast) {
+            return response()->json([
+                'status' => 'error',
+                'message' => "BAST dengan ID {$bastId} tidak ditemukan",
+            ], 404);
+        }
+
+        $query = CableDetail::where('bast_id', $bastId);
+        if ($poleSn) {
+            $query->where('pole_sn', $poleSn);
+        }
+        $CableDetail = $query->first();
+
+         
+
+        if (! $CableDetail) {
+            $CableDetail = new CableDetail();
+            $CableDetail->bast_id = $bastId;
+            if ($poleSn) {
+                $CableDetail->pole_sn = $poleSn;
+            }
+            $CableDetail->created_by = $user->email;
+        }
+
+    
+        $photoFields = [
+            'pulling_cable',
+            'instalasi',
+        ];
+        $p=0;
+        $percentage =0;
+        $CableDetail->progress_percentage = 0;
+
+        foreach ($photoFields as $field) {
+            $filePhoto = $request->input($field);
+
+            if (!empty($filePhoto)) {
+                $filePhoto = "data:image/png;base64," . $filePhoto;
+                if (preg_match('/^data:image\/(\w+);base64,/', $filePhoto, $type)) {
+                    $filePhoto = substr($filePhoto, strpos($filePhoto, ',') + 1);
+                    $type = strtolower($type[1]);
+                    $decoded = base64_decode($filePhoto);
+
+                    if ($decoded === false) {
+                        return response()->json([
+                            'status' => 'error',
+                            'message' => "Invalid base64 format for {$field}",
+                        ], 400);
+                    }
+
+                    // $fileName = $field . '_' . time() . '.' . $type;
+                    // Storage::disk('public')->put($path, $decoded);
+                    $fileName = $field . '_' . time() . '.' . $type;
+                    $path = 'cable/' . $fileName;
+                    $folder = public_path('storage/cable');
+
+                    if (!file_exists($folder)) {
+                        mkdir($folder, 0777, true);
+                    }
+
+                    $tempImage = imagecreatefromstring($decoded);
+                    if ($tempImage === false) {
+                        return response()->json(['error' => 'Failed to create image from data'], 400);
+                    }
+
+                    $width = imagesx($tempImage);
+                    $height = imagesy($tempImage);
+
+                    $maxWidth = 800;
+                    $maxHeight = 800;
+                    $ratio = min($maxWidth / $width, $maxHeight / $height, 1);
+                    $newWidth = (int)($width * $ratio);
+                    $newHeight = (int)($height * $ratio);
+
+                    $compressedImage = imagecreatetruecolor($newWidth, $newHeight);
+                    imagecopyresampled($compressedImage, $tempImage, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+
+                    imagejpeg($compressedImage, $folder . '/' . $fileName, 75);
+
+                    imagedestroy($tempImage);
+                    imagedestroy($compressedImage);
+
+                    $p = $p+1;
+                    
+                    $CableDetail->$field = $path;
+                } else {
+                    
+                    $p = $p+1;
+                    $CableDetail->$field = $filePhoto;
+                }
+            }
+        }
+
+       
+        if ($request->filled('notes')) {
+            $CableDetail->notes = $validated['notes']  ?? '';
+        }
+        // else{
+            
+        //     $pole->longitude = 0;
+        // }
+        $percentage = ($p/2)*100;
+        $CableDetail->progress_percentage = $percentage;
+
+        $CableDetail->updated_by = $user->email ?? null;
+        $CableDetail->save();
+
+        if ($bast) {
+            $bast->info_pole = 1;
+            $bast->status = 'in progress';
+            $bast->updated_by = $user->email;
+            $bast->save();
+        }
+        
+        $this->updateBastProgress($bastId);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Cable data updated successfully',
+            'data' => $CableDetail,
+        ]);
+        
+    }
+
+    public function detailcable(Request $request)
+    {
+        date_default_timezone_set('Asia/Jakarta');
+        $user = Auth::user();
+
+        if (! $user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthorized',
+            ], 401);
+        }
+
+        $validated = $request->validate([
+            'bast_id' => 'required|string|exists:mysql_inventory.BastProject,bast_id',
+            'pole_sn' => 'nullable|string',
+            
+        ]);
+
+        $bastId = $validated['bast_id'];
+        $poleSn = $validated['pole_sn'] ?? null;
+
+        $bast = BastProject::on('mysql_inventory')->where('bast_id', $bastId)->first();
+
+        if (! $bast) {
+            return response()->json([
+                'status' => 'error',
+                'message' => "BAST dengan ID {$bastId} tidak ditemukan",
+            ], 404);
+        }
+
+        $query = CableDetail::where('bast_id', $bastId);
+        if ($poleSn) {
+             $query->where('pole_sn', $poleSn);
+
+            $record = $query->first();
+
+            $fileKeys = [
+                'pulling_cable',
+                'instalasi',
+            ];
+
+            $base64Files = [];
+
+            foreach ($fileKeys as $key) {
+                $file = $record->$key ?? null;
+
+                if (!empty($file)) {
+                    $filePath = storage_path('app/public/' . $file);
+                    $base64Files[$key] = file_exists($filePath)
+                        ? 'data:image/' . pathinfo($filePath, PATHINFO_EXTENSION) . ';base64,' . base64_encode(file_get_contents($filePath))
+                        : null;
+                } else {
+                    $base64Files[$key] = null;
+                }
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $base64Files,
+            ]);
+        }else{
+            $CableDetail = $query->first();
+            return response()->json([
+                'status' => 'error',
+                'message' => "BAST dengan ID {$bastId} tidak ditemukan",
+            ], 404);
+        }
+        
+        
+    }
+
+
+
+    #ODP
     public function listodp(Request $request)
     {
         date_default_timezone_set('Asia/Jakarta');
@@ -1628,6 +1896,7 @@ class BastProjectController extends Controller
             'name_pelanggan' => 'required|string|exists:mysql_inventory.Homeconnect,name_pelanggan',
             'odp_name' => 'required|string|exists:mysql_inventory.Homeconnect,odp_name',
             'port_odp' => 'nullable|string',
+            'merk_ont' => 'required|string|exists:mysql_inventory.Homeconnect,merk_ont',
             'sn_ont' => 'required|string|exists:mysql_inventory.Homeconnect,sn_ont',
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
@@ -1639,6 +1908,7 @@ class BastProjectController extends Controller
         $name_pelanggan = $validated['name_pelanggan'];
         $odp_name = $validated['odp_name'];
         $port_odp = $validated['port_odp'];
+        $merk_ont = $validated['merk_ont'];
         $sn_ont = $validated['sn_ont'];
 
         $bast = BastProject::on('mysql_inventory')->where('bast_id', $bastId)->where('pass', 'HOMECONNECT')->first();
@@ -1662,6 +1932,7 @@ class BastProjectController extends Controller
             $HomeConnect->name_pelanggan = $name_pelanggan;
             $HomeConnect->odp_name = $odp_name;
             $HomeConnect->port_odp = $port_odp;
+            $HomeConnect->merk_ont = $merk_ont;
             $HomeConnect->sn_ont = $sn_ont;
             $HomeConnect->created_by = $user->email;
         }else{
@@ -1669,6 +1940,7 @@ class BastProjectController extends Controller
             $HomeConnect->name_pelanggan = $request->input('name_pelanggan', $HomeConnect->name_pelanggan);
             $HomeConnect->odp_name = $request->input('odp_name', $HomeConnect->odp_name);
             $HomeConnect->port_odp = $request->input('port_odp', $HomeConnect->port_odp);
+            $HomeConnect->merk_ont = $request->input('merk_ont', $HomeConnect->merk_ont);
             $HomeConnect->sn_ont = $request->input('sn_ont', $HomeConnect->sn_ont);
         }
 
