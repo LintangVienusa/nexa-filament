@@ -1307,10 +1307,8 @@ class BastProjectController extends Controller
             $record = $query->first();
 
             $fileKeys = [
-                'foto_utara',
-                'foto_barat',
-                'foto_selatan',
-                'foto_timur',
+                'pulling_cable',
+                'instalasi',
             ];
 
             $base64Files = [];
@@ -1437,10 +1435,8 @@ class BastProjectController extends Controller
 
     
         $photoFields = [
-            'foto_utara',
-            'foto_barat',
-            'foto_selatan',
-            'foto_timur',
+            'pulling_cable',
+            'instalasi'
         ];
         
             $po= 0;
@@ -1526,7 +1522,7 @@ class BastProjectController extends Controller
             
         //     $pole->longitude = 0;
         // }
-        $percentage = ($po/4)*100;
+        $percentage = ($po/2)*100;
         $feederDetail->progress_percentage = $percentage;
         $feederDetail->updated_by = $user->email ?? null;
         $feederDetail->save();
@@ -2202,16 +2198,14 @@ class BastProjectController extends Controller
                                 'FeederDetail.*',
                                 DB::raw('(
                                     (
-                                        (CASE WHEN foto_utara IS NOT NULL AND foto_utara <> "" THEN 1 ELSE 0 END) +
-                                        (CASE WHEN foto_barat IS NOT NULL AND foto_barat <> "" THEN 1 ELSE 0 END) +
-                                        (CASE WHEN foto_selatan IS NOT NULL AND foto_selatan <> "" THEN 1 ELSE 0 END) +
-                                        (CASE WHEN foto_timur IS NOT NULL AND foto_timur <> "" THEN 1 ELSE 0 END) 
+                                        (CASE WHEN pulling_cable IS NOT NULL AND pulling_cable <> "" THEN 1 ELSE 0 END) +
+                                        (CASE WHEN instalasi IS NOT NULL AND instalasi <> "" THEN 1 ELSE 0 END) 
                                     ) 
                                 ) as jml'))
                     ->value('jml') ?? 0;
                             
             $jml_all = $poleProgress + $odcProgress + $odpProgress + $rbsProgress + $feederProgress;
-            $presen = ($jml_all/26)*100;
+            $presen = ($jml_all/24)*100;
         }else{
             $HomeConnectprog = HomeConnect::where('bast_id', $bastId)
                         ->select(
