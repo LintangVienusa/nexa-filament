@@ -20,6 +20,8 @@ return new class extends Migration
             $table->string('foto_barat')->nullable();
             $table->string('foto_selatan')->nullable();
             $table->string('foto_timur')->nullable();
+            $table->string('pulling_cable')->nullable();
+            $table->string('instalasi')->nullable();
             $table->text('notes')->nullable();    
             $table->unsignedTinyInteger('progress_percentage')->default(0);
             $table->string('created_by')->nullable();

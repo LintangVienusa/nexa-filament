@@ -51,29 +51,17 @@ class listFeederDetails extends ListRecords
             TextColumn::make('site')->label('Site')->searchable(),
             TextColumn::make('feeder_name')->searchable(),
             TextColumn::make('notes')->searchable(),
-            ImageColumn::make('foto_utara')
-                ->label('Utara')
+            ImageColumn::make('pulling_cable')
+                ->label('Pulling Cable')
                 ->disk('public')
-                ->getStateUsing(fn($record) => $record->foto_utara ? asset('storage/'.$record->foto_utara) : null)
-                ->width(150)
-                ->height(150),
-            ImageColumn::make('foto_barat')
-                ->label('Barat')
-                ->disk('public')
-                ->getStateUsing(fn($record) => $record->foto_barat ? asset('storage/'.$record->foto_barat) : null)
-                ->width(150)
-                ->height(150),
-            ImageColumn::make('foto_selatan')
-                ->label('Selatan')
-                ->disk('public')
-                ->getStateUsing(fn($record) => $record->foto_selatan ? asset('storage/'.$record->foto_selatan) : null)
+                ->getStateUsing(fn($record) => $record->instalasi ? asset('storage/'.$record->instalasi) : null)
                 ->width(150)
                 ->height(150),
 
-            ImageColumn::make('foto_timur')
-                ->label('Timur')
+            ImageColumn::make('instalasi')
+                ->label('Instalasi Accesoris')
                 ->disk('public')
-                ->getStateUsing(fn($record) => $record->foto_timur ? asset('storage/'.$record->foto_timur) : null)
+                ->getStateUsing(fn($record) => $record->pulling_cable ? asset('storage/'.$record->pulling_cable) : null)
                 ->width(150)
                 ->height(150),
 

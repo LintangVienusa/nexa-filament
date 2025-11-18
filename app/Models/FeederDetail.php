@@ -24,6 +24,8 @@ class FeederDetail extends Model
         'foto_barat',
         'foto_selatan',
         'foto_timur',
+        'pulling_cable',
+        'instalasi',
         'notes',
         'progress_percentage',
         'created_by',
