@@ -1888,12 +1888,12 @@ class BastProjectController extends Controller
 
         $validated = $request->validate([
             'bast_id' => 'required|string|exists:mysql_inventory.BastProject,bast_id',
-            'id_pelanggan' => 'required|string|exists:mysql_inventory.Homeconnect,id_pelanggan',
-            'name_pelanggan' => 'required|string|exists:mysql_inventory.Homeconnect,name_pelanggan',
-            'odp_name' => 'required|string|exists:mysql_inventory.Homeconnect,odp_name',
+            'id_pelanggan' => 'required|string',
+            'name_pelanggan' => 'required|string',
+            'odp_name' => 'required|string',
             'port_odp' => 'nullable|string',
-            'merk_ont' => 'required|string|exists:mysql_inventory.Homeconnect,merk_ont',
-            'sn_ont' => 'required|string|exists:mysql_inventory.Homeconnect,sn_ont',
+            'merk_ont' => 'required|string',
+            'sn_ont' => 'required|string',
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
             
@@ -1918,10 +1918,15 @@ class BastProjectController extends Controller
 
         $query = HomeConnect::where('bast_id', $bastId);
         $HomeConnect = $query->first();
-
+        $id_pelanggan = $HomeConnect->id_pelanggan;
+        $name_pelanggan = $HomeConnect->name_pelanggan;
+        $odp_name = $HomeConnect->odp_name;
+        $port_odp = $HomeConnect->port_odp;
+        $merk_ont = $HomeConnect->merk_ont;
+        $sn_ont = $HomeConnect->sn_ont;
          
 
-        if (! $HomeConnect) {
+        if (!$HomeConnect && $HomeConnect->id_pelanggan != '') {
             $HomeConnect = new HomeConnect();
             $HomeConnect->bast_id = $bastId;
             $HomeConnect->id_pelanggan = $id_pelanggan;
@@ -1932,6 +1937,9 @@ class BastProjectController extends Controller
             $HomeConnect->sn_ont = $sn_ont;
             $HomeConnect->created_by = $user->email;
         }else{
+            
+           
+            $HomeConnect->bast_id = $bastId;
             $HomeConnect->id_pelanggan = $request->input('id_pelanggan', $HomeConnect->id_pelanggan);
             $HomeConnect->name_pelanggan = $request->input('name_pelanggan', $HomeConnect->name_pelanggan);
             $HomeConnect->odp_name = $request->input('odp_name', $HomeConnect->odp_name);
