@@ -13,8 +13,13 @@ return new class extends Migration
     {
         Schema::connection('mysql_inventory')->create('CableDetail', function (Blueprint $table) {
             $table->id();
+            
             $table->string('bast_id');
-            $table->foreign('bast_id')->references('bast_id')->on('BastProject')->onDelete('cascade');
+            $table->string('site');
+            $table->foreign(['bast_id', 'site'])
+                    ->references(['bast_id', 'site'])
+                    ->on('BastProject')
+                    ->onDelete('cascade');
             $table->string('pole_sn')->nullable();
             $table->string('pulling_cable')->nullable();
             $table->string('instalasi')->nullable();

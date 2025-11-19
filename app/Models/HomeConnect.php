@@ -13,6 +13,7 @@ class HomeConnect extends Model
     protected $table = 'HomeConnect';
 
     protected $fillable = [
+        'site',
         'bast_id',
         'id_pelanggan',
         'name_pelanggan',

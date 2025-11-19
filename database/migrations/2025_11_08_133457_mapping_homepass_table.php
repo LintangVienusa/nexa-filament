@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('regency_name',50);
             $table->string('village_name',50);
             $table->string('station_name',50);
+            $table->string('site',50);
             $table->string('pole',50);
             $table->string('feeder_name',50);
             $table->string('ODC',50);
@@ -24,7 +25,9 @@ return new class extends Migration
             $table->timestamps();
 
             
-            $table->unique(['id', 'province_name', 'regency_name', 'village_name', 'station_name','pole', 'feeder_name', 'ODC','ODP'],'mappinghomepass_unique_idx');
+            // $table->unique(['id', 'province_name', 'regency_name', 'village_name', 'station_name','site','pole', 'feeder_name', 'ODC','ODP'],'mappinghomepass_unique_idx');
+            
+            $table->unique(['feeder_name','ODC','ODP','pole'],'mappinghomepass_unique_idx');
             
         });
     }

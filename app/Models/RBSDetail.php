@@ -15,6 +15,7 @@ class RBSDetail extends Model
         protected $table = 'RBSDetail';
 
         protected $fillable = [
+            'site',
             'bast_id',
             'rbs_name',
             'hasil_otdr',

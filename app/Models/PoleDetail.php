@@ -14,6 +14,7 @@ class PoleDetail extends Model
     protected $table = 'PoleDetail'; 
 
     protected $fillable = [
+        'site',
         'bast_id',
         'digging',
         'instalasi',

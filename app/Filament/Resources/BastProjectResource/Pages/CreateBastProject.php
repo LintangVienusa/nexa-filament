@@ -8,7 +8,7 @@ use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Models\PoleDetail;
-use App\Models\CableDetail;
+// use App\Models\CableDetail;s
 use App\Models\FeederDetail;
 use App\Models\ODCDetail;
 use App\Models\ODPDetail;
@@ -179,14 +179,16 @@ class CreateBastProject extends CreateRecord
                     if (empty($row[0]) || strtoupper(trim($row[0]))=== 'NO_TIANG') continue;
 
                     PoleDetail::create([
+                        'site' => $record->site,
                         'bast_id' => $record->bast_id,
                         'pole_sn' => trim($row[0]),
                     ]);
 
-                     CableDetail::create([
-                        'bast_id' => $record->bast_id,
-                        'pole_sn' => trim($row[0]),
-                    ]);
+                    //  CableDetail::create([
+                    //     'site' => $record->site,
+                    //     'bast_id' => $record->bast_id,
+                    //     'pole_sn' => trim($row[0]),
+                    // ]);
                 }
 
             }
@@ -202,7 +204,8 @@ class CreateBastProject extends CreateRecord
                 foreach ($sheet as $row) {
                     if (empty($row[3]) || strtoupper(trim($row[3]))=== 'FEEDER') continue;
 
-                    FeederDetail::create([
+                    FeederDetail::updateOrCreate([
+                        'site' => $record->site,
                         'bast_id' => $record->bast_id,
                         'feeder_name' => trim($row[3]),
                     ]);
@@ -211,7 +214,8 @@ class CreateBastProject extends CreateRecord
                 foreach ($sheet as $row) {
                     if (empty($row[2]) || strtoupper(trim($row[2]))=== 'ODC') continue;
 
-                    ODCDetail::create([
+                    ODCDetail::updateOrCreate([
+                        'site' => $record->site,
                         'bast_id' => $record->bast_id,
                         'feeder_name' => trim($row[3]),
                         'odc_name' => trim($row[2]),
@@ -221,7 +225,8 @@ class CreateBastProject extends CreateRecord
                 foreach ($sheet as $row) {
                     if (empty($row[1]) || strtoupper(trim($row[1]))=== 'ODP') continue;
 
-                    ODPDetail::create([
+                    ODPDetail::updateOrCreate([
+                        'site' => $record->site,
                         'bast_id' => $record->bast_id,
                         'odc_name' => trim($row[2]),
                         'odp_name' => trim($row[1]),
@@ -237,16 +242,20 @@ class CreateBastProject extends CreateRecord
                     if ($feeder === '' || $odc === '' || $odp === '' || $pole === '') continue;
                     if (strtoupper($feeder) === 'FEEDER') continue;
 
+
                     MappingHomepass::updateOrCreate(
+                         [
+                            'pole'=> $pole,
+                            'ODC' => $odc,
+                            'ODP' => $odp,
+                        ],
                         [
                             'province_name' => $record->province_name,
                             'regency_name'  => $record->regency_name,
                             'village_name'  => $record->village_name,
                             'station_name'  => $record->station_name,
-                            'pole'          => $pole,
+                            'site'          => $record->site,
                             'feeder_name'   => $feeder,
-                            'ODC'           => $odc,
-                            'ODP'           => $odp,
                             'created_at'    => now(),
                         ],
                         [
@@ -269,6 +278,7 @@ class CreateBastProject extends CreateRecord
                         if ($index === 0 || empty($row[0])) continue;
 
                         HomeConnect::create([
+                            'site' => $record->site,
                             'bast_id'        => $record->bast_id,
                             'id_pelanggan'   => trim($row[0] ?? ''),
                             'name_pelanggan' => trim($row[1] ?? ''),

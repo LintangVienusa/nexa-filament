@@ -13,13 +13,13 @@ return new class extends Migration
     {
         Schema::connection('mysql_inventory')->create('BastProject', function (Blueprint $table) {
             $table->id();
-            $table->string('bast_id')->unique();
+            $table->string('site');
+            $table->string('bast_id');
             $table->string('province_name',50)->nullable();
             $table->string('regency_name',50)->nullable();
             $table->string('village_name',50)->nullable();
             $table->string('station_name',50)->nullable();
             $table->string('project_name');
-            $table->string('site')->nullable();
             $table->string('PIC')->nullable();
             $table->string('technici')->nullable();
             $table->enum('status', ['not started', 'in progress','pending', 'completed'])->default('not started');
@@ -40,10 +40,11 @@ return new class extends Migration
             $table->string('updated_by')->nullable();
             $table->timestamps();
 
+            
+            $table->unique(['bast_id','site']);
             $table->index('PIC');
             $table->index('technici');
             $table->index(['province_name', 'regency_name', 'village_name','station_name'],'region_idx');
-            $table->index('site');
             $table->index('status');
             $table->index('pass');
             $table->index('bast_id');
