@@ -72,17 +72,10 @@ class listOdpDetails extends ListRecords
                 ->width(150)
                 ->height(150),
 
-            ImageColumn::make('hasil_ukur_opm')
-                ->label('Hasil Ukur OPM')
+            ImageColumn::make('power_optic_odc')
+                ->label('Power Optic ODC')
                 ->disk('public')
                 ->getStateUsing(fn($record) => $record->hasil_ukur_opm ? asset('storage/'.$record->hasil_ukur_opm) : null)
-                ->width(150)
-                ->height(150),
-
-            ImageColumn::make('labeling_odp')
-                ->label('Labeling ODP')
-                ->disk('public')
-                ->getStateUsing(fn($record) => $record->labeling_odp ? asset('storage/'.$record->labeling_odp) : null)
                 ->width(150)
                 ->height(150),
 

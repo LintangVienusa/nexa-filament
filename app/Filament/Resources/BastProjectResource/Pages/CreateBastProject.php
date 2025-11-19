@@ -13,6 +13,7 @@ use App\Models\FeederDetail;
 use App\Models\ODCDetail;
 use App\Models\ODPDetail;
 use App\Models\HomeConnect;
+use App\Models\MappingHomepass;
 use Filament\Notifications\Notification;
 use Illuminate\Validation\ValidationException;
 
@@ -226,6 +227,34 @@ class CreateBastProject extends CreateRecord
                         'odp_name' => trim($row[1]),
                     ]);
                 }
+
+                foreach ($sheet as $row) {
+                    $feeder = trim($row[3] ?? '');
+                    $odc    = trim($row[2] ?? '');
+                    $odp    = trim($row[1] ?? '');
+                    $pole    = trim($row[0] ?? '');
+
+                    if ($feeder === '' || $odc === '' || $odp === '' || $pole === '') continue;
+                    if (strtoupper($feeder) === 'FEEDER') continue;
+
+                    MappingHomepass::updateOrCreate(
+                        [
+                            'province_name' => $record->province_name,
+                            'regency_name'  => $record->regency_name,
+                            'village_name'  => $record->village_name,
+                            'station_name'  => $record->station_name,
+                            'pole'          => $pole,
+                            'feeder_name'   => $feeder,
+                            'ODC'           => $odc,
+                            'ODP'           => $odp,
+                            'created_at'    => now(),
+                        ],
+                        [
+                            'updated_at'    => now(),
+                        ]
+                    );
+
+                 }
 
             }
 

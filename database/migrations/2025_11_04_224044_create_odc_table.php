@@ -15,12 +15,12 @@ return new class extends Migration
             $table->id();
             $table->string('bast_id');
             $table->foreign('bast_id')->references('bast_id')->on('BastProject')->onDelete('cascade');
-            $table->string('instalasi')->nullable();
             $table->string('feeder_name');
+            $table->string('instalasi')->nullable();
+            $table->string('Power_optic_olt')->nullable();
+            $table->string('flexing_conduit')->nullable();
             $table->string('odc_terbuka')->nullable();
             $table->string('odc_tertutup')->nullable();
-            $table->string('hasil_ukur_opm')->nullable();
-            $table->string('labeling_odc')->nullable();
             $table->decimal('latitude', 10, 8)->nullable();
             $table->decimal('longitude', 11, 8)->nullable();
             $table->string('odc_id')->nullable();
