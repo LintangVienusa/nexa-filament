@@ -14,12 +14,12 @@ return new class extends Migration
         Schema::connection('mysql_inventory')->create('FeederDetail', function (Blueprint $table) {
             $table->id();
             $table->string('bast_id');
-            $table->foreign('bast_id')->references('bast_id')->on('BastProject')->onDelete('cascade');
+            $table->string('site');
+            $table->foreign(['bast_id', 'site'])
+                    ->references(['bast_id', 'site'])
+                    ->on('BastProject')
+                    ->onDelete('cascade');
             $table->string('feeder_name')->nullable();
-            $table->string('foto_utara')->nullable();
-            $table->string('foto_barat')->nullable();
-            $table->string('foto_selatan')->nullable();
-            $table->string('foto_timur')->nullable();
             $table->string('pulling_cable')->nullable();
             $table->string('instalasi')->nullable();
             $table->text('notes')->nullable();    

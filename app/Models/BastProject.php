@@ -15,13 +15,13 @@ class BastProject extends Model
     protected $table = 'BastProject'; 
 
     protected $fillable = [
+        'site',
         'bast_id',
         'province_name',
         'regency_name',
         'village_name',
         'station_name',
         'project_name',
-        'site',
         'PIC',
         'email',
         'technici',

@@ -14,7 +14,11 @@ return new class extends Migration
         Schema::connection('mysql_inventory')->create('ODPDetail', function (Blueprint $table) {
             $table->id();
             $table->string('bast_id');
-            $table->foreign('bast_id')->references('bast_id')->on('BastProject')->onDelete('cascade');
+            $table->string('site');
+            $table->foreign(['bast_id', 'site'])
+                    ->references(['bast_id', 'site'])
+                    ->on('BastProject')
+                    ->onDelete('cascade');
             $table->string('odc_name')->constrained('ODCDetail')->onDelete('cascade'); 
             $table->string('instalasi')->nullable(); 
             $table->string('odp_terbuka')->nullable();

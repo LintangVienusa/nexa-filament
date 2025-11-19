@@ -31,30 +31,34 @@ class BastProjectController extends Controller
         }
 
         $validated = $request->validate([
-            'village_name' => 'nullable|string',
+            'pass' => 'required|string',
+            'station_name' => 'nullable|string',
             
         ]);
 
 
-        $village_name  = $validated['village_name'];
-        if($village_name != ''){
+        $station_name  = $validated['station_name'];
+        $pass  = $validated['pass'];
+        if($pass != '' && $station_name != ''){
             $basts = BastProject::where('status', '!=', 'completed')
-            ->where('village_name', $village_name)
+            ->where('pass', $pass)
+            ->where('station_name', $station_name)
             ->orderBy('created_at', 'desc')
             ->get()
-            ->groupBy('village_name'); 
+            ->groupBy('station_name'); 
         }else{
             $basts = BastProject::where('status', '!=', 'completed')
+            ->where('pass', $pass)
             ->orderBy('created_at', 'desc')
             ->get()
-            ->groupBy('village_name'); 
+            ->groupBy('station_name'); 
         }
 
         
 
-        $data = $basts->map(function ($items, $village_name) {
+        $data = $basts->map(function ($items, $station_name) {
             return [
-                'village_name' => $village_name,
+                'station_name' => $station_name,
                 'total_bast' => $items->count(),
                 'details' => $items->map(function ($item) {
                     return [
@@ -63,6 +67,7 @@ class BastProjectController extends Controller
                         'regency_name' => $item->regency_name,
                         'village_name' => $item->village_name,
                         'project_name' => $item->project_name,
+                        'station_name' => $item->station_name,
                         'notes' => $item->notes,
                         'pass' => $item->pass,
                         'PIC' => $item->pic,
@@ -1004,30 +1009,58 @@ class BastProjectController extends Controller
         }
 
         $validated = $request->validate([
-            'bast_id' => 'required|string|exists:mysql_inventory.BastProject,bast_id',
+            // 'pass' => 'required|string',
+            'station_name' => 'required|string',
         ]);
 
-        $bastId = $validated['bast_id'];
+        $station_name = $validated['station_name'];
         
 
-        $bast = BastProject::on('mysql_inventory')->where('bast_id', $bastId)->first();
+        $bastList = BastProject::on('mysql_inventory')->where('station_name', $station_name)->get(['bast_id', 'site']);;
 
-        if (! $bast) {
+        // if (!$bast) {
+        //     return response()->json([
+        //         'status' => 'error',
+        //         'message' => "SITE di Stasiun {$station_name} tidak ditemukan",
+        //     ], 404);
+        // }
+
+        if ($bastList->isEmpty()) {
             return response()->json([
                 'status' => 'error',
-                'message' => "BAST dengan ID {$bastId} tidak ditemukan",
+                'message' => "Tidak ada BAST pada site {$station_name}",
             ], 404);
         }
 
-        $query = ODCDetail::where('bast_id', $bastId)->pluck('odc_name')
-                ->toArray();
-        
-        
+        // $query = ODCDetail::where('bast_id', $bastId)->pluck('odc_name')
+        //         ->toArray();
+        $odcQuery = ODCDetail::query();
+
+        foreach ($bastList as $bast) {
+            $odcQuery->orWhere(function($q) use ($bast) {
+                $q->where('bast_id', $bast->bast_id)
+                ->where('site', $bast->site);
+            });
+        }
+
+        $odcData = $odcQuery->get(['odc_name', 'bast_id', 'site']);
+
+        // --- GROUP BY ODC NAME ---
+        $grouped = $odcData->groupBy('odc_name')->map(function ($items, $odcName) {
+            return [
+                'odc_name' => $odcName,
+                'detail' => $items->map(function ($item) {
+                    return [
+                        'bast_id' => $item->bast_id,
+                        'site'    => $item->site
+                    ];
+                })->values()
+            ];
+        })->values();
 
         return response()->json([
             'status' => 'success',
-            'message' => 'List ODC',
-            'list_odc' => $query,
+            'data' => $grouped
         ]);
         
     }

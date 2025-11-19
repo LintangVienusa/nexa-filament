@@ -13,6 +13,7 @@ class ODPDetail extends Model
     protected $table = 'ODPDetail';
 
     protected $fillable = [
+        'site',
         'bast_id',
         'odc_id',
         'odc_name',

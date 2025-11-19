@@ -14,6 +14,7 @@ class CableDetail extends Model
     protected $table = 'CableDetail'; 
 
     protected $fillable = [
+        'site',
         'bast_id',
         'pole_sn',
         'pulling_cable',

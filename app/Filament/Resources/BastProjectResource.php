@@ -88,15 +88,15 @@ class BastProjectResource extends Resource
 
                 Section::make('Project Info')
                     ->schema([
-                        TextInput::make('bast_id')
+                        
+                        TextInput::make('site')->maxLength(255),
+                        Hidden::make('bast_id')
                             ->label('BAST ID')
                             ->unique(ignoreRecord: true)
                             ->default(fn () => 'BA-' . now()->format('YmdH') . '-' . rand(1000, 9999))
-                            ->readonly()
                             ->dehydrateStateUsing(fn ($state) => $state),
                         DatePicker::make('bast_date')->required()->default(now()),
                         Textarea::make('project_name')->required()->maxLength(255),
-                        TextInput::make('site')->maxLength(255),
                         Select::make('PIC')
                                 ->label('PIC')
                                 ->options(
@@ -223,8 +223,6 @@ class BastProjectResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('bast_id')
-                    ->searchable(),
                 TextColumn::make('province_name')
                     ->searchable(),
                 TextColumn::make('regency_name')

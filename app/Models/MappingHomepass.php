@@ -17,6 +17,7 @@ class MappingHomepass extends Model
         'regency_name',
         'village_name',
         'station_name',
+        'site',
         'pole',
         'feeder_name',
         'ODC',
