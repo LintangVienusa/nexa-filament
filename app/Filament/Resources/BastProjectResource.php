@@ -94,6 +94,7 @@ class BastProjectResource extends Resource
                             ->label('BAST ID')
                             ->unique(ignoreRecord: true)
                             ->default(fn () => 'BA-' . now()->format('YmdH') . '-' . rand(1000, 9999))
+                            // ->readonly()
                             ->dehydrateStateUsing(fn ($state) => $state),
                         DatePicker::make('bast_date')->required()->default(now()),
                         Textarea::make('project_name')->required()->maxLength(255),
