@@ -51,7 +51,7 @@ class ListOdcDetails extends ListRecords
             TextColumn::make('odc_name')->searchable(),
             TextColumn::make('notes')->searchable(),
             ImageColumn::make('instalasi')
-                ->label('Instalasi')
+                ->label('Instalasi ODC')
                 ->disk('public')
                 ->getStateUsing(fn($record) => $record->instalasi ? asset('storage/'.$record->instalasi) : null)
                 ->width(150)
@@ -69,15 +69,15 @@ class ListOdcDetails extends ListRecords
                 ->width(150)
                 ->height(150),
 
-            ImageColumn::make('hasil_ukur_opm')
-                ->label('Hasil Ukur OPM')
+            ImageColumn::make('power_optic_olt')
+                ->label('Power Optic dari OLT')
                 ->disk('public')
                 ->getStateUsing(fn($record) => $record->hasil_ukur_opm ? asset('storage/'.$record->hasil_ukur_opm) : null)
                 ->width(150)
                 ->height(150),
 
-            ImageColumn::make('labeling_odc')
-                ->label('Labeling ODC')
+            ImageColumn::make('flexing_conduit')
+                ->label('Flexing Conduit')
                 ->disk('public')
                 ->getStateUsing(fn($record) => $record->labeling_odc ? asset('storage/'.$record->labeling_odc) : null)
                 ->width(150)

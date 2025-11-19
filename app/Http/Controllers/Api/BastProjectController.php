@@ -812,8 +812,7 @@ class BastProjectController extends Controller
             'instalasi',
             'odp_terbuka',
             'odp_tertutup',
-            'hasil_ukur_opm',
-            'labeling_odp',
+            'power_optic_odc',
         ];
 
         $po = 0;
@@ -896,7 +895,7 @@ class BastProjectController extends Controller
             
         //     $pole->longitude = 0;
         // }
-        $percentage = ($po/6)*100;
+        $percentage = ($po/5)*100;
         $odpDetail->progress_percentage = $percentage;
         $odpDetail->updated_by = $user->email ?? null;
         $odpDetail->save();
@@ -958,8 +957,7 @@ class BastProjectController extends Controller
                 'instalasi',
                 'odp_terbuka',
                 'odp_tertutup',
-                'hasil_ukur_opm',
-                'labeling_odp',
+                'power_optic_odc',
             ];
 
             $base64Files = [];
@@ -1072,10 +1070,10 @@ class BastProjectController extends Controller
 
             $fileKeys = [
                 'instalasi',
+                'power_optic_olt',
                 'odc_terbuka',
                 'odc_tertutup',
-                'hasil_ukur_opm',
-                'labeling_odc',
+                'flexing_conduit',
             ];
 
             $base64Files = [];
@@ -1160,10 +1158,10 @@ class BastProjectController extends Controller
     
         $photoFields = [
             'instalasi',
+            'power_optic_olt',
             'odc_terbuka',
             'odc_tertutup',
-            'hasil_ukur_opm',
-            'labeling_odc',
+            'flexing_conduit',
         ];
         
         $po = 0;
@@ -2126,6 +2124,7 @@ class BastProjectController extends Controller
                 'name_pelanggan'=> $record->name_pelanggan,
                 'odp_name'=> $record->odp_name,
                 'port_odp'=> $record->port_odp,
+                'merk_ont'=> $record->merk_ont,
                 'sn_ont'=> $record->sn_ont,
             ];
 
@@ -2170,8 +2169,8 @@ class BastProjectController extends Controller
                                 (CASE WHEN instalasi IS NOT NULL AND instalasi <> "" THEN 1 ELSE 0 END) +
                                 (CASE WHEN odc_terbuka IS NOT NULL AND odc_terbuka <> "" THEN 1 ELSE 0 END) +
                                 (CASE WHEN odc_tertutup IS NOT NULL AND odc_tertutup <> "" THEN 1 ELSE 0 END) +
-                                (CASE WHEN hasil_ukur_opm IS NOT NULL AND hasil_ukur_opm <> "" THEN 1 ELSE 0 END) +
-                                (CASE WHEN labeling_odc IS NOT NULL AND labeling_odc <> "" THEN 1 ELSE 0 END) +
+                                (CASE WHEN power_optic_olt IS NOT NULL AND power_optic_olt <> "" THEN 1 ELSE 0 END) +
+                                (CASE WHEN flexing_conduit IS NOT NULL AND flexing_conduit <> "" THEN 1 ELSE 0 END) +
                                 (CASE WHEN latitude IS NOT NULL AND latitude <> "" AND longitude IS NOT NULL AND longitude <> "" THEN 1 ELSE 0 END)
                             ) 
                         ) as jml'))
@@ -2184,8 +2183,7 @@ class BastProjectController extends Controller
                                         (CASE WHEN instalasi IS NOT NULL AND instalasi <> "" THEN 1 ELSE 0 END) +
                                         (CASE WHEN odp_terbuka IS NOT NULL AND odp_terbuka <> "" THEN 1 ELSE 0 END) +
                                         (CASE WHEN odp_tertutup IS NOT NULL AND odp_tertutup <> "" THEN 1 ELSE 0 END) +
-                                        (CASE WHEN hasil_ukur_opm IS NOT NULL AND hasil_ukur_opm <> "" THEN 1 ELSE 0 END) +
-                                        (CASE WHEN labeling_odp IS NOT NULL AND labeling_odp <> "" THEN 1 ELSE 0 END) +
+                                        (CASE WHEN power_optic_odc IS NOT NULL AND power_optic_odc <> "" THEN 1 ELSE 0 END) +
                                         (CASE WHEN latitude IS NOT NULL AND latitude <> "" AND longitude IS NOT NULL AND longitude <> "" THEN 1 ELSE 0 END)
                                     ) 
                                 ) as jml'))
@@ -2213,7 +2211,7 @@ class BastProjectController extends Controller
                     ->value('jml') ?? 0;
                             
             $jml_all = $poleProgress + $odcProgress + $odpProgress + $rbsProgress + $feederProgress;
-            $presen = ($jml_all/24)*100;
+            $presen = ($jml_all/23)*100;
         }else{
             $HomeConnectprog = HomeConnect::where('bast_id', $bastId)
                         ->select(
