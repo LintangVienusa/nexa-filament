@@ -231,6 +231,21 @@ class CreateBastProject extends CreateRecord
                         'odc_name' => trim($row[2]),
                         'odp_name' => trim($row[1]),
                     ]);
+
+                    for ($i = 1; $i <= 8; $i++) {
+
+                        HomeConnect::updateOrCreate(
+                            [
+                                'bast_id'   => $record->bast_id,
+                                'odp_name'  => trim($row[2]),
+                                'port_odp'  => $i, 
+                            ],
+                            [
+                                'site'      => $record->site,
+                                'status_port' => 'idle', 
+                            ]
+                        );
+                    }
                 }
 
                 foreach ($sheet as $row) {
@@ -285,6 +300,8 @@ class CreateBastProject extends CreateRecord
                             'odp_name'       => trim($row[2] ?? ''),
                             'sn_ont'         => trim($row[3] ?? ''),
                         ]);
+
+                        
                     }
 
                     Notification::make()

@@ -19,6 +19,7 @@ class HomeConnect extends Model
         'name_pelanggan',
         'odp_name',
         'port_odp',
+        'status_port',
         'merk_ont',
         'sn_ont',
         'province_name',
