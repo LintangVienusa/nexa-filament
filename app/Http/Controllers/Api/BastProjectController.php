@@ -12,6 +12,7 @@ use App\Models\ODCDetail;
 use App\Models\FeederDetail;
 use App\Models\RBSDetail;
 use App\Models\HomeConnect;
+use App\Models\MappingHomepass;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -189,10 +190,12 @@ class BastProjectController extends Controller
         }
 
         $validated = $request->validate([
-            'bast_id' => 'required|string|exists:mysql_inventory.BastProject,bast_id',
+            'bast_id' => 'required|string',
+            'odc_name' => 'required|string',
         ]);
 
         $bastId = $validated['bast_id'];
+        $odc_name = $validated['odc_name'];
         
 
         $bast = BastProject::on('mysql_inventory')->where('bast_id', $bastId)->first();
@@ -200,7 +203,7 @@ class BastProjectController extends Controller
         if (! $bast) {
             return response()->json([
                 'status' => 'error',
-                'message' => "BAST dengan ID {$bastId} tidak ditemukan",
+                'message' => "ODC dengan Name {$odc_name} tidak ditemukan",
             ], 404);
         }
 
@@ -735,22 +738,34 @@ class BastProjectController extends Controller
         }
 
         $validated = $request->validate([
-            'bast_id' => 'required|string|exists:mysql_inventory.BastProject,bast_id',
+            'bast_id' => 'required|string',
+            'odc_name' => 'required|string',
         ]);
 
         $bastId = $validated['bast_id'];
+        $odc_name = $validated['odc_name'];
         
 
         $bast = BastProject::on('mysql_inventory')->where('bast_id', $bastId)->first();
 
-        if (! $bast) {
+        $bast2 = BastProject::on('mysql_inventory')
+            ->where('bast_id', $bastId)
+            ->whereHas('ODCDetail', function($q) use ($odc_name) {
+                $q->where('odc_name', $odc_name);
+            })
+            ->with(['ODCDetail' => function($q) use ($odc_name) {
+                $q->where('odc_name', $odc_name);
+            }])
+            ->first();
+
+        if (!$bast2) {
             return response()->json([
                 'status' => 'error',
-                'message' => "BAST dengan ID {$bastId} tidak ditemukan",
+                'message' => "ODC dengan {$odc_name} tidak ditemukan",
             ], 404);
         }
 
-        $query = ODPDetail::where('bast_id', $bastId)->pluck('odp_name')
+        $query = ODPDetail::where('odc_name', $odc_name)->pluck('odp_name')
                 ->toArray();
         
         
@@ -1385,10 +1400,12 @@ class BastProjectController extends Controller
         }
 
         $validated = $request->validate([
-            'bast_id' => 'required|string|exists:mysql_inventory.BastProject,bast_id',
+            'bast_id' => 'required|string',
+            'odc_name' => 'required|string',
         ]);
 
         $bastId = $validated['bast_id'];
+        $odc_name = $validated['odc_name'];
         
 
         $bast = BastProject::on('mysql_inventory')->where('bast_id', $bastId)->first();
@@ -1400,7 +1417,19 @@ class BastProjectController extends Controller
             ], 404);
         }
 
-        $query = FeederDetail::where('bast_id', $bastId)
+        $MappingHomepass = MappingHomepass::on('mysql_inventory')
+                    ->where('ODC', $odc_name)->first();
+
+        if (! $MappingHomepass) {
+            return response()->json([
+                'status' => 'error',
+                'message' => "ODC dengan {$odc_name} tidak ditemukan",
+            ], 404);
+        }
+
+        $query = MappingHomepass::where('ODC', $odc_name)
+                ->select('feeder_name')
+                ->groupBy('feeder_name')
                 ->pluck('feeder_name')
                 ->toArray();
 
@@ -1868,14 +1897,14 @@ class BastProjectController extends Controller
         }
 
         $validated = $request->validate([
-            'village_name' => 'nullable|string|exists:mysql_inventory.BastProject,village_name',
+            'station_name' => 'nullable|string',
         ]);
 
-        $village_name = $validated['village_name'];
+        $station_name = $validated['station_name'];
         
-        if($village_name!=''){
+        if($station_name!=''){
             $odpNames = ODPDetail::join('BastProject as bp', 'bp.bast_id', '=', 'ODPDetail.bast_id')
-                ->where('bp.village_name', $village_name)
+                ->where('bp.station_name', $station_name)
                 ->groupBy('ODPDetail.odp_name')
                 ->pluck('ODPDetail.odp_name')
                 ->toArray();

@@ -131,13 +131,16 @@ class BastProjectResource extends Resource
                         //     ->searchable()
                         //     ->required()
                         //     ->dehydrated(true),
-                        Select::make('pass')
-                            ->options([
-                                'HOMEPASS' => 'HOME PASS',
-                                'HOMECONNECT' => 'HOME CONNECT',
-                            ])
-                            ->reactive()
-                            ->required(),
+                        // Select::make('pass')
+                        //     ->options([
+                        //         'HOMEPASS' => 'HOME PASS',
+                        //         'HOMECONNECT' => 'HOME CONNECT',
+                        //     ])
+                        //     ->reactive()
+                        //     ->required(),
+                        Hidden::make('pass')
+                            ->default('HOMEPASS')
+                            ->dehydrated(true),
                         Select::make('status')
                             ->options([
                                 'not started' => 'Not Started',
@@ -352,41 +355,41 @@ class BastProjectResource extends Resource
                Action::make('view_tiang')
                     ->label('Tiang')
                     ->icon('heroicon-o-eye')
-                    ->visible(fn ($record) => $record->pass === 'HOMEPASS')
+                    // ->visible(fn ($record) => $record->pass === 'HOMEPASS')
                     ->url(fn ($record) => url('/admin/bast-projects/list-pole-details/'.$record->bast_id))
                     ->openUrlInNewTab(true),
 
                 Action::make('view_odc')
                     ->label('ODC')
                     ->icon('heroicon-o-eye')
-                    ->visible(fn ($record) => $record->pass === 'HOMEPASS')
+                    // ->visible(fn ($record) => $record->pass === 'HOMEPASS')
                     ->url(fn ($record) => url('/admin/bast-projects/list-odc-details/'.$record->bast_id))
                     ->openUrlInNewTab(true),
 
                 Action::make('view_odp')
                     ->label('ODP')
                     ->icon('heroicon-o-eye')
-                    ->visible(fn ($record) => $record->pass === 'HOMEPASS')
+                    // ->visible(fn ($record) => $record->pass === 'HOMEPASS')
                     ->url(fn ($record) => url('/admin/bast-projects/list-odp-details/'.$record->bast_id))
                     ->openUrlInNewTab(true),
                 Action::make('view_feeder')
                     ->label('FE')
                     ->icon('heroicon-o-eye')
-                    ->visible(fn ($record) => $record->pass === 'HOMEPASS')
+                    // ->visible(fn ($record) => $record->pass === 'HOMEPASS')
                     ->url(fn ($record) => url('/admin/bast-projects/list-feeder-details/'.$record->bast_id))
                     ->openUrlInNewTab(true),
 
-                Action::make('view_rbs')
-                    ->label('RBS')
-                    ->icon('heroicon-o-eye')
-                    ->visible(fn ($record) => $record->pass === 'HOMEPASS')
-                    ->url(fn ($record) => url('/admin/bast-projects/list-rbs-details/'.$record->bast_id))
-                    ->openUrlInNewTab(true),
+                // Action::make('view_rbs')
+                //     ->label('RBS')
+                //     ->icon('heroicon-o-eye')
+                //     // ->visible(fn ($record) => $record->pass === 'HOMEPASS')
+                //     ->url(fn ($record) => url('/admin/bast-projects/list-rbs-details/'.$record->bast_id))
+                //     ->openUrlInNewTab(true),
 
                 Action::make('view_homeconnect')
                     ->label('Home Connect')
                     ->icon('heroicon-o-eye')
-                    ->visible(fn ($record) => $record->pass === 'HOMECONNECT')
+                    // ->visible(fn ($record) => $record->pass === 'HOMECONNECT')
                     ->url(fn ($record) => url('/admin/bast-projects/list-homeconnect-details/'.$record->bast_id))
                     ->openUrlInNewTab(true),
                 // Action::make('export_implementation')

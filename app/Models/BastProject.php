@@ -54,4 +54,14 @@ class BastProject extends Model
         return $this->hasMany(PoleDetail::class, 'bast_id', 'bast_id'); 
     }
 
+    public function ODCDetail()
+    {
+        return $this->hasMany(ODCDetail::class, 'bast_id', 'bast_id');
+    }
+
+    public function ODPDetail()
+    {
+        return $this->hasMany(ODPDetail::class, 'bast_id', 'bast_id');
+    }
+
 }
