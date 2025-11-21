@@ -237,7 +237,7 @@ class CreateBastProject extends CreateRecord
                         HomeConnect::updateOrCreate(
                             [
                                 'bast_id'   => $record->bast_id,
-                                'odp_name'  => trim($row[2]),
+                                'odp_name'  => trim($row[1]),
                                 'port_odp'  => $i, 
                             ],
                             [

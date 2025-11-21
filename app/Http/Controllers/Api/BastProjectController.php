@@ -1934,6 +1934,47 @@ class BastProjectController extends Controller
         
     }
 
+    public function listodp_porthc(Request $request)
+    {
+        date_default_timezone_set('Asia/Jakarta');
+        $user = Auth::user();
+
+        if (! $user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthorized',
+            ], 401);
+        }
+
+        $validated = $request->validate([
+            'odp_name' => 'required|string',
+        ]);
+
+        $odp_name = $validated['odp_name'];
+        
+             $HomeConnect = HomeConnect::on('mysql_inventory')
+                            ->select('odp_name','port_odp','status_port', 'bast_id')
+                            ->where('odp_name', $odp_name)
+                            ->where('status_port', 'idle')
+                            ->get()
+                            ->toArray();;
+
+            if (!$HomeConnect) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => "Tidak ada PORT IDLE untuk ODP {$odp_name}",
+                ], 404);
+            }
+        
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'List ODP PORT' ,
+            'list_odp_port' => $HomeConnect,
+        ]);
+        
+    }
+
     public function updatehomeconnect(Request $request)
     {
         date_default_timezone_set('Asia/Jakarta');
