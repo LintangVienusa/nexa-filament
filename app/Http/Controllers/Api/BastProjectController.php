@@ -1988,7 +1988,7 @@ class BastProjectController extends Controller
         }
 
         $validated = $request->validate([
-            'bast_id' => 'required|string|exists:mysql_inventory.BastProject,bast_id',
+            'bast_id' => 'required|string',
             'id_pelanggan' => 'required|string',
             'name_pelanggan' => 'required|string',
             'odp_name' => 'required|string',
@@ -2008,55 +2008,57 @@ class BastProjectController extends Controller
         $merk_ont = $validated['merk_ont'];
         $sn_ont = $validated['sn_ont'];
 
-        $bast = BastProject::on('mysql_inventory')->where('bast_id', $bastId)->where('pass', 'HOMECONNECT')->first();
+        $bast = BastProject::on('mysql_inventory')->where('bast_id', $bastId)->first();
 
         if (! $bast) {
             return response()->json([
                 'status' => 'error',
-                'message' => "BAST dengan ID {$bastId} tidak ditemukan",
+                'message' => "SITE dengan ID {$bastId} tidak ditemukan",
             ], 404);
         }
 
-        $query = HomeConnect::where('bast_id', $bastId);
+        $query = HomeConnect::where('bast_id', $bastId)->where('odp_name', $odp_name)->where('port_odp', $port_odp);
         $HomeConnect = $query->first();
-        $id_pelanggan = $HomeConnect->id_pelanggan;
-        $name_pelanggan = $HomeConnect->name_pelanggan;
-        $odp_name = $HomeConnect->odp_name;
-        $port_odp = $HomeConnect->port_odp;
-        $merk_ont = $HomeConnect->merk_ont;
-        $sn_ont = $HomeConnect->sn_ont;
+        // $id_pelanggan = $HomeConnect->id_pelanggan;
+        // $name_pelanggan = $HomeConnect->name_pelanggan;
+        // $odp_name = $HomeConnect->odp_name;
+        // $port_odp = $HomeConnect->port_odp;
+        // $merk_ont = $HomeConnect->merk_ont;
+        // $sn_ont = $HomeConnect->sn_ont;
          
 
-        if (!$HomeConnect && $HomeConnect->id_pelanggan != '') {
-            $HomeConnect = new HomeConnect();
-            $HomeConnect->bast_id = $bastId;
-            $HomeConnect->id_pelanggan = $id_pelanggan;
-            $HomeConnect->name_pelanggan = $name_pelanggan;
-            $HomeConnect->odp_name = $odp_name;
-            $HomeConnect->port_odp = $port_odp;
-            $HomeConnect->merk_ont = $merk_ont;
-            $HomeConnect->sn_ont = $sn_ont;
-            $HomeConnect->created_by = $user->email;
-        }else{
+        if (!$HomeConnect && $HomeConnect->odp_name != '') {
+            return response()->json([
+                'status' => 'error',
+                'message' => "ODP dengan {$odp_name} tidak ditemukan",
+            ], 404);
+        //     $HomeConnect = new HomeConnect();
+        //     $HomeConnect->bast_id = $bastId;
+        //     $HomeConnect->id_pelanggan = $id_pelanggan;
+        //     $HomeConnect->name_pelanggan = $name_pelanggan;
+        //     $HomeConnect->odp_name = $odp_name;
+        //     $HomeConnect->port_odp = $port_odp;
+        //     $HomeConnect->merk_ont = $merk_ont;
+        //     $HomeConnect->sn_ont = $sn_ont;
+        //     $HomeConnect->created_by = $user->email;
+        // }else{
             
            
-            $HomeConnect->bast_id = $bastId;
-            $HomeConnect->id_pelanggan = $request->input('id_pelanggan', $HomeConnect->id_pelanggan);
-            $HomeConnect->name_pelanggan = $request->input('name_pelanggan', $HomeConnect->name_pelanggan);
-            $HomeConnect->odp_name = $request->input('odp_name', $HomeConnect->odp_name);
-            $HomeConnect->port_odp = $request->input('port_odp', $HomeConnect->port_odp);
-            $HomeConnect->merk_ont = $request->input('merk_ont', $HomeConnect->merk_ont);
-            $HomeConnect->sn_ont = $request->input('sn_ont', $HomeConnect->sn_ont);
+            // $HomeConnect->bast_id = $bastId;
+            // $HomeConnect->odp_name = $request->input('odp_name', $HomeConnect->odp_name);
+            // $HomeConnect->port_odp = $request->input('port_odp', $HomeConnect->port_odp);
         }
 
     
         $photoFields = [
-            'foto_label_odp',
-            'foto_hasil_ukur_odp',
-            'foto_penarikan_outdoor',
-            'foto_aksesoris_ikr',
-            'foto_sn_ont',
-            'foto_depan_rumah',
+            // 'foto_label_odp',
+            // 'foto_hasil_ukur_odp',
+            // 'foto_penarikan_outdoor',
+            // 'foto_aksesoris_ikr',
+            // 'foto_sn_ont',
+            // 'foto_depan_rumah',
+            'foto_label_id_plg',
+            'foto_qr',
         ];
         
             $po = 0;
@@ -2122,6 +2124,11 @@ class BastProjectController extends Controller
                 }
             }
         }
+        
+        $HomeConnect->id_pelanggan = $request->input('id_pelanggan', $HomeConnect->id_pelanggan);
+        $HomeConnect->name_pelanggan = $request->input('name_pelanggan', $HomeConnect->name_pelanggan);
+        $HomeConnect->merk_ont = $request->input('merk_ont', $HomeConnect->merk_ont);
+        $HomeConnect->sn_ont = $request->input('sn_ont', $HomeConnect->sn_ont);
 
         if ($request->filled('latitude')) {
             $HomeConnect->latitude = $validated['latitude'] ?? 0;
@@ -2142,8 +2149,10 @@ class BastProjectController extends Controller
             
         //     $pole->longitude = 0;
         // }
-        $percentage = ($po/7)*100;
+        
+        $percentage = ($po/3)*100;
         $HomeConnect->progress_percentage = $percentage;
+        $HomeConnect->status_port = "used";
         $HomeConnect->updated_by = $user->email ?? null;
         $HomeConnect->save();
 
@@ -2177,11 +2186,15 @@ class BastProjectController extends Controller
         }
 
         $validated = $request->validate([
-            'bast_id' => 'required|string|exists:mysql_inventory.BastProject,bast_id',
+            'bast_id' => 'required|string',
+            'odp_name' => 'required|string',
+            'port_odp' => 'required|string',
             
         ]);
 
         $bastId = $validated['bast_id'];
+        $odp_name = $validated['odp_name'];
+        $port_odp = $validated['port_odp'];
 
         $bast = BastProject::on('mysql_inventory')->where('bast_id', $bastId)->first();
 
@@ -2192,18 +2205,18 @@ class BastProjectController extends Controller
             ], 404);
         }
 
-        $query = HomeConnect::where('bast_id', $bastId);
+        $query = HomeConnect::where('bast_id', $bastId)->where('odp_name', $odp_name)->where('port_odp', $port_odp);
         if ($bastId) {
              
             $record = $query->first();
 
             $fileKeys = [
-                'foto_label_odp',
-                'foto_hasil_ukur_odp',
-                'foto_penarikan_outdoor',
-                'foto_aksesoris_ikr',
-                'foto_sn_ont',
-                'foto_depan_rumah',
+                // 'foto_label_odp',
+                // 'foto_hasil_ukur_odp',
+                // 'foto_penarikan_outdoor',
+                // 'foto_aksesoris_ikr',
+                // 'foto_sn_ont',
+                // 'foto_depan_rumah',
                 'foto_label_id_plg',
                 'foto_qr',
             ];
@@ -2333,7 +2346,7 @@ class BastProjectController extends Controller
                     ->value('jml') ?? 0;
                             
             $jml_all = $HomeConnectprog;
-            $presen = ($jml_all/7)*100;
+            $presen = ($jml_all/3)*100;
         }
         
 

@@ -2,6 +2,7 @@
 
 namespace App\Exports;
 
+use App\Models\ODPDetail;
 use App\Models\BastProject;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -13,10 +14,9 @@ use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Events\AfterSheet;
-use App\Models\PoleDetail;
 use Carbon\Carbon;
 
-class BastPoleExport implements WithEvents
+class BastODPExport implements WithEvents
 {
     protected $project;
 
@@ -24,14 +24,14 @@ class BastPoleExport implements WithEvents
     {
         $this->project = $project;
     }
-
+    
     public function registerEvents(): array
     {
         return [
             AfterSheet::class => function (AfterSheet $event) {
                 $project = $this->project;
-                $details = PoleDetail::where('bast_id', $this->project->bast_id)
-                    ->where('pole_sn', $this->project->pole_sn)
+                $details = ODPDetail::where('bast_id', $this->project->bast_id)
+                    ->where('odp_name', $this->project->odp_name)
                     ->first();
                 
                 $bastproject = BastProject::where('bast_id', $this->project->bast_id)
@@ -41,7 +41,7 @@ class BastPoleExport implements WithEvents
                         ->translatedFormat('l/Y-m-d');
 
 
-                $sheet = $event->sheet->getDelegate()->setTitle('IMPLEMENTATION PHOTO POLE');;
+                $sheet = $event->sheet->getDelegate()->setTitle('IMPLEMENTATION PHOTO ODP');;
 
                 $logo = new Drawing();
                 $logo->setName('Logo');
@@ -58,7 +58,7 @@ class BastPoleExport implements WithEvents
                 $logo2->setDescription('Logo Project2');
                 $logo2->setPath(public_path('assets/images/Invoice Permit_20251008_233910_0002.png')); 
                 $logo2->setCoordinates('O3');
-                $logo2->setHeight(80);
+                $logo2->setHeight(80); 
                 $logo2->setOffsetX(5); 
                 $logo2->setOffsetY(5); 
                 $logo2->setWorksheet($sheet);
@@ -98,21 +98,16 @@ class BastPoleExport implements WithEvents
                     [  'Keterangan','', ': ' . $bastproject->notes],
                 ], null, 'M9', true);
 
-                
                 $sheet->getStyle('C9:E10')->getFont()->setBold(true);
                 $sheet->getStyle('H9:J10')->getFont()->setBold(true);
                 $sheet->getStyle('M9:P9')->getFont()->setBold(true);
+                
 
                 $sheet->getStyle('E9:G9')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('FFFF00');
                 $sheet->getStyle('E10:G10')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('FFFF00');
                 $sheet->getStyle('M9:P9')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('FFFF00');
 
-                // $headers = [
-                //     [$details->pole_sn.' Digging Hole', $details->pole_sn.' Measuring Hole', $details->pole_sn.' Solid Fill'],
-                //     [$details->pole_sn.' Pole Installation', $details->pole_sn.' Pole Casting', $details->pole_sn.' Pole Accessories Installation'],
-                //     [$details->pole_sn.' Cable Pulling', $details->pole_sn.' ODC Installation', $details->pole_sn.' ODP Integration']
-                // ];
-
+                
                 $sheet->getStyle('C12:F13')->applyFromArray([
                     'borders' => [
                         'outline' => [
@@ -128,7 +123,7 @@ class BastPoleExport implements WithEvents
 
                 $sheet->mergeCells('C12:F13');
                 $sheet->fromArray([
-                    [  $details->pole_sn.' Digging Hole'],
+                    [ 'Instalasi '.$details->odp_name],
                 ], null, 'C12', true);
 
                 $sheet->getStyle('C14:F30')->applyFromArray([
@@ -144,14 +139,12 @@ class BastPoleExport implements WithEvents
                 
                     $range = 'C14:F30';
                     [$startCol, $startRow, $endCol, $endRow] = sscanf($range, "%[A-Z]%d:%[A-Z]%d");
-                                    // $sheet->fromArray([
-                                    //     [ '' ],
-                                    // ], null, 'C14', true);
                                     
-                                    $photoPath = public_path('storage/' . $details->digging);
+                                    
+                                    $photoPath = public_path('storage/' . $details->instalasi);
                                     $sheet->setCellValue('C14', '');
 
-                    if (file_exists($photoPath) && $details->digging !='' ) {
+                    if (file_exists($photoPath) && $details->instalasi !='' ) {
 
                         $colWidth = 0;
                         foreach (range($startCol, $endCol) as $col) {
@@ -163,9 +156,7 @@ class BastPoleExport implements WithEvents
                             $rowHeight += $sheet->getRowDimension($r)->getRowHeight() ?: 15;
                         }
 
-                        // [$imgWidth, $imgHeight] = getimagesize($photoPath);
-
-                        // $scale = min(($colWidth - 10) / $imgWidth, ($rowHeight - 10) / $imgHeight);
+                        
                         $imgWidth = 0;
                         $imgHeight = 0;
                         $scale = 1;
@@ -181,12 +172,10 @@ class BastPoleExport implements WithEvents
                         }
 
                         $drawing = new Drawing();
-                        $drawing->setPath(public_path('storage/' . $details->digging));
+                        $drawing->setPath(public_path('storage/' . $details->instalasi));
                         $drawing->setCoordinates($startCol . $startRow);
                         $drawing->setOffsetX(5);
                         $drawing->setOffsetY(5);
-                        // $drawing->setWidth($imgWidth * $scale);
-                        // $drawing->setHeight($imgHeight * $scale);
                         $drawing->setWidth(190);
                         $drawing->setHeight(190);
                         $drawing->setWorksheet($sheet);
@@ -207,7 +196,7 @@ class BastPoleExport implements WithEvents
 
                 $sheet->mergeCells('C31:F32');
                 $sheet->fromArray([
-                    [  $details->pole_sn.' Pole Installation'],
+                    [ 'ODP Tertutup'],
                 ], null, 'C31', true);
                 
                  $sheet->getStyle('C33:F49')->applyFromArray([
@@ -223,14 +212,12 @@ class BastPoleExport implements WithEvents
 
                 $range = 'C33:F49';
                     [$startCol, $startRow, $endCol, $endRow] = sscanf($range, "%[A-Z]%d:%[A-Z]%d");
-                                    // $sheet->fromArray([
-                                    //     [ '' ],
-                                    // ], null, 'C14', true);
+                                   
                                     
-                                    $photoPath = public_path('storage/' . $details->instalasi);
+                                    $photoPath = public_path('storage/' . $details->odp_tertutup);
                                     $sheet->setCellValue('C33', '');
 
-                    if (file_exists($photoPath) && $details->instalasi !='' ) {
+                    if (file_exists($photoPath) && $details->odp_tertutup !='' ) {
 
                         $colWidth = 0;
                         foreach (range($startCol, $endCol) as $col) {
@@ -242,9 +229,7 @@ class BastPoleExport implements WithEvents
                             $rowHeight += $sheet->getRowDimension($r)->getRowHeight() ?: 15;
                         }
 
-                        // [$imgWidth, $imgHeight] = getimagesize($photoPath);
-
-                        // $scale = min(($colWidth - 10) / $imgWidth, ($rowHeight - 10) / $imgHeight);
+                        
                         $imgWidth = 0;
                         $imgHeight = 0;
                         $scale = 1;
@@ -260,48 +245,16 @@ class BastPoleExport implements WithEvents
                         }
 
                         $drawing = new Drawing();
-                        $drawing->setPath(public_path('storage/' . $details->instalasi));
+                        $drawing->setPath(public_path('storage/' . $details->odp_tertutup));
                         $drawing->setCoordinates($startCol . $startRow);
                         $drawing->setOffsetX(5);
                         $drawing->setOffsetY(5);
-                        // $drawing->setWidth($imgWidth * $scale);
-                        // $drawing->setHeight($imgHeight * $scale);
                         $drawing->setWidth(190);
                         $drawing->setHeight(190);
                         $drawing->setWorksheet($sheet);
                     }
 
 
-                // $sheet->fromArray([
-                //     [ '' ],
-                // ], null, 'C33', true);
-
-                // $sheet->getStyle('C50:F51')->applyFromArray([
-                //     'borders' => [
-                //         'outline' => [
-                //             'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
-                //             'color' => ['rgb' => '000000']
-                //         ]
-                //     ]
-                // ])->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
-                
-                // $sheet->getStyle('C50')->getFont()->setBold(true)->setSize(11);
-                // $sheet->getStyle('C50:F51')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('C5EFCA');
-
-                
-                // $sheet->mergeCells('C50:F51');
-                // $sheet->fromArray([
-                //     [  $details->pole_sn.' Cable Pulling'],
-                // ], null, 'C50', true);
-
-                //  $sheet->getStyle('C52:F68')->applyFromArray([
-                //     'borders' => [
-                //         'outline' => [
-                //             'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
-                //             'color' => ['rgb' => '000000']
-                //         ]
-                //     ]
-                // ]);
                 
                 $sheet->mergeCells('C52:F68');
                 $sheet->fromArray([
@@ -322,7 +275,7 @@ class BastPoleExport implements WithEvents
 
                 $sheet->mergeCells('H12:K13');
                 $sheet->fromArray([
-                    [  $details->pole_sn.' Solid Fill'],
+                    [ 'Power Optic From ODC TO '.$details->odp_name],
                 ], null, 'H12', true);
 
                 $sheet->getStyle('H14:K30')->applyFromArray([
@@ -339,14 +292,12 @@ class BastPoleExport implements WithEvents
 
                 $range = 'H14:K30';
                     [$startCol, $startRow, $endCol, $endRow] = sscanf($range, "%[A-Z]%d:%[A-Z]%d");
-                                    // $sheet->fromArray([
-                                    //     [ '' ],
-                                    // ], null, 'C14', true);
                                     
-                                    $photoPath = public_path('storage/' . $details->coran);
+                                    
+                                    $photoPath = public_path('storage/' . $details->power_optic_odc);
                                     $sheet->setCellValue('H14', '');
 
-                    if (file_exists($photoPath) && $details->coran !='' ) {
+                    if (file_exists($photoPath) && $details->power_optic_odc !='' ) {
 
                         $colWidth = 0;
                         foreach (range($startCol, $endCol) as $col) {
@@ -358,9 +309,6 @@ class BastPoleExport implements WithEvents
                             $rowHeight += $sheet->getRowDimension($r)->getRowHeight() ?: 15;
                         }
 
-                        // [$imgWidth, $imgHeight] = getimagesize($photoPath);
-
-                        // $scale = min(($colWidth - 10) / $imgWidth, ($rowHeight - 10) / $imgHeight);
                         $imgWidth = 0;
                         $imgHeight = 0;
                         $scale = 1;
@@ -376,12 +324,10 @@ class BastPoleExport implements WithEvents
                         }
 
                         $drawing = new Drawing();
-                        $drawing->setPath(public_path('storage/' . $details->coran));
+                        $drawing->setPath(public_path('storage/' . $details->power_optic_odc));
                         $drawing->setCoordinates($startCol . $startRow);
                         $drawing->setOffsetX(5);
                         $drawing->setOffsetY(5);
-                        // $drawing->setWidth($imgWidth * $scale);
-                        // $drawing->setHeight($imgHeight * $scale);
                         $drawing->setWidth(190);
                         $drawing->setHeight(190);
                         $drawing->setWorksheet($sheet);
@@ -392,120 +338,10 @@ class BastPoleExport implements WithEvents
                     [ '' ],
                 ], null, 'H14', true);
 
-                $sheet->getStyle('H31:K32')->applyFromArray([
-                    'borders' => [
-                        'outline' => [
-                            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
-                            'color' => ['rgb' => '000000']
-                        ]
-                    ]
-                ])->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
-                
-                $sheet->getStyle('H31')->getFont()->setBold(true)->setSize(11);
-                $sheet->getStyle('H31:K32')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('C5EFCA');
-
                 
 
-                $sheet->mergeCells('H31:K32');
-                $sheet->fromArray([
-                    [  $details->pole_sn.' Pole Casting'],
-                ], null, 'H31', true);
                 
-
-                $sheet->getStyle('H33:K49')->applyFromArray([
-                    'borders' => [
-                        'outline' => [
-                            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
-                            'color' => ['rgb' => '000000']
-                        ]
-                    ]
-                ]);
-
-                $sheet->mergeCells('H33:K49');
-
-                $range = 'H33:K49';
-                    [$startCol, $startRow, $endCol, $endRow] = sscanf($range, "%[A-Z]%d:%[A-Z]%d");
-                                    // $sheet->fromArray([
-                                    //     [ '' ],
-                                    // ], null, 'C14', true);
-                                    
-                                    $photoPath = public_path('storage/' . $details->labeling_tiang);
-                                    $sheet->setCellValue('H33', '');
-
-                    if (file_exists($photoPath) && $details->labeling_tiang !='' ) {
-
-                        $colWidth = 0;
-                        foreach (range($startCol, $endCol) as $col) {
-                            $colWidth += $sheet->getColumnDimension($col)->getWidth() * 7;
-                        }
-
-                        $rowHeight = 0;
-                        for ($r = $startRow; $r <= $endRow; $r++) {
-                            $rowHeight += $sheet->getRowDimension($r)->getRowHeight() ?: 15;
-                        }
-
-                        // [$imgWidth, $imgHeight] = getimagesize($photoPath);
-
-                        // $scale = min(($colWidth - 10) / $imgWidth, ($rowHeight - 10) / $imgHeight);
-                        $imgWidth = 0;
-                        $imgHeight = 0;
-                        $scale = 1;
-
-                        if (file_exists($photoPath)) {
-                            $size = getimagesize($photoPath);
-                            if ($size) {
-                                [$imgWidth, $imgHeight] = $size;
-                                if ($imgWidth > 0 && $imgHeight > 0) {
-                                    $scale = min(($colWidth - 10) / $imgWidth, ($rowHeight - 10) / $imgHeight);
-                                }
-                            }
-                        }
-
-                        $drawing = new Drawing();
-                        $drawing->setPath(public_path('storage/' . $details->labeling_tiang));
-                        $drawing->setCoordinates($startCol . $startRow);
-                        $drawing->setOffsetX(5);
-                        $drawing->setOffsetY(5);
-                        // $drawing->setWidth($imgWidth * $scale);
-                        // $drawing->setHeight($imgHeight * $scale);
-                        $drawing->setWidth(190);
-                        $drawing->setHeight(190);
-                        $drawing->setWorksheet($sheet);
-                    }
-
-                $sheet->fromArray([
-                    [ '' ],
-                ], null, 'H33', true);
-
                 
-                // $sheet->getStyle('H50:K51')->applyFromArray([
-                //     'borders' => [
-                //         'outline' => [
-                //             'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
-                //             'color' => ['rgb' => '000000']
-                //         ]
-                //     ]
-                // ])->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
-                
-                // $sheet->getStyle('H50')->getFont()->setBold(true)->setSize(11);
-                // $sheet->getStyle('H50:K51')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('C5EFCA');
-
-                
-
-                // $sheet->mergeCells('H50:K51');
-                // $sheet->fromArray([
-                //     [  $details->pole_sn.' ODC Installation'],
-                // ], null, 'H50', true);
-                
-
-                // $sheet->getStyle('H52:K68')->applyFromArray([
-                //     'borders' => [
-                //         'outline' => [
-                //             'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
-                //             'color' => ['rgb' => '000000']
-                //         ]
-                //     ]
-                // ]);
 
                 $sheet->mergeCells('H52:K68');
                 $sheet->fromArray([
@@ -527,7 +363,7 @@ class BastPoleExport implements WithEvents
 
                 $sheet->mergeCells('M12:P13');
                 $sheet->fromArray([
-                    [  $details->pole_sn.' Pole Labeling'],
+                    [  'ODP Terbuka'],
                 ], null, 'M12', true);
 
                 $sheet->getStyle('M14:P30')->applyFromArray([
@@ -542,14 +378,12 @@ class BastPoleExport implements WithEvents
 
                 $range = 'M14:P30';
                     [$startCol, $startRow, $endCol, $endRow] = sscanf($range, "%[A-Z]%d:%[A-Z]%d");
-                                    // $sheet->fromArray([
-                                    //     [ '' ],
-                                    // ], null, 'C14', true);
                                     
-                                    $photoPath = public_path('storage/' . $details->tiang_berdiri);
+                                    
+                                    $photoPath = public_path('storage/' . $details->odp_terbuka);
                                     $sheet->setCellValue('M14', '');
 
-                    if (file_exists($photoPath) && $details->tiang_berdiri !='' ) {
+                    if (file_exists($photoPath) && $details->odp_terbuka !='' ) {
 
                         $colWidth = 0;
                         foreach (range($startCol, $endCol) as $col) {
@@ -561,9 +395,7 @@ class BastPoleExport implements WithEvents
                             $rowHeight += $sheet->getRowDimension($r)->getRowHeight() ?: 15;
                         }
 
-                        // [$imgWidth, $imgHeight] = getimagesize($photoPath);
-
-                        // $scale = min(($colWidth - 10) / $imgWidth, ($rowHeight - 10) / $imgHeight);
+                        
                         $imgWidth = 0;
                         $imgHeight = 0;
                         $scale = 1;
@@ -579,12 +411,10 @@ class BastPoleExport implements WithEvents
                         }
 
                         $drawing = new Drawing();
-                        $drawing->setPath(public_path('storage/' . $details->tiang_berdiri));
+                        $drawing->setPath(public_path('storage/' . $details->odp_terbuka));
                         $drawing->setCoordinates($startCol . $startRow);
                         $drawing->setOffsetX(5);
                         $drawing->setOffsetY(5);
-                        // $drawing->setWidth($imgWidth * $scale);
-                        // $drawing->setHeight($imgHeight * $scale);
                         $drawing->setWidth(190);
                         $drawing->setHeight(190);
                         $drawing->setWorksheet($sheet);
@@ -594,117 +424,8 @@ class BastPoleExport implements WithEvents
                     [ '' ],
                 ], null, 'M14', true);
                 
-                $sheet->getStyle('M31:P32')->applyFromArray([
-                    'borders' => [
-                        'outline' => [
-                            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
-                            'color' => ['rgb' => '000000']
-                        ]
-                    ]
-                ])->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
                 
-                $sheet->getStyle('M31')->getFont()->setBold(true)->setSize(11);
-                $sheet->getStyle('M31:P32')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('C5EFCA');
 
-                $sheet->mergeCells('M31:P32');
-                $sheet->fromArray([
-                    [  $details->pole_sn.' Pole Accessories Installation'],
-                ], null, 'M31', true);
-
-                 $sheet->getStyle('M33:P49')->applyFromArray([
-                    'borders' => [
-                        'outline' => [
-                            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
-                            'color' => ['rgb' => '000000']
-                        ]
-                    ]
-                ]);
-                
-                $sheet->mergeCells('M33:P49');
-
-                 $range = 'M33:P49';
-                    [$startCol, $startRow, $endCol, $endRow] = sscanf($range, "%[A-Z]%d:%[A-Z]%d");
-                                    // $sheet->fromArray([
-                                    //     [ '' ],
-                                    // ], null, 'C14', true);
-                                    
-                                    $photoPath = public_path('storage/' . $details->aksesoris_tiang);
-                                    $sheet->setCellValue('M33', '');
-
-                    if (file_exists($photoPath) && $details->aksesoris_tiang !='' ) {
-
-                        $colWidth = 0;
-                        foreach (range($startCol, $endCol) as $col) {
-                            $colWidth += $sheet->getColumnDimension($col)->getWidth() * 7;
-                        }
-
-                        $rowHeight = 0;
-                        for ($r = $startRow; $r <= $endRow; $r++) {
-                            $rowHeight += $sheet->getRowDimension($r)->getRowHeight() ?: 15;
-                        }
-
-                        // [$imgWidth, $imgHeight] = getimagesize($photoPath);
-
-                        // $scale = min(($colWidth - 10) / $imgWidth, ($rowHeight - 10) / $imgHeight);
-                        $imgWidth = 0;
-                        $imgHeight = 0;
-                        $scale = 1;
-
-                        if (file_exists($photoPath)) {
-                            $size = getimagesize($photoPath);
-                            if ($size) {
-                                [$imgWidth, $imgHeight] = $size;
-                                if ($imgWidth > 0 && $imgHeight > 0) {
-                                    $scale = min(($colWidth - 10) / $imgWidth, ($rowHeight - 10) / $imgHeight);
-                                }
-                            }
-                        }
-
-                        $drawing = new Drawing();
-                        $drawing->setPath(public_path('storage/' . $details->aksesoris_tiang));
-                        $drawing->setCoordinates($startCol . $startRow);
-                        $drawing->setOffsetX(5);
-                        $drawing->setOffsetY(5);
-                        // $drawing->setWidth($imgWidth * $scale);
-                        // $drawing->setHeight($imgHeight * $scale);
-                        $drawing->setWidth(190);
-                        $drawing->setHeight(190);
-                        $drawing->setWorksheet($sheet);
-                    }
-
-                $sheet->fromArray([
-                    [ '' ],
-                ], null, 'M33', true);
-
-                // $sheet->getStyle('M50:P51')->applyFromArray([
-                //     'borders' => [
-                //         'outline' => [
-                //             'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
-                //             'color' => ['rgb' => '000000']
-                //         ]
-                //     ]
-                // ])->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
-                
-                // $sheet->getStyle('M50')->getFont()->setBold(true)->setSize(11);
-                // $sheet->getStyle('M50:P51')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('C5EFCA');
-
-                // $sheet->mergeCells('M50:P51');
-                // $sheet->fromArray([
-                //     [  $details->pole_sn.' ODP Integration'],
-                // ], null, 'M50', true);
-
-                // $sheet->getStyle('M52:P68')->applyFromArray([
-                //     'borders' => [
-                //         'outline' => [
-                //             'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
-                //             'color' => ['rgb' => '000000']
-                //         ]
-                //     ]
-                // ]);
-                // $sheet->mergeCells('M52:P68');
-                // $sheet->fromArray([
-                //     [ '' ],
-                // ], null, 'M52', true);
 
 
 
@@ -788,19 +509,7 @@ class BastPoleExport implements WithEvents
                     [ '(                                             )' ],
                 ], null, 'N77', true);
 
-                // $footerStart = 71;
-                // $sheet->mergeCells("A{$footerStart}:C{$footerStart}");
-                // $sheet->mergeCells("D{$footerStart}:F{$footerStart}");
-                // $sheet->setCellValue("A{$footerStart}", 'PT DAPOER POESAT NOESANTARA GROUP');
-                // $sheet->setCellValue("D{$footerStart}", 'PT. Integrasi Jaringan Ekosistem (WEAVE)');
-                // $sheet->getStyle("A{$footerStart}:F{$footerStart}")->getAlignment()->setHorizontal('center')->setVertical('center');
-
-                // $footerSignRow = $footerStart + 4;
-                // $sheet->mergeCells("A{$footerSignRow}:C{$footerSignRow}");
-                // $sheet->mergeCells("D{$footerSignRow}:F{$footerSignRow}");
-                // $sheet->setCellValue("A{$footerSignRow}", "( {$this->project->nama_pelaksana} )");
-                // $sheet->setCellValue("D{$footerSignRow}", "( {$this->project->nama_pengawas} )");
-                // $sheet->getStyle("A{$footerSignRow}:F{$footerSignRow}")->getAlignment()->setHorizontal('center');
+               
             }
         ];
     }

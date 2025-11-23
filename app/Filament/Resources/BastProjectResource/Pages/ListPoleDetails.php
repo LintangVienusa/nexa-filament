@@ -113,9 +113,9 @@ class ListPoleDetails extends ListRecords
         return [
             // Tables\Actions\ViewAction::make(),
             Action::make('export_implementation')
-                    ->label('Tiang')
+                    ->label('Print')
                     ->icon('heroicon-o-document-arrow-down')
-                    ->action(fn ($record) => Excel::download(new BastPoleExport($record), "Implementation_{$record->kode}.xlsx")),
+                    ->action(fn ($record) => Excel::download(new BastPoleExport($record), "Implementation_Pole_{$record->site}.xlsx")),
         ];
     }
 

@@ -15,7 +15,7 @@ use Filament\Resources\Pages\ListRecords;
 use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Facades\Excel;
 use Filament\Tables\Actions\Action;
-use App\Exports\BastPoleExport;
+use App\Exports\BastODPExport;
 use Filament\Tables\Columns\ImageColumn;
 
 class listOdpDetails extends ListRecords
@@ -75,7 +75,7 @@ class listOdpDetails extends ListRecords
             ImageColumn::make('power_optic_odc')
                 ->label('Power Optic ODC')
                 ->disk('public')
-                ->getStateUsing(fn($record) => $record->hasil_ukur_opm ? asset('storage/'.$record->hasil_ukur_opm) : null)
+                ->getStateUsing(fn($record) => $record->power_optic_odc ? asset('storage/'.$record->power_optic_odc) : null)
                 ->width(150)
                 ->height(150),
 
@@ -98,10 +98,10 @@ class listOdpDetails extends ListRecords
     {
         return [
             // Tables\Actions\ViewAction::make(),
-            // Action::make('export_implementation')
-            //         ->label('Tiang')
-            //         ->icon('heroicon-o-document-arrow-down')
-            //         ->action(fn ($record) => Excel::download(new BastPoleExport($record), "Implementation_{$record->kode}.xlsx")),
+            Action::make('export_implementation')
+                    ->label('Print')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->action(fn ($record) => Excel::download(new BastODPExport($record), "Implementation_ODP_{$record->site}.xlsx")),
         ];
     }
 
