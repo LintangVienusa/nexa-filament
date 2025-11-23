@@ -7,6 +7,11 @@ use App\Filament\Resources\BastProjectResource\RelationManagers;
 use App\Models\BastProject;
 use App\Models\MappingRegion;
 use App\Models\Employee;
+use App\Models\ODCDetail;
+use App\Models\ODPDetail;
+use App\Models\FeederDetail;
+use App\Models\PoleDetail;
+use App\Models\HomeConnect;
 use Illuminate\Support\Facades\Auth;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -22,7 +27,6 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Hidden;
 use Filament\Tables\Columns\TextColumn;
-use App\Exports\BastPoleExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Filament\Tables\Actions\Action;
 use Filament\Forms\Components\FileUpload;
@@ -31,6 +35,7 @@ use Illuminate\Support\HtmlString;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\DateFilter;
 use Filament\Tables\Filters\Filter;
+use Filament\Tables\Columns\ColumnGroup;
 
 class BastProjectResource extends Resource
 {
@@ -242,40 +247,119 @@ class BastProjectResource extends Resource
                 TextColumn::make('PIC')
                     ->label('PIC')
                     ->searchable(),
-                TextColumn::make('technici')
-                    ->label('Teknisi')
-                    ->searchable(), 
-                TextColumn::make('status')
-                    ->label('Status')
-                    ->formatStateUsing(fn($state) => match($state) {
-                        'not started' => 'Not Started',
-                        'in progress' => 'In Progress',
-                        'pending' => 'Pending',
-                        'completed' => 'Completed',
-                        default => $state,
-                    })
-                    ->badge()
-                    ->color(fn($state) => match($state) {
-                        'not started' => 'gray',
-                        'in progress' => 'info',
-                        'pending' => 'warning',
-                        'completed' => 'success',
-                        default => 'gray',
-                    }),
-                TextColumn::make('progress_percentage')
-                    ->label('Progress (%)')
-                    ->formatStateUsing(fn ($state) => '
-                        <div style="width:300%; background:#e5e7eb; border-radius:8px; overflow:hidden;">
-                            <div style="width:'.$state.'%; background:'.
-                                ($state < 30 ? '#ef4444' : ($state < 70 ? '#f59e0b' : '#10b981')).
-                                '; height:8px;"></div>
-                        </div>
-                        <div style="font-size:12px; text-align:center; margin-top:2px;">'.number_format($state,0).'%</div>
-                    ')
-                    ->html() 
-                    ->sortable(),
+                ColumnGroup::make('Homepass', [
+                    TextColumn::make('pole_count')
+                        ->label('Tiang')
+                        ->sortable()
+                        ->getStateUsing(function ($record) {
+                            $total = PoleDetail::where('site', $record->site)->count();
+
+                            $completed = PoleDetail::where('site', $record->site)
+                                ->where('progress_percentage', 100)
+                                ->count();
+
+                            return "{$completed} | {$total}";
+                        })->alignRight()
+                        ->url(fn ($record) => url('/admin/bast-projects/list-pole-details/'.$record->site))
+                        ->openUrlInNewTab(true),
+                    TextColumn::make('odc_count')
+                        ->label('ODC')
+                        ->sortable()
+                        ->getStateUsing(function ($record) {
+                            $total = ODCDetail::where('site', $record->site)->count();
+
+                            $completed = ODCDetail::where('site', $record->site)
+                                ->where('progress_percentage', 100)
+                                ->count();
+
+                            return "{$completed} | {$total}";
+                        })
+                        ->alignRight()
+                        ->url(fn ($record) => url('/admin/bast-projects/list-odc-details/'.$record->site))
+                        ->openUrlInNewTab(true),
+                    TextColumn::make('odp_count')
+                        ->label('ODP')
+                        ->sortable()
+                        ->getStateUsing(function ($record) {
+                            $total = ODPDetail::where('site', $record->site)->count();
+
+                            $completed = ODPDetail::where('site', $record->site)
+                                ->where('progress_percentage', 100)
+                                ->count();
+
+                            return "{$completed} | {$total}";
+                        })
+                        ->alignRight()
+                        ->url(fn ($record) => url('/admin/bast-projects/list-odp-details/'.$record->site))
+                        ->openUrlInNewTab(true),
+                    TextColumn::make('feeder')
+                        ->label('Feeder')
+                        ->sortable()
+                        ->getStateUsing(function ($record) {
+                            $total = FeederDetail::where('site', $record->site)->count();
+
+                            $completed = FeederDetail::where('site', $record->site)
+                                ->where('progress_percentage', 100)
+                                ->count();
+
+                            return "{$completed} | {$total}";
+                        })
+                        ->alignRight()
+                        ->url(fn ($record) => url('/admin/bast-projects/list-feeder-details/'.$record->site))
+                        ->openUrlInNewTab(true),
+                ])->label('HOMEPASS')->alignCenter(),
+                ColumnGroup::make('Homeconnect', [
+                    TextColumn::make('homeconnect')
+                        ->label('port')
+                        ->sortable()
+                        ->getStateUsing(function ($record) {
+                            $total = HomeConnect::where('site', $record->site)->count();
+
+                            $completed = HomeConnect::where('site', $record->site)
+                                ->where('progress_percentage', 100)
+                                ->count();
+
+                            return "{$completed} | {$total}";
+                        })
+                        ->alignRight()
+                        ->url(fn ($record) => url('/admin/bast-projects/list-homeconnect-details/'.$record->site))
+                        ->openUrlInNewTab(true)
+                ])->label('HOMECONNECT')->alignCenter(),
+
+                // TextColumn::make('status')
+                //     ->label('Status')
+                //     ->formatStateUsing(fn($state) => match($state) {
+                //         'not started' => 'Not Started',
+                //         'in progress' => 'In Progress',
+                //         'pending' => 'Pending',
+                //         'completed' => 'Completed',
+                //         default => $state,
+                //     })
+                //     ->badge()
+                //     ->color(fn($state) => match($state) {
+                //         'not started' => 'gray',
+                //         'in progress' => 'info',
+                //         'pending' => 'warning',
+                //         'completed' => 'success',
+                //         default => 'gray',
+                //     }),
+                // TextColumn::make('progress_percentage')
+                //     ->label('Progress (%)')
+                //     ->formatStateUsing(fn ($state) => '
+                //         <div style="width:300%; background:#e5e7eb; border-radius:8px; overflow:hidden;">
+                //             <div style="width:'.$state.'%; background:'.
+                //                 ($state < 30 ? '#ef4444' : ($state < 70 ? '#f59e0b' : '#10b981')).
+                //                 '; height:8px;"></div>
+                //         </div>
+                //         <div style="font-size:12px; text-align:center; margin-top:2px;">'.number_format($state,0).'%</div>
+                //     ')
+                //     ->html() 
+                //     ->sortable(),
                 TextColumn::make('bast_date')
                     ->date()
+                    ->sortable(),
+                TextColumn::make('updated_at')
+                    ->datetime()
                     ->sortable()
             ])
             ->filters([
@@ -351,52 +435,7 @@ class BastProjectResource extends Resource
 
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-               Action::make('view_tiang')
-                    ->label('Tiang')
-                    ->icon('heroicon-o-eye')
-                    // ->visible(fn ($record) => $record->pass === 'HOMEPASS')
-                    ->url(fn ($record) => url('/admin/bast-projects/list-pole-details/'.$record->bast_id))
-                    ->openUrlInNewTab(true),
-
-                Action::make('view_odc')
-                    ->label('ODC')
-                    ->icon('heroicon-o-eye')
-                    // ->visible(fn ($record) => $record->pass === 'HOMEPASS')
-                    ->url(fn ($record) => url('/admin/bast-projects/list-odc-details/'.$record->bast_id))
-                    ->openUrlInNewTab(true),
-
-                Action::make('view_odp')
-                    ->label('ODP')
-                    ->icon('heroicon-o-eye')
-                    // ->visible(fn ($record) => $record->pass === 'HOMEPASS')
-                    ->url(fn ($record) => url('/admin/bast-projects/list-odp-details/'.$record->bast_id))
-                    ->openUrlInNewTab(true),
-                Action::make('view_feeder')
-                    ->label('FE')
-                    ->icon('heroicon-o-eye')
-                    // ->visible(fn ($record) => $record->pass === 'HOMEPASS')
-                    ->url(fn ($record) => url('/admin/bast-projects/list-feeder-details/'.$record->bast_id))
-                    ->openUrlInNewTab(true),
-
-                // Action::make('view_rbs')
-                //     ->label('RBS')
-                //     ->icon('heroicon-o-eye')
-                //     // ->visible(fn ($record) => $record->pass === 'HOMEPASS')
-                //     ->url(fn ($record) => url('/admin/bast-projects/list-rbs-details/'.$record->bast_id))
-                //     ->openUrlInNewTab(true),
-
-                Action::make('view_homeconnect')
-                    ->label('Home Connect')
-                    ->icon('heroicon-o-eye')
-                    // ->visible(fn ($record) => $record->pass === 'HOMECONNECT')
-                    ->url(fn ($record) => url('/admin/bast-projects/list-homeconnect-details/'.$record->bast_id))
-                    ->openUrlInNewTab(true),
-                // Action::make('export_implementation')
-                //     ->label('Tiang')
-                //     ->icon('heroicon-o-document-arrow-down')
-                //     ->action(fn ($record) => Excel::download(new BastPoleExport($record), "Implementation_{$record->kode}.xlsx")),
-        
+                
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

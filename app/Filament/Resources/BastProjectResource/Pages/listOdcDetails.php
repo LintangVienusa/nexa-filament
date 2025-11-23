@@ -15,7 +15,7 @@ use Filament\Resources\Pages\ListRecords;
 use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Facades\Excel;
 use Filament\Tables\Actions\Action;
-use App\Exports\BastPoleExport;
+use App\Exports\BastODCExport;
 use Filament\Tables\Columns\ImageColumn;
 
 class ListOdcDetails extends ListRecords
@@ -72,14 +72,14 @@ class ListOdcDetails extends ListRecords
             ImageColumn::make('power_optic_olt')
                 ->label('Power Optic dari OLT')
                 ->disk('public')
-                ->getStateUsing(fn($record) => $record->hasil_ukur_opm ? asset('storage/'.$record->hasil_ukur_opm) : null)
+                ->getStateUsing(fn($record) => $record->Power_optic_olt ? asset('storage/'.$record->Power_optic_olt) : null)
                 ->width(150)
                 ->height(150),
 
             ImageColumn::make('flexing_conduit')
                 ->label('Flexing Conduit')
                 ->disk('public')
-                ->getStateUsing(fn($record) => $record->labeling_odc ? asset('storage/'.$record->labeling_odc) : null)
+                ->getStateUsing(fn($record) => $record->flexing_conduit ? asset('storage/'.$record->flexing_conduit) : null)
                 ->width(150)
                 ->height(150),
 
@@ -102,10 +102,10 @@ class ListOdcDetails extends ListRecords
     {
         return [
             // Tables\Actions\ViewAction::make(),
-            // Action::make('export_implementation')
-            //         ->label('Tiang')
-            //         ->icon('heroicon-o-document-arrow-down')
-            //         ->action(fn ($record) => Excel::download(new BastPoleExport($record), "Implementation_{$record->kode}.xlsx")),
+            Action::make('export_implementation')
+                    ->label('Print')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->action(fn ($record) => Excel::download(new BastODCExport($record), "Implementation_{$record->kode}.xlsx")),
         ];
     }
 

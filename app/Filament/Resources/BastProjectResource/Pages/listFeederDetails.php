@@ -15,7 +15,7 @@ use Filament\Resources\Pages\ListRecords;
 use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Facades\Excel;
 use Filament\Tables\Actions\Action;
-use App\Exports\BastPoleExport;
+use App\Exports\BastFeederExport;
 use Filament\Tables\Columns\ImageColumn;
 
 class listFeederDetails extends ListRecords
@@ -54,14 +54,14 @@ class listFeederDetails extends ListRecords
             ImageColumn::make('pulling_cable')
                 ->label('Pulling Cable')
                 ->disk('public')
-                ->getStateUsing(fn($record) => $record->instalasi ? asset('storage/'.$record->instalasi) : null)
+                ->getStateUsing(fn($record) => $record->pulling_cable ? asset('storage/'.$record->pulling_cable) : null)
                 ->width(150)
                 ->height(150),
 
             ImageColumn::make('instalasi')
                 ->label('Instalasi Accesoris')
                 ->disk('public')
-                ->getStateUsing(fn($record) => $record->pulling_cable ? asset('storage/'.$record->pulling_cable) : null)
+                ->getStateUsing(fn($record) => $record->instalasi ? asset('storage/'.$record->instalasi) : null)
                 ->width(150)
                 ->height(150),
 
@@ -84,10 +84,10 @@ class listFeederDetails extends ListRecords
     {
         return [
             // Tables\Actions\ViewAction::make(),
-            // Action::make('export_implementation')
-            //         ->label('Tiang')
-            //         ->icon('heroicon-o-document-arrow-down')
-            //         ->action(fn ($record) => Excel::download(new BastPoleExport($record), "Implementation_{$record->kode}.xlsx")),
+            Action::make('export_implementation')
+                    ->label('Print')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->action(fn ($record) => Excel::download(new BastFeederExport($record), "Implementation_Feeder_{$record->site}.xlsx")),
         ];
     }
 

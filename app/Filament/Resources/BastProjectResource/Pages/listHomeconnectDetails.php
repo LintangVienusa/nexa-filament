@@ -17,6 +17,9 @@ use Maatwebsite\Excel\Facades\Excel;
 use Filament\Tables\Actions\Action;
 use App\Exports\BastPoleExport;
 use Filament\Tables\Columns\ImageColumn;
+use Filament\Tables\Filters\SelectFilter;
+use App\Services\DownloadBAService;
+
 
 class listHomeconnectDetails extends ListRecords
 {
@@ -28,18 +31,18 @@ class listHomeconnectDetails extends ListRecords
     protected static ?string $navigationLabel = 'Home Connect Details';
     protected static ?string $navigationIcon = 'heroicon-o-collection';
     protected static ?string $slug = 'list-homeconnect-details';
-     public ?int $bastId = null;
-     public function mount(?string $bastId = null): void
+     public ?int $site = null;
+     public function mount(?string $site = null): void
     {
-        $this->bastId = $bastId;
+        $this->site = $site;
     }
 
     protected function getTableQuery(): Builder
     {
         return HomeConnect::query()
-                ->Join('BastProject', 'HomeConnect.bast_id', '=', 'BastProject.bast_id')
-                ->when($this->bastId, fn($query) => 
-                        $query->where('HomeConnect.bast_id', $this->bastId)
+                ->Join('BastProject', 'HomeConnect.site', '=', 'BastProject.site')
+                ->when($this->site, fn($query) => 
+                        $query->where('HomeConnect.site', $this->site)
                     )
                     ->select('HomeConnect.*', 'BastProject.site');
     }
@@ -47,47 +50,26 @@ class listHomeconnectDetails extends ListRecords
     protected function getTableColumns(): array
     {
         return [
-            TextColumn::make('bast_id')->label('BAST ID')->searchable(),
+            // TextColumn::make('bast_id')->label('BAST ID')->searchable(),
             TextColumn::make('site')->label('Site')->searchable(),
-            TextColumn::make('sn_ont')->searchable(),
+            TextColumn::make('odp_name')->label('ODP')->searchable(),
+            TextColumn::make('port_odp')->label('Port ODP')->searchable(),
+            TextColumn::make('status_port')->label('Status')->searchable(),
+            TextColumn::make('merk_ont')->label('Merk ONT')->searchable(),
+            TextColumn::make('sn_ont')->label('SN ONT')->searchable(),
             TextColumn::make('notes')->searchable(),
-            ImageColumn::make('foto_label_odp')
-                ->label('Label ODP')
+
+            ImageColumn::make('foto_label_id_plg')
+                ->label('ID Pelanggan di ODP')
                 ->disk('public')
-                ->getStateUsing(fn($record) => $record->foto_label_odp ? asset('storage/'.$record->foto_label_odp) : null)
-                ->width(150)
-                ->height(150),
-            ImageColumn::make('foto_hasil_ukur_odp')
-                ->label('Hasil Ukur ODP')
-                ->disk('public')
-                ->getStateUsing(fn($record) => $record->foto_hasil_ukur_odp ? asset('storage/'.$record->foto_hasil_ukur_odp) : null)
-                ->width(150)
-                ->height(150),
-            ImageColumn::make('foto_penarikan_outdoor')
-                ->label('Penarikan Outdoor')
-                ->disk('public')
-                ->getStateUsing(fn($record) => $record->foto_penarikan_outdoor ? asset('storage/'.$record->foto_penarikan_outdoor) : null)
+                ->getStateUsing(fn($record) => $record->foto_label_id_plg ? asset('storage/'.$record->foto_label_id_plg) : null)
                 ->width(150)
                 ->height(150),
 
-            ImageColumn::make('foto_aksesoris_ikr')
-                ->label('Aksesoris IKR')
+            ImageColumn::make('foto_qr')
+                ->label('QR Code')
                 ->disk('public')
-                ->getStateUsing(fn($record) => $record->foto_aksesoris_ikr ? asset('storage/'.$record->foto_aksesoris_ikr) : null)
-                ->width(150)
-                ->height(150),
-
-            ImageColumn::make('foto_sn_ont')
-                ->label('SN ONT')
-                ->disk('public')
-                ->getStateUsing(fn($record) => $record->foto_sn_ont ? asset('storage/'.$record->foto_sn_ont) : null)
-                ->width(150)
-                ->height(150),
-
-            ImageColumn::make('foto_depan_rumah')
-                ->label('Depan Rumah')
-                ->disk('public')
-                ->getStateUsing(fn($record) => $record->foto_depan_rumah ? asset('storage/'.$record->foto_depan_rumah) : null)
+                ->getStateUsing(fn($record) => $record->foto_qr ? asset('storage/'.$record->foto_qr) : null)
                 ->width(150)
                 ->height(150),
             TextColumn::make('progress_percentage')
@@ -103,18 +85,78 @@ class listHomeconnectDetails extends ListRecords
                 ->html() 
                 ->sortable(),
         ];
+        
     }
 
     protected function getTableActions(): array
     {
         return [
-            // Tables\Actions\ViewAction::make(),
-            // Action::make('export_implementation')
-            //         ->label('Tiang')
-            //         ->icon('heroicon-o-document-arrow-down')
-            //         ->action(fn ($record) => Excel::download(new BastPoleExport($record), "Implementation_{$record->kode}.xlsx")),
+            Action::make('export_ba_pdf')
+                ->label('Export BA PDF')
+                ->icon('heroicon-o-arrow-down-tray')
+                ->color('danger')
+                ->action(function ($record) {
+                    $pdf = app(DownloadBAService::class)->downloadBA($record);
+
+                    return response()->streamDownload(
+                        fn () => print($pdf->output()),
+                        "BA_{$record->site}.pdf"
+                    );
+                }),
         ];
     }
+
+    protected function getTableFilters(): array
+    {
+        return [
+            SelectFilter::make('odp_name')
+                ->label('ODP Name')
+                ->options(
+                    HomeConnect::query()
+                        ->when($this->site, fn($q) => $q->where('site', $this->site))
+                        ->whereNotNull('odp_name')
+                        ->distinct()
+                        ->orderBy('odp_name')
+                        ->pluck('odp_name', 'odp_name')
+                        ->filter() // buang null/empty
+                        ->mapWithKeys(fn($v) => [(string)$v => (string)$v]) // pastikan string keys
+                        ->toArray()
+                )
+                ->searchable(),
+            SelectFilter::make('status_port')
+                ->label('Status Port')
+                ->options(
+                    HomeConnect::query()
+                        ->when($this->site, fn($q) => $q->where('site', $this->site))
+                        ->whereNotNull('status_port')
+                        ->distinct()
+                        ->orderBy('status_port')
+                        ->pluck('status_port', 'status_port')
+                        ->filter()
+                        ->mapWithKeys(fn($v) => [(string)$v => (string)$v])
+                        ->toArray()
+                )
+                ->searchable(),
+
+            SelectFilter::make('merk_ont')
+                ->label('Merk ONT')
+                ->options(
+                    HomeConnect::query()
+                        ->when($this->site, fn($q) => $q->where('site', $this->site))
+                        ->whereNotNull('merk_ont')
+                        ->distinct()
+                        ->orderBy('merk_ont')
+                        ->pluck('merk_ont', 'merk_ont')
+                        ->filter()
+                        ->mapWithKeys(fn($v) => [(string)$v => (string)$v])
+                        ->toArray()
+                )
+                ->searchable(),
+            
+        ];
+    }
+
+   
 
     protected function getTableBulkActions(): array
     {
