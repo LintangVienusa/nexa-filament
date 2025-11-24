@@ -190,32 +190,35 @@ class BastProjectController extends Controller
         }
 
         $validated = $request->validate([
-            'bast_id' => 'required|string',
-            'odc_name' => 'required|string',
+            'station_name' => 'required|string',
+            'per_page'     => 'nullable|integer|min:1|max:200',
+            'page'         => 'nullable|integer|min:1',
         ]);
 
-        $bastId = $validated['bast_id'];
-        $odc_name = $validated['odc_name'];
-        
+        // $bastId = $validated['bast_id'];
+        $station_name = $validated['station_name'];
+        $perPage = $request->per_page ?? 20;
 
-        $bast = BastProject::on('mysql_inventory')->where('bast_id', $bastId)->first();
+        $poles = PoleDetail::on('mysql_inventory')
+            ->join('BastProject', 'PoleDetail.bast_id', '=', 'BastProject.bast_id')
+            ->where('BastProject.station_name', $station_name)
+            ->select('PoleDetail.bast_id','PoleDetail.pole_sn')
+            ->distinct()
+            ->paginate($perPage);
 
-        if (! $bast) {
+        if ($poles->isEmpty()) {
             return response()->json([
                 'status' => 'error',
-                'message' => "ODC dengan Name {$odc_name} tidak ditemukan",
+                'message' => "Tidak ada Pole untuk station {$station_name}",
             ], 404);
         }
-
-        $query = PoleDetail::where('bast_id', $bastId)->pluck('pole_sn')
-                ->toArray();
         
         
 
         return response()->json([
             'status' => 'success',
-            'message' => 'List Pole',
-            'list_pole' => $query,
+            'message' => "List Pole — {$station_name}",
+            'data' => $poles,
         ]);
         
     }

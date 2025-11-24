@@ -28,6 +28,9 @@ class ODCDetail extends Model
         'odc_name',
         'notes',
         'progress_percentage',
+        'staus',
+        'aproval_by',
+        'aproval_at',
         'created_by',
         'updated_by',
     ];
