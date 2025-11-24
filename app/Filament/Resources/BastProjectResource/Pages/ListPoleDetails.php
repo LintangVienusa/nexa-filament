@@ -111,6 +111,19 @@ class ListPoleDetails extends ListRecords
     protected function getTableActions(): array
     {
         return [
+            Action::make('approve')
+                ->label('Approved')
+                ->icon('heroicon-o-check-circle')
+                ->color('success')
+                ->requiresConfirmation()
+                ->visible(fn ($record) => $record->status !== 'approved' && (int) $record->progress_percentage >= 100)
+                ->action(function ($record) {
+                    $record->update([
+                        'status'       => 'approved',
+                        'approval_by'  => Auth::user()->email,
+                        'approval_at'  => now(),
+                    ]);
+                }),
             // Tables\Actions\ViewAction::make(),
             Action::make('export_implementation')
                     ->label('Print')

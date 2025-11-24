@@ -27,6 +27,9 @@ class ODPDetail extends Model
         'odp_name',
         'notes',
         'progress_percentage',
+        'staus',
+        'aproval_by',
+        'aproval_at',
         'created_by',
         'updated_by',
     ];
