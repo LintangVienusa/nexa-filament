@@ -17,6 +17,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use Filament\Tables\Actions\Action;
 use App\Exports\BastODPExport;
 use Filament\Tables\Columns\ImageColumn;
+use Illuminate\Support\Facades\Auth;
 
 class listOdpDetails extends ListRecords
 {
@@ -91,12 +92,74 @@ class listOdpDetails extends ListRecords
                 ')
                 ->html() 
                 ->sortable(),
+            TextColumn::make('status')
+                    ->badge()
+                    ->formatStateUsing(fn ($state) => match ($state) {
+                        'submit' => 'submit',
+                        'pending' => 'Pending',
+                        'approved' => 'Approved',
+                        'rejected' => 'Rejected',
+                        default => $state,
+                    })
+                    ->color(fn ($state): string => match ($state) {
+                        'submit' => 'warning',
+                        'pending' => 'warning',
+                        'approved' => 'success',
+                        'rejected' => 'danger',
+                        default => 'primary',
+                    })
+                    ->sortable(),
         ];
     }
 
     protected function getTableActions(): array
     {
         return [
+            Action::make('pending')
+                ->label('Pending')
+                ->icon('heroicon-o-check-circle')
+                ->color('warning')
+                ->requiresConfirmation()
+                ->visible(fn ($record) => $record->status === 'submit'  && (int) $record->progress_percentage >= 100)
+                ->action(function ($record) {
+                    ODPDetail::where('bast_id', $record->bast_id)->where('odp_name', $record->odp_name)
+                    ->update([
+                        'status'       => 'pending',
+                        'approval_by'  => Auth::user()->email,
+                        'approval_at'  => now(),
+                    ]);
+                })->after(fn () => $this->dispatch('refresh'))
+                ->successNotificationTitle('Data berhasil di-pending'),
+            Action::make('approve')
+                ->label('Approved')
+                ->icon('heroicon-o-check-circle')
+                ->color('success')
+                ->requiresConfirmation()
+                ->visible(fn ($record) => $record->status !== 'approved' && (int) $record->progress_percentage >= 100)
+                ->action(function ($record) {
+                    ODPDetail::where('bast_id', $record->bast_id)->where('odp_name', $record->odp_name)
+                    ->update([
+                        'status'       => 'approved',
+                        'approval_by'  => Auth::user()->email,
+                        'approval_at'  => now(),
+                    ]);
+                })->after(fn () => $this->dispatch('refresh'))
+                ->successNotificationTitle('Data berhasil di-approve'),
+            Action::make('reject')
+                ->label('Rejected')
+                ->icon('heroicon-o-check-circle')
+                ->color('danger')
+                ->requiresConfirmation()
+                ->visible(fn ($record) => $record->status === 'submit'  && (int) $record->progress_percentage >= 100)
+                ->action(function ($record) {
+                    ODPDetail::where('bast_id', $record->bast_id)->where('odp_name', $record->odp_name)
+                    ->update([
+                        'status'       => 'rejected',
+                        'approval_by'  => Auth::user()->email,
+                        'approval_at'  => now(),
+                    ]);
+                })->after(fn () => $this->dispatch('refresh'))
+                ->successNotificationTitle('Data berhasil di-reject'),
             // Tables\Actions\ViewAction::make(),
             Action::make('export_implementation')
                     ->label('Print')

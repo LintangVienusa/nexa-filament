@@ -104,10 +104,10 @@ class BastProjectController extends Controller
             ], 401);
         }
 
-        $query = BastProject::select('village_name', DB::raw('COUNT(bast_id) as total_bast'))
+        $query = BastProject::select('station_name', DB::raw('COUNT(bast_id) as total_bast'))
                 ->where('status', '!=', 'completed')
-                ->groupBy('village_name')
-                ->orderBy('village_name', 'asc')
+                ->groupBy('station_name')
+                ->orderBy('station_name', 'asc')
                 ->get();
 
         
@@ -191,20 +191,33 @@ class BastProjectController extends Controller
 
         $validated = $request->validate([
             'station_name' => 'required|string',
+            'pole_sn'         => 'nullable|string',
             'per_page'     => 'nullable|integer|min:1|max:200',
             'page'         => 'nullable|integer|min:1',
         ]);
 
         // $bastId = $validated['bast_id'];
         $station_name = $validated['station_name'];
+        $pole_sn = $validated['pole_sn'];
         $perPage = $request->per_page ?? 20;
 
-        $poles = PoleDetail::on('mysql_inventory')
+        if($pole_sn != ''){
+            $poles = PoleDetail::on('mysql_inventory')
+            ->join('BastProject', 'PoleDetail.bast_id', '=', 'BastProject.bast_id')
+            ->where('PoleDetail.pole_sn', $pole_sn)
+            ->select('PoleDetail.bast_id','PoleDetail.pole_sn')
+            ->distinct()
+            ->paginate($perPage);
+
+        }else{
+            $poles = PoleDetail::on('mysql_inventory')
             ->join('BastProject', 'PoleDetail.bast_id', '=', 'BastProject.bast_id')
             ->where('BastProject.station_name', $station_name)
             ->select('PoleDetail.bast_id','PoleDetail.pole_sn')
             ->distinct()
             ->paginate($perPage);
+        }
+        
 
         if ($poles->isEmpty()) {
             return response()->json([
@@ -743,33 +756,43 @@ class BastProjectController extends Controller
         $validated = $request->validate([
             'bast_id' => 'required|string',
             'odc_name' => 'required|string',
+            'odp_name' => 'nullable|string',
         ]);
 
         $bastId = $validated['bast_id'];
         $odc_name = $validated['odc_name'];
+        $odp_name = $validated['odp_name'];
         
 
-        $bast = BastProject::on('mysql_inventory')->where('bast_id', $bastId)->first();
+        if($odp_name ===""){
+            $bast = BastProject::on('mysql_inventory')->where('bast_id', $bastId)->first();
 
-        $bast2 = BastProject::on('mysql_inventory')
-            ->where('bast_id', $bastId)
-            ->whereHas('ODCDetail', function($q) use ($odc_name) {
-                $q->where('odc_name', $odc_name);
-            })
-            ->with(['ODCDetail' => function($q) use ($odc_name) {
-                $q->where('odc_name', $odc_name);
-            }])
-            ->first();
+            $bast2 = BastProject::on('mysql_inventory')
+                ->where('bast_id', $bastId)
+                ->whereHas('ODCDetail', function($q) use ($odc_name) {
+                    $q->where('odc_name', $odc_name);
+                })
+                ->with(['ODCDetail' => function($q) use ($odc_name) {
+                    $q->where('odc_name', $odc_name);
+                }])
+                ->first();
 
-        if (!$bast2) {
-            return response()->json([
-                'status' => 'error',
-                'message' => "ODC dengan {$odc_name} tidak ditemukan",
-            ], 404);
-        }
+            if (!$bast2) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => "ODC dengan {$odc_name} tidak ditemukan",
+                ], 404);
+            }
 
-        $query = ODPDetail::where('odc_name', $odc_name)->pluck('odp_name')
+            $query = ODPDetail::where('odc_name', $odc_name)->pluck('odp_name')
                 ->toArray();
+        }else{
+             $query = ODPDetail::where('odp_name', $odp_name)->pluck('odp_name')
+                ->toArray();
+        }
+        
+
+        
         
         
 
@@ -1029,37 +1052,44 @@ class BastProjectController extends Controller
         $validated = $request->validate([
             // 'pass' => 'required|string',
             'station_name' => 'required|string',
+            'odc_name' => 'nullable|string',
         ]);
 
         $station_name = $validated['station_name'];
+        $odc_name = $validated['odc_name'];
         
+        if($odc_name == ''){
+            $bastList = BastProject::on('mysql_inventory')->where('station_name', $station_name)->get(['bast_id', 'site']);;
 
-        $bastList = BastProject::on('mysql_inventory')->where('station_name', $station_name)->get(['bast_id', 'site']);;
+            // if (!$bast) {
+            //     return response()->json([
+            //         'status' => 'error',
+            //         'message' => "SITE di Stasiun {$station_name} tidak ditemukan",
+            //     ], 404);
+            // }
 
-        // if (!$bast) {
-        //     return response()->json([
-        //         'status' => 'error',
-        //         'message' => "SITE di Stasiun {$station_name} tidak ditemukan",
-        //     ], 404);
-        // }
+            if ($bastList->isEmpty()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => "Tidak ada BAST pada site {$station_name}",
+                ], 404);
+            }
 
-        if ($bastList->isEmpty()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => "Tidak ada BAST pada site {$station_name}",
-            ], 404);
+            // $query = ODCDetail::where('bast_id', $bastId)->pluck('odc_name')
+            //         ->toArray();
+            $odcQuery = ODCDetail::query();
+
+            foreach ($bastList as $bast) {
+                $odcQuery->orWhere(function($q) use ($bast) {
+                    $q->where('bast_id', $bast->bast_id)
+                    ->where('site', $bast->site);
+                });
+            }
+
+        }else{
+            $odcQuery = ODCDetail::where('odc_name', $odc_name);
         }
-
-        // $query = ODCDetail::where('bast_id', $bastId)->pluck('odc_name')
-        //         ->toArray();
-        $odcQuery = ODCDetail::query();
-
-        foreach ($bastList as $bast) {
-            $odcQuery->orWhere(function($q) use ($bast) {
-                $q->where('bast_id', $bast->bast_id)
-                ->where('site', $bast->site);
-            });
-        }
+        
 
         $odcData = $odcQuery->get(['odc_name', 'bast_id', 'site']);
 
@@ -1901,22 +1931,33 @@ class BastProjectController extends Controller
 
         $validated = $request->validate([
             'station_name' => 'nullable|string',
+            'odp_name' => 'nullable|string',
         ]);
 
         $station_name = $validated['station_name'];
+        $odp_name = $validated['odp_name'];
         
-        if($station_name!=''){
-            $odpNames = ODPDetail::join('BastProject as bp', 'bp.bast_id', '=', 'ODPDetail.bast_id')
-                ->where('bp.station_name', $station_name)
-                ->groupBy('ODPDetail.odp_name')
-                ->pluck('ODPDetail.odp_name')
-                ->toArray();
+        if($odp_name==''){
+            if($station_name!=''){
+                $odpNames = ODPDetail::join('BastProject as bp', 'bp.bast_id', '=', 'ODPDetail.bast_id')
+                    ->where('bp.station_name', $station_name)
+                    ->groupBy('ODPDetail.odp_name')
+                    ->pluck('ODPDetail.odp_name')
+                    ->toArray();
+            }else{
+                $odpNames = ODPDetail::join('BastProject as bp', 'bp.bast_id', '=', 'ODPDetail.bast_id')
+                    ->groupBy('ODPDetail.odp_name')
+                    ->pluck('ODPDetail.odp_name')
+                    ->toArray();
+            }
         }else{
             $odpNames = ODPDetail::join('BastProject as bp', 'bp.bast_id', '=', 'ODPDetail.bast_id')
-                ->groupBy('ODPDetail.odp_name')
-                ->pluck('ODPDetail.odp_name')
-                ->toArray();
+                    ->where('ODPDetail.odp_name', $odp_name)
+                    ->groupBy('ODPDetail.odp_name')
+                    ->pluck('ODPDetail.odp_name')
+                    ->toArray();
         }
+        
         
 
        if (empty($odpNames)) {

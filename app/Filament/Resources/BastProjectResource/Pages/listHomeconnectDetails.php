@@ -19,6 +19,7 @@ use App\Exports\BastPoleExport;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Filters\SelectFilter;
 use App\Services\DownloadBAService;
+use Illuminate\Support\Facades\Auth;
 
 
 class listHomeconnectDetails extends ListRecords
@@ -84,6 +85,23 @@ class listHomeconnectDetails extends ListRecords
                 ')
                 ->html() 
                 ->sortable(),
+            TextColumn::make('status')
+                    ->badge()
+                    ->formatStateUsing(fn ($state) => match ($state) {
+                        'submit' => 'submit',
+                        'pending' => 'Pending',
+                        'approved' => 'Approved',
+                        'rejected' => 'Rejected',
+                        default => $state,
+                    })
+                    ->color(fn ($state): string => match ($state) {
+                        'submit' => 'warning',
+                        'pending' => 'warning',
+                        'approved' => 'success',
+                        'rejected' => 'danger',
+                        default => 'primary',
+                    })
+                    ->sortable(),
         ];
         
     }
@@ -91,6 +109,51 @@ class listHomeconnectDetails extends ListRecords
     protected function getTableActions(): array
     {
         return [
+            Action::make('pending')
+                ->label('Pending')
+                ->icon('heroicon-o-check-circle')
+                ->color('warning')
+                ->requiresConfirmation()
+                ->visible(fn ($record) => $record->status === 'submit'  && (int) $record->progress_percentage >= 100)
+                ->action(function ($record) {
+                    HomeConnect::where('bast_id', $record->bast_id)->where('id_pelanggan', $record->id_pelanggan)
+                    ->update([
+                        'status'       => 'pending',
+                        'approval_by'  => Auth::user()->email,
+                        'approval_at'  => now(),
+                    ]);
+                })->after(fn () => $this->dispatch('refresh'))
+                ->successNotificationTitle('Data berhasil di-pending'),
+            Action::make('approve')
+                ->label('Approved')
+                ->icon('heroicon-o-check-circle')
+                ->color('success')
+                ->requiresConfirmation()
+                ->visible(fn ($record) => $record->status !== 'approved' && (int) $record->progress_percentage >= 100)
+                ->action(function ($record) {
+                    HomeConnect::where('bast_id', $record->bast_id)->where('id_pelanggan', $record->id_pelanggan)
+                    ->update([
+                        'status'       => 'approved',
+                        'approval_by'  => Auth::user()->email,
+                        'approval_at'  => now(),
+                    ]);
+                })->after(fn () => $this->dispatch('refresh'))
+                ->successNotificationTitle('Data berhasil di-approve'),
+            Action::make('reject')
+                ->label('Rejected')
+                ->icon('heroicon-o-check-circle')
+                ->color('danger')
+                ->requiresConfirmation()
+                ->visible(fn ($record) => $record->status === 'submit'  && (int) $record->progress_percentage >= 100)
+                ->action(function ($record) {
+                    HomeConnect::where('bast_id', $record->bast_id)->where('id_pelanggan', $record->id_pelanggan)
+                    ->update([
+                        'status'       => 'rejected',
+                        'approval_by'  => Auth::user()->email,
+                        'approval_at'  => now(),
+                    ]);
+                })->after(fn () => $this->dispatch('refresh'))
+                ->successNotificationTitle('Data berhasil di-reject'),
             Action::make('export_ba_pdf')
                 ->label('Export BA PDF')
                 ->icon('heroicon-o-arrow-down-tray')
