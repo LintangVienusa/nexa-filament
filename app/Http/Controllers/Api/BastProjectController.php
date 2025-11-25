@@ -764,25 +764,25 @@ class BastProjectController extends Controller
         $odp_name = $validated['odp_name'];
         
 
-        if($odp_name ===""){
-            $bast = BastProject::on('mysql_inventory')->where('bast_id', $bastId)->first();
+        if($odp_name ==""){
+            // $bast = BastProject::on('mysql_inventory')->where('bast_id', $bastId)->first();
 
-            $bast2 = BastProject::on('mysql_inventory')
-                ->where('bast_id', $bastId)
-                ->whereHas('ODCDetail', function($q) use ($odc_name) {
-                    $q->where('odc_name', $odc_name);
-                })
-                ->with(['ODCDetail' => function($q) use ($odc_name) {
-                    $q->where('odc_name', $odc_name);
-                }])
-                ->first();
+            // $bast2 = BastProject::on('mysql_inventory')
+            //     ->where('bast_id', $bastId)
+            //     ->whereHas('ODCDetail', function($q) use ($odc_name) {
+            //         $q->where('odc_name', $odc_name);
+            //     })
+            //     ->with(['ODCDetail' => function($q) use ($odc_name) {
+            //         $q->where('odc_name', $odc_name);
+            //     }])
+            //     ->first();
 
-            if (!$bast2) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => "ODC dengan {$odc_name} tidak ditemukan",
-                ], 404);
-            }
+            // if (!$bast2) {
+            //     return response()->json([
+            //         'status' => 'error',
+            //         'message' => "ODC dengan {$odc_name} tidak ditemukan",
+            //     ], 404);
+            // }
 
             $query = ODPDetail::where('odc_name', $odc_name)->pluck('odp_name')
                 ->toArray();
@@ -790,7 +790,12 @@ class BastProjectController extends Controller
              $query = ODPDetail::where('odp_name', $odp_name)->pluck('odp_name')
                 ->toArray();
         }
-        
+         if (!$query) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => "ODC dengan {$odc_name} tidak ditemukan",
+                ], 404);
+            }
 
         
         
