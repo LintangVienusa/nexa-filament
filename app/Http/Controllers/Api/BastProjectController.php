@@ -786,16 +786,25 @@ class BastProjectController extends Controller
 
             $query = ODPDetail::where('odc_name', $odc_name)->pluck('odp_name')
                 ->toArray();
+
+                if (!$query) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => "ODC dengan {$odc_name} tidak ditemukan",
+                    ], 404);
+                }
         }else{
              $query = ODPDetail::where('odp_name', $odp_name)->pluck('odp_name')
                 ->toArray();
+
+                if (!$query) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => "ODP dengan {$odp_name} tidak ditemukan",
+                    ], 404);
+                }
         }
-         if (!$query) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => "ODC dengan {$odc_name} tidak ditemukan",
-                ], 404);
-            }
+         
 
         
         
