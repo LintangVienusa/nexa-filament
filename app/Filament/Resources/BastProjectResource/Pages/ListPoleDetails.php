@@ -19,13 +19,14 @@ use App\Exports\BastPoleExport;
 use Filament\Tables\Columns\ImageColumn;
 use Illuminate\Support\Facades\DB;
 use Filament\Tables\Columns\ProgressColumn;
+use Illuminate\Support\Facades\Auth;
 
 
 class ListPoleDetails extends ListRecords
 {
     use InteractsWithTable;
     protected static string $resource = BastProjectResource::class;
-
+    protected $connection = 'mysql_inventory';
     protected static ?string $title = 'List Pole Details';
 
     protected static ?string $navigationLabel = 'Pole Details';
@@ -39,12 +40,11 @@ class ListPoleDetails extends ListRecords
 
     protected function getTableQuery(): Builder
     {
-        return PoleDetail::query()
-                ->Join('BastProject', 'PoleDetail.bast_id', '=', 'BastProject.bast_id')
-                ->when($this->bastId, fn($query) => 
-                        $query->where('PoleDetail.bast_id', $this->bastId)
-                    )
-                    ->select('PoleDetail.*', 'BastProject.site');
+        return PoleDetail::on('mysql_inventory')
+            ->with('bastProject')
+            ->when($this->bastId, fn ($query) =>
+                $query->where('bast_id', $this->bastId)
+            );
     }
 
     protected function getTableColumns(): array
@@ -105,12 +105,44 @@ class ListPoleDetails extends ListRecords
                 ')
                 ->html() 
                 ->sortable(),
+            TextColumn::make('status')
+                    ->badge()
+                    ->formatStateUsing(fn ($state) => match ($state) {
+                        'submit' => 'submit',
+                        'pending' => 'Pending',
+                        'approved' => 'Approved',
+                        'rejected' => 'Rejected',
+                        default => $state,
+                    })
+                    ->color(fn ($state): string => match ($state) {
+                        'submit' => 'warning',
+                        'pending' => 'warning',
+                        'approved' => 'success',
+                        'rejected' => 'danger',
+                        default => 'primary',
+                    })
+                    ->sortable(),
         ];
     }
 
     protected function getTableActions(): array
     {
         return [
+            Action::make('pending')
+                ->label('Pending')
+                ->icon('heroicon-o-check-circle')
+                ->color('warning')
+                ->requiresConfirmation()
+                ->visible(fn ($record) => $record->status === 'submit'  && (int) $record->progress_percentage >= 100)
+                ->action(function ($record) {
+                    PoleDetail::where('bast_id', $record->bast_id)->where('pole_sn', $record->pole_sn)
+                    ->update([
+                        'status'       => 'pending',
+                        'approval_by'  => Auth::user()->email,
+                        'approval_at'  => now(),
+                    ]);
+                })->after(fn () => $this->dispatch('refresh'))
+                ->successNotificationTitle('Data berhasil di-pending'),
             Action::make('approve')
                 ->label('Approved')
                 ->icon('heroicon-o-check-circle')
@@ -118,12 +150,29 @@ class ListPoleDetails extends ListRecords
                 ->requiresConfirmation()
                 ->visible(fn ($record) => $record->status !== 'approved' && (int) $record->progress_percentage >= 100)
                 ->action(function ($record) {
-                    $record->update([
+                    PoleDetail::where('bast_id', $record->bast_id)->where('pole_sn', $record->pole_sn)
+                    ->update([
                         'status'       => 'approved',
                         'approval_by'  => Auth::user()->email,
                         'approval_at'  => now(),
                     ]);
-                }),
+                })->after(fn () => $this->dispatch('refresh'))
+                ->successNotificationTitle('Data berhasil di-approve'),
+            Action::make('reject')
+                ->label('Rejected')
+                ->icon('heroicon-o-check-circle')
+                ->color('danger')
+                ->requiresConfirmation()
+                ->visible(fn ($record) => $record->status === 'submit'  && (int) $record->progress_percentage >= 100)
+                ->action(function ($record) {
+                    PoleDetail::where('bast_id', $record->bast_id)->where('pole_sn', $record->pole_sn)
+                    ->update([
+                        'status'       => 'rejected',
+                        'approval_by'  => Auth::user()->email,
+                        'approval_at'  => now(),
+                    ]);
+                })->after(fn () => $this->dispatch('refresh'))
+                ->successNotificationTitle('Data berhasil di-reject'),
             // Tables\Actions\ViewAction::make(),
             Action::make('export_implementation')
                     ->label('Print')
