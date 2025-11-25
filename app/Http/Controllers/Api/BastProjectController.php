@@ -1058,7 +1058,7 @@ class BastProjectController extends Controller
         $station_name = $validated['station_name'];
         $odc_name = $validated['odc_name'];
         
-        if($odc_name == ''){
+        if($odc_name === ''){
             $bastList = BastProject::on('mysql_inventory')->where('station_name', $station_name)->get(['bast_id', 'site']);;
 
             // if (!$bast) {
@@ -1093,6 +1093,13 @@ class BastProjectController extends Controller
 
         $odcData = $odcQuery->get(['odc_name', 'bast_id', 'site']);
 
+        if ($odcData->isEmpty()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => "Tidak ada ODC {$odc_name}",
+            ], 404);
+        }
+
         // --- GROUP BY ODC NAME ---
         $grouped = $odcData->groupBy('odc_name')->map(function ($items, $odcName) {
             return [
@@ -1105,6 +1112,8 @@ class BastProjectController extends Controller
                 })->values()
             ];
         })->values();
+
+        
 
         return response()->json([
             'status' => 'success',
