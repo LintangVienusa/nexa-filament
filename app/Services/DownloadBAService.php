@@ -5,10 +5,13 @@ namespace App\Services;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\HomeConnect;
 use App\Models\BastProject;
+use App\Models\Employee;
 use Carbon\Carbon;
 
 class DownloadBAService
 {
+
+    
     /**
      * Create a new class instance.
      */
@@ -20,15 +23,30 @@ class DownloadBAService
         $bast_id = $HomeConnect->bast_id;
         $bast = BastProject::where('bast_id', $bast_id)
                     ->first();
+        
+        $employee = Employee::where('email',$HomeConnect->updated_by)->first();
+        
+        if($employee->middle_name != ''){
+            $fullname = $employee->first_name." ".$employee->middle_name." ".$employee->last_name;
+        }else{
+            $fullname = $employee->first_name." ".$employee->last_name;
+        }
+        
         $hariTanggal = Carbon::parse($bast->bast_date)
             ->locale('id')
             ->translatedFormat('l, d F Y');
 
         $jam = Carbon::parse($HomeConnect->updated_at)->format('H.i.s');
-        $path = public_path('storage/homeconnect/' . $HomeConnect->foto_label_id_plg);
+        $path = public_path('storage/' . $HomeConnect->foto_label_id_plg);
         $path = str_replace('\\', '/', $path);
-        
+        $base64Image = 'data:image/png;base64,' . base64_encode(file_get_contents($path));
+        // $path     = 'file://' . $path;
+        // $path =realpath($path);
         // dd($path);s
+         $path2 = public_path('storage/' . $HomeConnect->foto_qr);
+        $path2 = str_replace('\\', '/', $path2);
+        // $imagePath = public_path('storage/homeconnect/foto_label_id_plg_1763912701.png');
+        $base64Image2 = 'data:image/png;base64,' . base64_encode(file_get_contents($path2));
 
         $html = "
             <html>
@@ -79,7 +97,7 @@ class DownloadBAService
                 <div class='bold' style='text-decoration: underline;'>DATA PETUGAS</div>
                 <br>
                 <table>
-                    <tr><td>Nama Petugas</td><td>: {$bast->petugas_name}</td></tr>
+                    <tr><td>Nama Petugas</td><td>: {$fullname}</td></tr>
                     <tr><td>Email Petugas</td><td>: {$HomeConnect->updated_by}</td></tr>
                 </table>
 
@@ -105,10 +123,10 @@ class DownloadBAService
                     </tr>
                     <tr>
                         <td class='box'>
-                            <img src='".$path."' width='100%'>
+                            <img src='{$base64Image}' width='100%'>
                         </td>
                         <td class='box'>
-                           <img src='".public_path('storage/'.$HomeConnect->foto_qr)."' width='100%'>
+                           <img src='{$base64Image2}' width='100%' >
                         </td>
                     </tr>
                 </table>
@@ -116,13 +134,13 @@ class DownloadBAService
             </html>
             ";
 
+
             $pdf = Pdf::loadHTML($html)->setOptions([
                 'isHtml5ParserEnabled' => true,
                 'isRemoteEnabled' => true,
-            ]);
-            $pdf->setOptions([
                 'chroot' => public_path(),
             ]);
+            
             return $pdf->setPaper('A4', 'portrait');
         
     }
