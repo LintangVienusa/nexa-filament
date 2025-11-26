@@ -73,7 +73,7 @@ class ListOdcDetails extends ListRecords
             ImageColumn::make('power_optic_olt')
                 ->label('Power Optic dari OLT')
                 ->disk('public')
-                ->getStateUsing(fn($record) => $record->Power_optic_olt ? asset('storage/'.$record->Power_optic_olt) : null)
+                ->getStateUsing(fn($record) => $record->power_optic_olt ? asset('storage/'.$record->power_optic_olt) : null)
                 ->width(150)
                 ->height(150),
 

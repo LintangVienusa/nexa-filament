@@ -990,7 +990,7 @@ class BastProjectController extends Controller
         }
 
         $validated = $request->validate([
-            'bast_id' => 'required|string|exists:mysql_inventory.BastProject,bast_id',
+            'bast_id' => 'nullable|string|exists:mysql_inventory.BastProject,bast_id',
             'odp_name' => 'nullable|string',
             
         ]);

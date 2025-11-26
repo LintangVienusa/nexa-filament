@@ -161,10 +161,17 @@ class listHomeconnectDetails extends ListRecords
                 ->action(function ($record) {
                     $pdf = app(DownloadBAService::class)->downloadBA($record);
 
+                    // return response()->streamDownload(
+                    //     fn () => print($pdf->output()),
+                    //     "BA_{$record->site}.pdf"
+                    // );
                     return response()->streamDownload(
-                        fn () => print($pdf->output()),
-                        "BA_{$record->site}.pdf"
-                    );
+                    fn () =>print($pdf->output()),
+                    "BA_{$record->site}.pdf",
+                    [
+                        "Content-Type" => "application/pdf",
+                    ]
+                );
                 }),
         ];
     }

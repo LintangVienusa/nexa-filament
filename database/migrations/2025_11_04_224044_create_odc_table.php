@@ -21,7 +21,7 @@ return new class extends Migration
                     ->onDelete('cascade');
             $table->string('feeder_name');
             $table->string('instalasi')->nullable();
-            $table->string('Power_optic_olt')->nullable();
+            $table->string('power_optic_olt')->nullable();
             $table->string('flexing_conduit')->nullable();
             $table->string('odc_terbuka')->nullable();
             $table->string('odc_tertutup')->nullable();
