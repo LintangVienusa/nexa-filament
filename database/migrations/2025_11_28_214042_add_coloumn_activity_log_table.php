@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::connection('mysql_activitylog')->table('Activity_Log',  function (Blueprint $table) {
+        Schema::connection('mysql_activitylog')->table('activity_Log',  function (Blueprint $table) {
             $table->string('record_id')->nullable()->after('menu');
         });
     }
@@ -21,7 +21,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::connection('mysql_activitylog')->table('Activity_Log', fn (Blueprint $table) => $table->dropColumn(['record_id']));
-        
+        Schema::connection('mysql_activitylog')->table('activity_Log', fn (Blueprint $table) => $table->dropColumn(['record_id']));
+
     }
 };
