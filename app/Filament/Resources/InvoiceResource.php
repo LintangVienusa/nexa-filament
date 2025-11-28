@@ -198,13 +198,21 @@ class InvoiceResource extends Resource
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()
+                    ->getStateUsing(fn ($record) => match($record->keterangan) {
+                        0 => 'Draft',
+                        1 => 'Approve CTO',
+                        2 => 'Reject CTO',
+                        3 => 'Approve CEO',
+                        4 => 'Reject CEO',
+                        default => 'Draft'
+                    })
                     ->formatStateUsing(fn ($state) => match ($state) {
                         0 => 'Draft',
                         1 => 'Approve CTO',
                         2 => 'Reject CTO',
                         3 => 'Approve CEO',
                         4 => 'Reject CEO',
-                        default => $state,
+                        default => 'Draft',
                     })
                     ->color(fn ($state): string => match ($state) {
                         0 => 'warning',

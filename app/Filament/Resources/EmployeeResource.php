@@ -112,7 +112,21 @@ class EmployeeResource extends Resource
                             ->label('Tanggal Masuk')
                             ->default(now()),
 
-                        
+                        Select::make('employee_type')
+                            ->label('Tipe')
+                            ->options(function () {
+                                $options = [
+                                    'organik'   => 'organik',
+                                    'mitra'     => 'mitra'
+                                ];
+
+                                
+
+                                return $options;
+                            })
+
+                            ->required(),
+
                         Select::make('job_title')
                             ->label('Jabatan')
                             ->options(function () {
@@ -321,6 +335,8 @@ class EmployeeResource extends Resource
                             $direction
                         );
                     }),
+                
+                TextColumn::make('employee_type')->label('Tipe')->searchable()->sortable(),
                 TextColumn::make('organization.divisi_name')->label('Divisi')->searchable()->sortable(),
                 TextColumn::make('organization.unit_name')->label('Unit')->searchable()->sortable(),
                 TextColumn::make('job_title')->label('Jabatan')->searchable()->sortable(),
