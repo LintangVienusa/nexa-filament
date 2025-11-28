@@ -56,6 +56,7 @@ class AuthController extends Controller
                 'email'        => $user->email,
                 'employee_id'  => $employee->employee_id ?? null,
                 'full_name'    => $employee->full_name ?? null,
+                'employee_type'=> $employee->employee_type ?? null,
                 'division'     => optional(optional($employee)->organization)->divisi_name ?? null,
                 'unit_name'    => optional(optional($employee)->organization)->unit_name ?? null,
                 'job_title'    => $employee->job_title ?? null,

@@ -63,7 +63,6 @@ class CreateInvoiceItem extends CreateRecord
         parent::mount();
         $user = auth()->user();
 
-        // Log aktivitas saat halaman Create dibuka
         $activity = activity('InvoiceItems-access')
             ->causedBy(auth()->user())
             ->withProperties([
