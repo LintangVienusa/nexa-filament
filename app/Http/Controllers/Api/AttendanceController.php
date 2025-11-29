@@ -322,7 +322,18 @@ class AttendanceController extends Controller
         $employee_id = $employee->employee_id;
         $today = Carbon::today()->format('Y-m-d');
 
-       
+        $todayas = Carbon::today();
+        if ($todayas->day <= 27) {
+                $startDate = $todayas->copy()->subMonth()->setDay(28)->startOfDay();
+                $endDate   = $todayas->copy()->setDay(27)->endOfDay();
+            } else {
+                $startDate = $todayas->copy()->setDay(28)->startOfDay();
+                $endDate   = $todayas->copy()->addMonth()->setDay(27)->endOfDay();
+            }
+
+        $daysPresent = Attendance::where('employee_id', $employee_id)
+            ->whereBetween('attendance_date', [$startDate, $endDate])
+            ->count();
 
         $attendance = Attendance::where('employee_id', $employee_id)
             ->whereDate('attendance_date', $today)
@@ -408,6 +419,7 @@ class AttendanceController extends Controller
                             ? $attendance->check_out_time->setTimezone('Asia/Jakarta')->format('Y-m-d H:i:s')
                             : null,
                         'working_hours' => $workingHours,
+                        'jml_hari' => $daysPresent,
                         'check_in_evidence' => $base64_in,
                         'check_out_evidence' => $base64_out,
                         'check_in_latitude' => $attendance->check_in_latitude,
