@@ -40,7 +40,21 @@ class DownloadSlipService
                 <html>
                     <head>
                         <style>
-                            body {font-family: DejaVu Sans, Helvetica, Arial, sans-serif; margin: 20px; }
+                            @page {
+                            margin: 0;
+                        }
+
+                        html, body {
+                            margin: 0;
+                            padding: 0;
+                            font-family:  sans-serif;
+                            background-color: #e9d0a9ff;  
+                        }
+
+                        body {
+                            padding: 40px;
+                            position: relative;
+                        }
                             .header { display: flex; align-items: center; }
                             .logo { height: 80px; width: 300px; margin-right: 20px; }
                             .title { font-family: DejaVu Sans, Helvetica, Arial, sans-serif; font-size: 20px; font-weight: bold;  color: #888; }
@@ -48,14 +62,75 @@ class DownloadSlipService
                             .info_pt { font-size: 16px; font-weight: bold; margin-top: 20px; }
                             table { font-size: 14px; width: 100%; border-collapse: collapse; margin-top: 15px; }
                             th, td { border: none; padding: 5px; text-align: left; }
-                            th { background-color: #F0F8FF; }
+                            th { background-color: #dabe92ff; }
                             tfoot td { font-weight: bold; }
                             .footer { position: fixed; bottom: 20px; width: 100%; text-align: center; font-size: 12px; color: #888; }
+                        .watermark {
+                            position: fixed;
+                            bottom: 10px;
+                            left: 0;
+                            width: 100%;
+                            height: 0%;
+                            pointer-events: none;
+                            opacity: 0.11; 
+                            z-index: 0;
+                            }
+
+                            .watermark-row {
+                            position: absolute;
+                            }
+
+                            .watermark-row img {
+                            width: 45rem;
+                            height: auto;
+                            }
+
+                            
+                            .watermark-left {
+                            bottom: 0;
+                            left: -230px;
+                            margin-bottom: -180px;
+                            }
+
+                           
+                            .watermark-center {
+                            bottom: 10px; 
+                            left: 30px;
+                            transform: translateX(-50%);
+                            }
+
+                            
+                            .watermark-right {
+                            bottom: 240px;
+                            right: -230px;
+                            }
+
+                            
+                            .rotate-left {
+                            transform: rotate(0deg);
+                            }
+                            .rotate-pusat {
+                            transform: rotate(0deg);
+                            }
+
+                            .rotate-right {
+                            transform: rotate(180deg);
+                            }
                         </style>
                     </head>
                 <body>
-
-                
+                    <div class="watermark">
+                    
+                    <div class="watermark-row watermark-left rotate-pusat">
+                        <img src="'. public_path('assets/images/LOGO PT DAPOER POESAT NUSANTARA-08.png') .'" alt="Logo">
+                    </div>
+                        <div class="watermark-row watermark-center rotate-right">
+                        <img src="'. public_path('assets/images/LOGO PT DAPOER POESAT NUSANTARA-08.png') .'" alt="Logo">
+                    </div>
+                    <div class="watermark-row watermark-right rotate-left">
+                        <img src="'. public_path('assets/images/LOGO PT DAPOER POESAT NUSANTARA-08.png') .'" alt="Logo">
+                    </div>
+                    </div>
                     <div style="font-size: 12px; text-align: right;">
                         '. $date.'
                     </div>
@@ -72,7 +147,7 @@ class DownloadSlipService
                             </tr>
                         </table>
                     </div>
-                    <img src="' . public_path('assets/images/Kop Surat Logo PT Nexanira Biru.png') . '" class="logo">
+                    <img src="' . public_path('assets/images/Invoice Permit_20251008_233910_0002.png') . '" class="logo">
                         
                     <div class="info" style="display: flex; justify-content: space-between; gap: 10px;">
                         <table style="width: 50%; float:left; border-collapse: collapse; ">
@@ -190,31 +265,31 @@ class DownloadSlipService
                                 </tbody>
                             </table>
                         
-                        <div style="clear:both;"></div>
-                            </div>
-                            <div class="info" style="margin-top: 8px; background-color: #F0F8FF;">
-                                <table style="width: 100%;  text-align: center;">
-                                    <thead>
-                                        <tr>
-                                            <td  style="text-align: center;">
-                                                <strong>Total Net Salary </strong>
-                                            </td>
-                                            
-                                        </tr>
-                                        <tr>
-                                            <td  style="color:#888; text-align: center;">
-                                                <strong>Gross Earnings - Total Deduction</strong>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td  style="color:#1E90FF; font-size:24px; text-align: center;">
-                                                <strong>Rp '.number_format($net_salary,0,',','.').'</strong>
-                                            </td>
-                                        </tr>
-                                    </thead>
-                                </table>
-                            </div>
-                    ';
+                            <div style="clear:both;"></div>
+                                </div>
+                                <div class="info" style="margin-top: 8px; background-color: #dabe92ff;">
+                                    <table style="width: 100%;  text-align: center;">
+                                        <thead>
+                                            <tr>
+                                                <td  style="text-align: center;">
+                                                    <strong>Total Net Salary </strong>
+                                                </td>
+                                                
+                                            </tr>
+                                            <tr>
+                                                <td  style="color:#888; text-align: center;">
+                                                    <strong>Gross Earnings - Total Deduction</strong>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td  style="color:#A0522D; font-size:24px; text-align: center;">
+                                                    <strong stlye="color:#A0522D;";>Rp '.number_format($net_salary,0,',','.').'</strong>
+                                                </td>
+                                            </tr>
+                                        </thead>
+                                    </table>
+                                </div>
+                        ';
        
 
         // Render ke PDF
