@@ -12,6 +12,7 @@ use Spatie\Activitylog\Models\Activity;
 class CreateInvoiceItem extends CreateRecord
 {
     protected static string $resource = InvoiceItemResource::class;
+    protected InvoiceItem $createdRecord;
 
     protected function getRedirectUrl(): string
     {
@@ -23,7 +24,7 @@ class CreateInvoiceItem extends CreateRecord
         $poNumber = $data['po_number'] ?? 'PO.' . now()->format('Y.m') . '.' . rand(10000,99999);
         foreach ($data['items'] as $component) {
             // $poNumber = 'PO-'.date('Ymd-His').'-'.rand(100,999);
-            InvoiceItem::create([
+            $this->createdRecord = InvoiceItem::create([
                 'po_number' =>  $poNumber,
                 'po_description' => $data['po_description'],
                 'customer_id' => $data['customer_id'],
@@ -37,26 +38,32 @@ class CreateInvoiceItem extends CreateRecord
 
              
         }
-        return new InvoiceItem();
+        return $this->createdRecord;
+        // return new InvoiceItem();
     }
-    // protected function mutateFormDataBeforeCreate(array $data): array
-    // {
-    //     $record = $this->record; // record yang baru dibuat
+    protected function afterCreate(): void
+    {
+        $record = $this->createdRecord; // record yang baru dibuat
 
-    //         $activity =activity('filament-action')
-    //             ->causedBy(auth()->user())
+            activity('Invoice-action')
+                ->causedBy(auth()->user())
                 
-    //             ->withProperties([
-    //                 'email' => auth()->user()?->email,
-    //                 'record_id' => $record->id,
-    //                 'name' => $record->name ?? null,
-    //             ])
-    //             ->log('Membuat record InvoiceItem baru');
-    //             Activity::latest()->first()->update([
-    //                 'email' => auth()->user()?->email,
-    //             ]);
-    // return $data;
-    // }
+                ->withProperties([
+                    'ip' =>  request()->ip(),
+                    'menu' => 'Invoice Items',
+                    'email' => auth()->user()?->email,
+                    'record_id' => $record->id,
+                    'url' => request()->fullUrl(),
+                    'name' => $record->name ?? null,
+                ])
+                ->log('Membuat record Invoice baru');
+                Activity::latest()->first()->update([
+                    'email' => auth()->user()?->email,
+                    'record_id' => $record->id,
+                ]);
+    }
+
+    
 
     public function mount(): void
     {

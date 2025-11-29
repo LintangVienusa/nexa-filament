@@ -12,6 +12,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Actions;
+use Filament\Tables\Actions\Action;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Columns\BadgeColumn;
@@ -24,6 +25,7 @@ use App\Services\HariKerjaService;
 use Filament\Forms\Components\Placeholder;
 use Illuminate\Support\HtmlString;
 use App\Traits\HasNavigationPolicy;
+use App\Filament\Resources\LeaveResource\Pages\listLogActivity;
 
 
 
@@ -523,6 +525,16 @@ class LeaveResource extends Resource
                             && $record->approval_2 == 0             
                             && $record->approval_3 == 0              
                         ),
+                Action::make('viewLogs')
+                    ->label('Logs')
+                    ->icon('heroicon-o-clipboard-document-list')
+                    ->url(fn ($record) =>
+                        listLogActivity::getUrl([
+                            'record' => $record->id
+                        ])
+                    )
+                    ->visible(fn ($record) => in_array(auth()->user()->employee?->job_title, ['Manager', 'CTO', 'CEO', 'VP']))
+                    ->openUrlInNewTab()
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -544,6 +556,7 @@ class LeaveResource extends Resource
             'index' => Pages\ListLeaves::route('/'),
             'create' => Pages\CreateLeave::route('/create'),
             'edit' => Pages\EditLeave::route('/{record}/edit'),
+            'logs' => Pages\listLogActivity::route('/{record}/logs'),
         ];
     }
 }

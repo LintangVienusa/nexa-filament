@@ -42,6 +42,7 @@ class EditInvoiceItem extends EditRecord
             Activity::latest()->first()->update([
                 'email' => auth()->user()?->email,
                 'menu' => 'Invoice Items',
+                'record_id' => $record->id,
             ]);
         }
     }
@@ -81,6 +82,7 @@ class EditInvoiceItem extends EditRecord
     protected function mutateFormDataBeforeSave(array $data): array
     {
        // Pastikan customer_id dari form
+       $record = $this->record;
         $data['customer_id'] = $data['customer_id'] ?? ($this->record?->customer_id ?? null);
 
         // Jika ini create, buat invoice dulu untuk dapat ID
@@ -119,26 +121,6 @@ class EditInvoiceItem extends EditRecord
             }
         }
 
-        // Hapus key 'items' agar tidak ikut disimpan di Invoice model
-        unset($data['items']);
-
-        // Pastikan invoice_id selalu ada
-        $data['id'] ??= $invoiceId;
-
-        return $data;
-    }
-
-    protected function getRedirectUrl(): string
-    {
-        return $this->getResource()::getUrl('index');
-    }
-
-    protected function afterSave(): void
-    {
-        parent::afterSave();
-
-        $record = $this->record; // record yang baru diupdate
-
         $activity = activity('InvoiceItems-action')
             ->causedBy(auth()->user())
             ->withProperties([
@@ -153,8 +135,45 @@ class EditInvoiceItem extends EditRecord
             Activity::latest()->first()->update([
                 'email' => auth()->user()?->email,
                 'menu' => 'Invoice Items',
+                'record_id' => $record->id,
             ]);
+        // Hapus key 'items' agar tidak ikut disimpan di Invoice model
+        unset($data['items']);
+
+        // Pastikan invoice_id selalu ada
+        $data['id'] ??= $invoiceId;
+
+        return $data;
     }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
+
+    // protected function afterSave(): void
+    // {
+    //     parent::afterSave();
+
+    //     $record = $this->record; // record yang baru diupdate
+
+    //     $activity = activity('InvoiceItems-action')
+    //         ->causedBy(auth()->user())
+    //         ->withProperties([
+    //             'ip' =>  request()->ip(),
+    //             'menu' => 'Invoice Items',
+    //             'email' => auth()->user()->email,
+    //             'record_id' => $record->id,
+    //             'record_name' => $record->name ?? null,
+    //         ])
+    //         ->log('Mengedit record InvoiceItem');
+
+    //         Activity::latest()->first()->update([
+    //             'email' => auth()->user()?->email,
+    //             'menu' => 'Invoice Items',
+    //             'record_id' => $record->id,
+    //         ]);
+    // }
 
    
 }
