@@ -452,8 +452,9 @@ class BastProjectController extends Controller
 
                 if (!empty($file)) {
                     $filePath = storage_path('app/public/' . $file);
+                    $filePath = preg_replace('/^data:image\/[a-zA-Z0-9]+;base64,/', '', $filePath);
                     $base64Files[$key] = file_exists($filePath)
-                        ? 'data:image/' . pathinfo($filePath, PATHINFO_EXTENSION) . ';base64,' . base64_encode(file_get_contents($filePath))
+                        ? base64_encode(file_get_contents($filePath))
                         : null;
                 } else {
                     $base64Files[$key] = null;
@@ -716,7 +717,7 @@ class BastProjectController extends Controller
                 if (!empty($file)) {
                     $filePath = storage_path('app/public/' . $file);
                     $base64Files[$key] = file_exists($filePath)
-                        ? 'data:image/' . pathinfo($filePath, PATHINFO_EXTENSION) . ';base64,' . base64_encode(file_get_contents($filePath))
+                        ? base64_encode(file_get_contents($filePath))
                         : null;
                 } else {
                     $base64Files[$key] = null;
@@ -1027,8 +1028,9 @@ class BastProjectController extends Controller
 
                 if (!empty($file)) {
                     $filePath = storage_path('app/public/' . $file);
+                     $filePath = preg_replace('/^data:image\/[a-zA-Z0-9]+;base64,/', '', $filePath);
                     $base64Files[$key] = file_exists($filePath)
-                        ? 'data:image/' . pathinfo($filePath, PATHINFO_EXTENSION) . ';base64,' . base64_encode(file_get_contents($filePath))
+                        ? base64_encode(file_get_contents($filePath))
                         : null;
                 } else {
                     $base64Files[$key] = null;
@@ -1072,7 +1074,7 @@ class BastProjectController extends Controller
         $station_name = $validated['station_name'];
         $odc_name = $validated['odc_name'];
         
-        if($odc_name === ''){
+        if($odc_name == ''){
             $bastList = BastProject::on('mysql_inventory')->where('station_name', $station_name)->get(['bast_id', 'site']);;
 
             // if (!$bast) {
@@ -1089,8 +1091,7 @@ class BastProjectController extends Controller
                 ], 404);
             }
 
-            // $query = ODCDetail::where('bast_id', $bastId)->pluck('odc_name')
-            //         ->toArray();
+            // $query = ODCDetail::where('bast_id', $bastId);
             $odcQuery = ODCDetail::query();
 
             foreach ($bastList as $bast) {
@@ -1187,8 +1188,9 @@ class BastProjectController extends Controller
 
                 if (!empty($file)) {
                     $filePath = storage_path('app/public/' . $file);
+                    $filePath = preg_replace('/^data:image\/[a-zA-Z0-9]+;base64,/', '', $filePath);
                     $base64Files[$key] = file_exists($filePath)
-                        ? 'data:image/' . pathinfo($filePath, PATHINFO_EXTENSION) . ';base64,' . base64_encode(file_get_contents($filePath))
+                        ? base64_encode(file_get_contents($filePath))
                         : null;
                 } else {
                     $base64Files[$key] = null;
@@ -1421,7 +1423,7 @@ class BastProjectController extends Controller
                 if (!empty($file)) {
                     $filePath = storage_path('app/public/' . $file);
                     $base64Files[$key] = file_exists($filePath)
-                        ? 'data:image/' . pathinfo($filePath, PATHINFO_EXTENSION) . ';base64,' . base64_encode(file_get_contents($filePath))
+                        ? base64_encode(file_get_contents($filePath))
                         : null;
                 } else {
                     $base64Files[$key] = null;
@@ -1918,7 +1920,7 @@ class BastProjectController extends Controller
                 if (!empty($file)) {
                     $filePath = storage_path('app/public/' . $file);
                     $base64Files[$key] = file_exists($filePath)
-                        ? 'data:image/' . pathinfo($filePath, PATHINFO_EXTENSION) . ';base64,' . base64_encode(file_get_contents($filePath))
+                        ? base64_encode(file_get_contents($filePath))
                         : null;
                 } else {
                     $base64Files[$key] = null;
@@ -2296,7 +2298,7 @@ class BastProjectController extends Controller
                 if (!empty($file)) {
                     $filePath = storage_path('app/public/' . $file);
                     $base64Files[$key] = file_exists($filePath)
-                        ? 'data:image/' . pathinfo($filePath, PATHINFO_EXTENSION) . ';base64,' . base64_encode(file_get_contents($filePath))
+                        ? base64_encode(file_get_contents($filePath))
                         : null;
                 } else {
                     $base64Files[$key] = null;
