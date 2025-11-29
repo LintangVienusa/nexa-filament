@@ -419,7 +419,7 @@ class AttendanceController extends Controller
                             ? $attendance->check_out_time->setTimezone('Asia/Jakarta')->format('Y-m-d H:i:s')
                             : null,
                         'working_hours' => $workingHours,
-                        'jml_hari' => $daysPresent,
+                        'working_days' => $daysPresent,
                         'check_in_evidence' => $base64_in,
                         'check_out_evidence' => $base64_out,
                         'check_in_latitude' => $attendance->check_in_latitude,
@@ -428,7 +428,7 @@ class AttendanceController extends Controller
                         'check_out_longitude' => $attendance->check_out_longitude
 
                 ],
-            ], 404);
+            ]);
         }
 
     }
