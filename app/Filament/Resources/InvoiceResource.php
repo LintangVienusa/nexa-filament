@@ -24,6 +24,7 @@ use App\Services\DownloadInvoiceService;
 use App\Traits\HasOwnRecordPolicy;
 use Spatie\Permission\Traits\HasPermissions;
 use App\Traits\HasNavigationPolicy;
+use App\Filament\Resources\InvoiceResource\Pages\ViewLogActivityInvoice;
 
 class InvoiceResource extends Resource
 {
@@ -444,6 +445,15 @@ class InvoiceResource extends Resource
                         ->log('Invoice diunduh');
                     return $service->downloadInvoice($record);
                 }),
+                Action::make('viewLogs')
+                    ->label('Logs')
+                    ->icon('heroicon-o-clipboard-document-list')
+                    ->url(fn ($record) =>
+        \App\Filament\Resources\InvoiceResource\Pages\ViewLogActivityInvoice::getUrl([
+            'record' => $record->id
+        ])
+    )
+    ->openUrlInNewTab()
             ])
 
             ->bulkActions([
@@ -470,6 +480,7 @@ class InvoiceResource extends Resource
             'index' => Pages\ListInvoices::route('/'),
             'create' => Pages\CreateInvoice::route('/create'),
             'edit' => Pages\EditInvoice::route('/{record}/edit'),
+            'logs' => Pages\ViewLogActivityInvoice::route('/{record}/logs'),
         ];
     }
 }
