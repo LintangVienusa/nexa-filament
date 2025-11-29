@@ -277,7 +277,7 @@ class DownloadSlipService
                                                 
                                             </tr>
                                             <tr>
-                                                <td  style="color:#888; text-align: center;">
+                                                <td  style="color:#A0522D; text-align: center;">
                                                     <strong>Gross Earnings - Total Deduction</strong>
                                                 </td>
                                             </tr>
