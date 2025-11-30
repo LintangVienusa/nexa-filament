@@ -20,6 +20,7 @@ use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Filters\SelectFilter;
 use App\Services\DownloadBAService;
 use Illuminate\Support\Facades\Auth;
+use Filament\Forms\Form as FilamentForm;
 
 
 class listHomeconnectDetails extends ListRecords
@@ -157,20 +158,52 @@ class listHomeconnectDetails extends ListRecords
                     ]);
                 })->after(fn () => $this->dispatch('refresh'))
                 ->successNotificationTitle('Data berhasil di-approve'),
-            Action::make('reject')
+             Action::make('reject')
                 ->label('Rejected')
-                ->icon('heroicon-o-check-circle')
+                ->icon('heroicon-o-x-circle')
                 ->color('danger')
                 ->requiresConfirmation()
-                ->visible(fn ($record) => $record->status === 'submit'  && (int) $record->progress_percentage >= 100)
-                ->action(function ($record) {
-                    HomeConnect::where('bast_id', $record->bast_id)->where('id_pelanggan', $record->id_pelanggan)
-                    ->update([
-                        'status'       => 'rejected',
-                        'approval_by'  => Auth::user()->email,
-                        'approval_at'  => now(),
+                ->visible(fn ($record) => $record->status === 'submit' && (int) $record->progress_percentage >= 100)
+
+                ->form([
+                    \Filament\Forms\Components\Textarea::make('notes')
+                        ->label('Alasan Reject / Catatan')
+                        ->rows(4)
+                        ->required(),
+                ])
+
+                ->mountUsing(function (FilamentForm  $form, $record) {
+                    $detail = HomeConnect::where('bast_id', $record->bast_id)
+                        ->where('id_pelanggan', $record->id_pelanggan)
+                        ->first();
+
+                    $form->fill([
+                        'notes' => '',
+                        'old_notes' => $detail?->notes, 
                     ]);
-                })->after(fn () => $this->dispatch('refresh'))
+                })
+
+                ->action(function ($record, array $data) {
+                    $detail = HomeConnect::where('bast_id', $record->bast_id)
+                        ->where('id_pelanggan', $record->id_pelanggan)
+                        ->first();
+
+                    $oldNotes = $detail?->notes ?? '';
+                    $newEntry = "[" . now() . "] " . Auth::user()->email . "-> Reject :\n" .
+                                $data['notes'] . "\n\n";
+                    $finalNotes = $newEntry ." | " . $oldNotes;
+
+                    HomeConnect::where('bast_id', $record->bast_id)
+                        ->where('id_pelanggan', $record->id_pelanggan)
+                        ->update([
+                            'status'       => 'rejected',
+                            'approval_by'  => Auth::user()->email,
+                            'approval_at'  => now(),
+                            'notes'        => $finalNotes,
+                        ]);
+                })
+
+                ->after(fn () => $this->dispatch('refresh'))
                 ->successNotificationTitle('Data berhasil di-reject'),
             Action::make('export_ba_pdf')
                 ->label('Export BA PDF')
