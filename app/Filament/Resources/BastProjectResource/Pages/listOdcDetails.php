@@ -168,7 +168,8 @@ class ListOdcDetails extends ListRecords
             Action::make('export_implementation')
                     ->label('Print')
                     ->icon('heroicon-o-document-arrow-down')
-                    ->action(fn ($record) => Excel::download(new BastODCExport($record), "Implementation_{$record->kode}.xlsx")),
+                    ->action(fn ($record) => Excel::download(new BastODCExport($record), "Implementation_{$record->kode}.xlsx"))
+                    ->visible(fn ($record) => $record->status === 'approved'),
         ];
     }
 
