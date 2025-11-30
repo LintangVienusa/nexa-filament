@@ -128,6 +128,12 @@ class ListPoleDetails extends ListRecords
     protected function getTableActions(): array
     {
         return [
+            Action::make('maps')
+                        ->label('Lihat Maps')
+                        ->icon('heroicon-o-map')
+                        ->url(fn ($record) => "https://www.google.com/maps?q={$record->latitude},{$record->longitude}")
+                        ->openUrlInNewTab()
+                        ->color('success'),
             Action::make('pending')
                 ->label('Pending')
                 ->icon('heroicon-o-check-circle')
