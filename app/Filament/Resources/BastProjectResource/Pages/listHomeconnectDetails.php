@@ -218,7 +218,7 @@ class listHomeconnectDetails extends ListRecords
                     // );
                     return response()->streamDownload(
                     fn () =>print($pdf->output()),
-                    "BA_{$record->site}.pdf",
+                    "BA_Pelanggan_{$record->id_pelanggan}.pdf",
                     [
                         "Content-Type" => "application/pdf",
                     ]

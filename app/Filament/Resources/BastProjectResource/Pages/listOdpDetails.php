@@ -203,7 +203,7 @@ class listOdpDetails extends ListRecords
             Action::make('export_implementation')
                     ->label('Print')
                     ->icon('heroicon-o-document-arrow-down')
-                    ->action(fn ($record) => Excel::download(new BastODPExport($record), "Implementation_ODP_{$record->site}.xlsx"))
+                    ->action(fn ($record) => Excel::download(new BastODPExport($record), "Implementation_ODP_{$record->odp_name}.xlsx"))
                     ->visible(fn ($record) => $record->status === 'approved'),
         ];
     }
