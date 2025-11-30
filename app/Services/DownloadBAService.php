@@ -37,16 +37,39 @@ class DownloadBAService
             ->translatedFormat('l, d F Y');
 
         $jam = Carbon::parse($HomeConnect->updated_at)->format('H.i.s');
+        
         $path = public_path('storage/' . $HomeConnect->foto_label_id_plg);
-        $path = str_replace('\\', '/', $path);
-        $base64Image = 'data:image/png;base64,' . base64_encode(file_get_contents($path));
-        // $path     = 'file://' . $path;
-        // $path =realpath($path);
-        // dd($path);s
-         $path2 = public_path('storage/' . $HomeConnect->foto_qr);
-        $path2 = str_replace('\\', '/', $path2);
-        // $imagePath = public_path('storage/homeconnect/foto_label_id_plg_1763912701.png');
-        $base64Image2 = 'data:image/png;base64,' . base64_encode(file_get_contents($path2));
+        if($HomeConnect->foto_label_id_plg !=''){
+            $path = str_replace('\\', '/', $path);
+            $idpelanggan = 'data:image/png;base64,' . base64_encode(file_get_contents($path));
+        }else{
+            $idpelanggan ='';
+        }
+
+        $path2 = public_path('storage/' . $HomeConnect->foto_qr);
+        if($HomeConnect->foto_qr !=''){
+            $path2 = str_replace('\\', '/', $path2);
+            $qr = 'data:image/png;base64,' . base64_encode(file_get_contents($path2));
+        }else{
+            $qr = '';
+        }
+
+        $path3 = public_path('storage/' . $HomeConnect->foto_label_odp);
+        if($HomeConnect->foto_label_odp !=''){
+            $path3 = str_replace('\\', '/', $path3);
+            $odp = 'data:image/png;base64,' . base64_encode(file_get_contents($path3));
+        }else{
+            $odp = '';
+        }
+
+        $path4 = public_path('storage/' . $HomeConnect->foto_sn_ont);
+        if($HomeConnect->foto_sn_ont !=''){
+            
+            $path4 = str_replace('\\', '/', $path4);
+            $foto_sn_ont = 'data:image/png;base64,' . base64_encode(file_get_contents($path4));
+        }else{
+            $foto_sn_ont = '';
+        }
 
         $html = "
             <html>
@@ -123,10 +146,22 @@ class DownloadBAService
                     </tr>
                     <tr>
                         <td class='box'>
-                            <img src='{$base64Image}' width='100%'>
+                            <img src='{$idpelanggan}' width='50%'>
                         </td>
                         <td class='box'>
-                           <img src='{$base64Image2}' width='100%' >
+                           <img src='{$qr}' width='50%' >
+                        </td>
+                    </tr>
+                    <tr class='center bold'>
+                        <td>ODP</td>
+                        <td>SN ONT</td>
+                    </tr>
+                    <tr>
+                        <td class='box'>
+                            <img src='{$odp}' width='50%' height='50%'>
+                        </td>
+                        <td class='box'>
+                           <img src='{$foto_sn_ont}' width='50%' height='50%' >
                         </td>
                     </tr>
                 </table>

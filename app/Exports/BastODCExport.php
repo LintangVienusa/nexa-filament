@@ -294,10 +294,10 @@ class BastODCExport implements WithEvents
                     [$startCol, $startRow, $endCol, $endRow] = sscanf($range, "%[A-Z]%d:%[A-Z]%d");
                                     
                                     
-                                    $photoPath = public_path('storage/' . $details->Power_optic_olt);
+                                    $photoPath = public_path('storage/' . $details->power_optic_olt);
                                     $sheet->setCellValue('H14', '');
 
-                    if (file_exists($photoPath) && $details->Power_optic_olt !='' ) {
+                    if (file_exists($photoPath) && $details->power_optic_olt !='' ) {
 
                         $colWidth = 0;
                         foreach (range($startCol, $endCol) as $col) {
@@ -324,7 +324,7 @@ class BastODCExport implements WithEvents
                         }
 
                         $drawing = new Drawing();
-                        $drawing->setPath(public_path('storage/' . $details->Power_optic_olt));
+                        $drawing->setPath(public_path('storage/' . $details->power_optic_olt));
                         $drawing->setCoordinates($startCol . $startRow);
                         $drawing->setOffsetX(5);
                         $drawing->setOffsetY(5);

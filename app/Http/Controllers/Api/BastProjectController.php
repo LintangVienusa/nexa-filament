@@ -2138,11 +2138,11 @@ class BastProjectController extends Controller
 
     
         $photoFields = [
-            // 'foto_label_odp',
+            'foto_label_odp',
             // 'foto_hasil_ukur_odp',
             // 'foto_penarikan_outdoor',
             // 'foto_aksesoris_ikr',
-            // 'foto_sn_ont',
+            'foto_sn_ont',
             // 'foto_depan_rumah',
             'foto_label_id_plg',
             'foto_qr',
@@ -2237,7 +2237,7 @@ class BastProjectController extends Controller
         //     $pole->longitude = 0;
         // }
         
-        $percentage = ($po/3)*100;
+        $percentage = ($po/5)*100;
         $HomeConnect->progress_percentage = $percentage;
         $HomeConnect->status_port = "used";
         $HomeConnect->updated_by = $user->email ?? null;

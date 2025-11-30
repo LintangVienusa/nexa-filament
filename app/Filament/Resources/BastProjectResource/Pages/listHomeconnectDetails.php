@@ -73,6 +73,19 @@ class listHomeconnectDetails extends ListRecords
                 ->getStateUsing(fn($record) => $record->foto_qr ? asset('storage/'.$record->foto_qr) : null)
                 ->width(150)
                 ->height(150),
+            ImageColumn::make('foto_label_odp')
+                ->label('ODP')
+                ->disk('public')
+                ->getStateUsing(fn($record) => $record->foto_label_odp ? asset('storage/'.$record->foto_label_odp) : null)
+                ->width(150)
+                ->height(150),
+
+            ImageColumn::make('foto_sn_ont')
+                ->label('SN ONT')
+                ->disk('public')
+                ->getStateUsing(fn($record) => $record->foto_sn_ont ? asset('storage/'.$record->foto_sn_ont) : null)
+                ->width(150)
+                ->height(150),
             TextColumn::make('progress_percentage')
                 ->label('Progress (%)')
                 ->formatStateUsing(fn ($state) => '
@@ -172,7 +185,7 @@ class listHomeconnectDetails extends ListRecords
                         "Content-Type" => "application/pdf",
                     ]
                 );
-                }),
+                })->visible(fn ($record) => $record->status === 'approved'),
         ];
     }
 
