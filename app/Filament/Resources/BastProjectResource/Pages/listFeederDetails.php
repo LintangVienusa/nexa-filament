@@ -101,27 +101,27 @@ class listFeederDetails extends ListRecords
     protected function getTableActions(): array
     {
         return [
-            Action::make('pending')
-                ->label('Pending')
-                ->icon('heroicon-o-check-circle')
-                ->color('warning')
-                ->requiresConfirmation()
-                ->visible(fn ($record) => $record->status === 'submit'  && (int) $record->progress_percentage >= 100)
-                ->action(function ($record) {
-                    FeederDetail::where('bast_id', $record->bast_id)->where('feeder_name', $record->feeder_name)
-                    ->update([
-                        'status'       => 'pending',
-                        'approval_by'  => Auth::user()->email,
-                        'approval_at'  => now(),
-                    ]);
-                })->after(fn () => $this->dispatch('refresh'))
-                ->successNotificationTitle('Data berhasil di-pending'),
+            // Action::make('pending')
+            //     ->label('Pending')
+            //     ->icon('heroicon-o-check-circle')
+            //     ->color('warning')
+            //     ->requiresConfirmation()
+            //     ->visible(fn ($record) => $record->status === 'submit'  && (int) $record->progress_percentage >= 100)
+            //     ->action(function ($record) {
+            //         FeederDetail::where('bast_id', $record->bast_id)->where('feeder_name', $record->feeder_name)
+            //         ->update([
+            //             'status'       => 'pending',
+            //             'approval_by'  => Auth::user()->email,
+            //             'approval_at'  => now(),
+            //         ]);
+            //     })->after(fn () => $this->dispatch('refresh'))
+            //     ->successNotificationTitle('Data berhasil di-pending'),
             Action::make('approve')
                 ->label('Approved')
                 ->icon('heroicon-o-check-circle')
                 ->color('success')
                 ->requiresConfirmation()
-                ->visible(fn ($record) => $record->status !== 'approved' && (int) $record->progress_percentage >= 100)
+                ->visible(fn ($record) => $record->status === 'submit' && (int) $record->progress_percentage >= 100)
                 ->action(function ($record) {
                     FeederDetail::where('bast_id', $record->bast_id)->where('feeder_name', $record->feeder_name)
                     ->update([

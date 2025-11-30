@@ -127,27 +127,27 @@ class listHomeconnectDetails extends ListRecords
             //             ->url(fn ($record) => "https://www.google.com/maps?q={$record->latitude},{$record->longitude}")
             //             ->openUrlInNewTab()
             //             ->color('success'),
-            Action::make('pending')
-                ->label('Pending')
-                ->icon('heroicon-o-check-circle')
-                ->color('warning')
-                ->requiresConfirmation()
-                ->visible(fn ($record) => $record->status === 'submit'  && (int) $record->progress_percentage >= 100)
-                ->action(function ($record) {
-                    HomeConnect::where('bast_id', $record->bast_id)->where('id_pelanggan', $record->id_pelanggan)
-                    ->update([
-                        'status'       => 'pending',
-                        'approval_by'  => Auth::user()->email,
-                        'approval_at'  => now(),
-                    ]);
-                })->after(fn () => $this->dispatch('refresh'))
-                ->successNotificationTitle('Data berhasil di-pending'),
+            // Action::make('pending')
+            //     ->label('Pending')
+            //     ->icon('heroicon-o-check-circle')
+            //     ->color('warning')
+            //     ->requiresConfirmation()
+            //     ->visible(fn ($record) => $record->status === 'submit'  && (int) $record->progress_percentage >= 100)
+            //     ->action(function ($record) {
+            //         HomeConnect::where('bast_id', $record->bast_id)->where('id_pelanggan', $record->id_pelanggan)
+            //         ->update([
+            //             'status'       => 'pending',
+            //             'approval_by'  => Auth::user()->email,
+            //             'approval_at'  => now(),
+            //         ]);
+            //     })->after(fn () => $this->dispatch('refresh'))
+            //     ->successNotificationTitle('Data berhasil di-pending'),
             Action::make('approve')
                 ->label('Approved')
                 ->icon('heroicon-o-check-circle')
                 ->color('success')
                 ->requiresConfirmation()
-                ->visible(fn ($record) => $record->status !== 'approved' && (int) $record->progress_percentage >= 100)
+                ->visible(fn ($record) => $record->status === 'submit' && (int) $record->progress_percentage >= 100)
                 ->action(function ($record) {
                     HomeConnect::where('bast_id', $record->bast_id)->where('id_pelanggan', $record->id_pelanggan)
                     ->update([
