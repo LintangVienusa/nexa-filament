@@ -29,18 +29,18 @@ class listFeederDetails extends ListRecords
     protected static ?string $navigationLabel = 'Feeder Details';
     protected static ?string $navigationIcon = 'heroicon-o-collection';
     protected static ?string $slug = 'list-feeder-details';
-    public ?int $bastId = null;
-    public function mount(?string $bastId = null): void
+    public ?string $site = null;
+    public function mount(?string $site = null): void
     {
-        $this->bastId = $bastId;
+        $this->site = $site;
     }
 
     protected function getTableQuery(): Builder
     {
         return FeederDetail::query()
                 ->Join('BastProject', 'FeederDetail.bast_id', '=', 'BastProject.bast_id')
-                ->when($this->bastId, fn($query) => 
-                        $query->where('FeederDetail.bast_id', $this->bastId)
+                ->when($this->site, fn($query) => 
+                        $query->where('FeederDetail.site', $this->site)
                     )
                     ->select('FeederDetail.*', 'BastProject.site');
     }

@@ -457,12 +457,12 @@ class BastProjectResource extends Resource
             'index' => Pages\ListBastProjects::route('/'),
             'create' => Pages\CreateBastProject::route('/create'),
             'edit' => Pages\EditBastProject::route('/{record}/edit'),
-            'list-pole-details' => Pages\ListPoleDetails::route('/list-pole-details/{record}'),
-            'list-odc-details' => Pages\ListOdcDetails::route('/list-odc-details/{record}'),
-            'list-odp-details' => Pages\ListOdpDetails::route('/list-odp-details/{record}'),
-            'list-feeder-details' => Pages\ListFeederDetails::route('/list-feeder-details/{record}'),
-            'list-rbs-details' => Pages\ListRbsDetails::route('/list-rbs-details/{record}'),
-            'list-homeconnect-details' => Pages\ListHomeConnectDetails::route('/list-homeconnect-details/{record}'),
+            'list-pole-details' => Pages\ListPoleDetails::route('/list-pole-details/{site}'),
+            'list-odc-details' => Pages\ListOdcDetails::route('/list-odc-details/{site}'),
+            'list-odp-details' => Pages\ListOdpDetails::route('/list-odp-details/{site}'),
+            'list-feeder-details' => Pages\ListFeederDetails::route('/list-feeder-details/{site}'),
+            'list-rbs-details' => Pages\ListRbsDetails::route('/list-rbs-details/{site}'),
+            'list-homeconnect-details' => Pages\ListHomeConnectDetails::route('/list-homeconnect-details/{site}'),
         ];
     }
 }

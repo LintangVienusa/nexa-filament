@@ -32,7 +32,8 @@ class listHomeconnectDetails extends ListRecords
     protected static ?string $navigationLabel = 'Home Connect Details';
     protected static ?string $navigationIcon = 'heroicon-o-collection';
     protected static ?string $slug = 'list-homeconnect-details';
-     public ?int $site = null;
+     public ?string  $site = null;
+     
      public function mount(?string $site = null): void
     {
         $this->site = $site;
@@ -41,10 +42,8 @@ class listHomeconnectDetails extends ListRecords
     protected function getTableQuery(): Builder
     {
         return HomeConnect::query()
-                ->Join('BastProject', 'HomeConnect.site', '=', 'BastProject.site')
-                ->when($this->site, fn($query) => 
-                        $query->where('HomeConnect.site', $this->site)
-                    )
+                ->Join('BastProject', 'HomeConnect.bast_id', '=', 'BastProject.bast_id')
+                ->where('HomeConnect.site', $this->site)
                     ->select('HomeConnect.*', 'BastProject.site');
     }
 

@@ -32,18 +32,18 @@ class ListPoleDetails extends ListRecords
     protected static ?string $navigationLabel = 'Pole Details';
     protected static ?string $navigationIcon = 'heroicon-o-collection';
     protected static ?string $slug = 'list-pole-details';
-     public ?int $bastId = null;
-     public function mount(?string $bastId = null): void
+     public ?string $site = null;
+     public function mount(?string $site = null): void
     {
-        $this->bastId = $bastId;
+        $this->site = $site;
     }
 
     protected function getTableQuery(): Builder
     {
         return PoleDetail::on('mysql_inventory')
             ->with('bastProject')
-            ->when($this->bastId, fn ($query) =>
-                $query->where('bast_id', $this->bastId)
+            ->when($this->site, fn ($query) =>
+                $query->where('site', $this->site)
             );
     }
 

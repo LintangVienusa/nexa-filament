@@ -29,19 +29,19 @@ class listOdpDetails extends ListRecords
     protected static ?string $navigationLabel = 'ODP Details';
     protected static ?string $navigationIcon = 'heroicon-o-collection';
     protected static ?string $slug = 'list-odp-details';
-    public ?int $bastId = null;
+    public ?string $site = null;
 
-    public function mount(?string $bastId = null): void
+    public function mount(?string $site = null): void
     {
-        $this->bastId = $bastId;
+        $this->site = $site;
     }
 
     protected function getTableQuery(): Builder
     {
         return ODPDetail::query()
                 ->Join('BastProject', 'ODPDetail.bast_id', '=', 'BastProject.bast_id')
-                ->when($this->bastId, fn($query) => 
-                        $query->where('ODPDetail.bast_id', $this->bastId)
+                ->when($this->site, fn($query) => 
+                        $query->where('BastProject.site', $this->site)
                     )
                     ->select('ODPDetail.*', 'BastProject.site');
     }
