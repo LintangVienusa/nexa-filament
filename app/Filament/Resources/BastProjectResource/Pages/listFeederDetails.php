@@ -184,7 +184,7 @@ class listFeederDetails extends ListRecords
             Action::make('export_implementation')
                     ->label('Print')
                     ->icon('heroicon-o-document-arrow-down')
-                    ->action(fn ($record) => Excel::download(new BastFeederExport($record), "Implementation_Feeder_{$record->site}.xlsx"))
+                    ->action(fn ($record) => Excel::download(new BastFeederExport($record), "Implementation_Feeder_{$record->feeder_name}.xlsx"))
                     ->visible(fn ($record) => $record->status === 'approved'),
         ];
     }

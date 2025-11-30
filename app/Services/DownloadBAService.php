@@ -81,6 +81,9 @@ class DownloadBAService
                     .title { font-size: 16px; font-weight: bold; }
                     table { width: 100%; border-collapse: collapse; }
                     .box { border: 1px solid #000; height: 230px; }
+                    .page-break {
+                        page-break-before: always;
+                    }
                 </style>
             </head>
             <body>
@@ -103,14 +106,14 @@ class DownloadBAService
                 <br>
 
                 <div style='width: 100%;'>
-                    <table style='width: auto; margin-left: auto; text-align: right;'>
+                    <table style='width: auto; margin-left: 0; text-align: left;'>
                         <tr>
-                            <td class='bold' style='text-align: right;'>Tanggal</td>
-                            <td style='text-align: right;'>: {$hariTanggal}</td>
+                            <td class='bold' style='text-align: left;'>Tanggal</td>
+                            <td style='text-align: left;'>: {$hariTanggal}</td>
                         </tr>
                         <tr>
-                            <td class='bold' style='text-align: right;'>Jam</td>
-                            <td style='text-align: right;'>: {$jam}</td>
+                            <td class='bold' style='text-align: left;'>Jam</td>
+                            <td style='text-align: left;'>: {$jam}</td>
                         </tr>
                     </table>
                 </div>
@@ -119,22 +122,22 @@ class DownloadBAService
 
                 <div class='bold' style='text-decoration: underline;'>DATA PETUGAS</div>
                 <br>
-                <table>
-                    <tr><td>Nama Petugas</td><td>: {$fullname}</td></tr>
-                    <tr><td>Email Petugas</td><td>: {$HomeConnect->updated_by}</td></tr>
+                <table style='width:50%;'>
+                    <tr><td style='text-align: left;'>Nama Petugas</td><td style='text-align: left;'>: {$fullname}</td></tr>
+                    <tr><td style='text-align: left;'>Email Petugas</td><td style='text-align: left;'>: {$HomeConnect->updated_by}</td></tr>
                 </table>
 
                 <br>
 
-                <div class='bold' style='text-decoration: underline;'>DATA PELANGGAN</div>
+                <div class='bold' style='text-decoration: underline;  text-left: right;'>DATA PELANGGAN</div>
                 <br>
-                <table>
-                    <tr><td>Nama Pelanggan</td><td>: {$HomeConnect->name_pelanggan}</td></tr>
-                    <tr><td>ID Pelanggan</td><td>: {$HomeConnect->id_pelanggan}</td></tr>
-                    <tr><td>SN ONT</td><td>: {$HomeConnect->sn_ont}</td></tr>
-                    <tr><td>Datek ODP</td><td>: {$HomeConnect->odp_name}</td></tr>
-                    <tr><td>Port ODP</td><td>: {$HomeConnect->port_odp}</td></tr>
-                    <tr><td>Site Pekerjaan</td><td>: {$HomeConnect->site}</td></tr>
+                <table style='width:50%;'>
+                    <tr><td style='text-align: left;'>Nama Pelanggan</td><td style='text-align: left;'>: {$HomeConnect->name_pelanggan}</td></tr>
+                    <tr><td style='text-align: left;'>ID Pelanggan</td><td style='text-align: left;'>: {$HomeConnect->id_pelanggan}</td></tr>
+                    <tr><td style='text-align: left;'>SN ONT</td><td style='text-align: left;'>: {$HomeConnect->sn_ont}</td></tr>
+                    <tr><td style='text-align: left;'>Datek ODP</td><td style='text-align: left;'>: {$HomeConnect->odp_name}</td></tr>
+                    <tr><td style='text-align: left;'>Port ODP</td><td style='text-align: left;'>: {$HomeConnect->port_odp}</td></tr>
+                    <tr><td style='text-align: left;'>Site Pekerjaan</td><td style='text-align: left;'>: {$HomeConnect->site}</td></tr>
                 </table>
 
                 <br><br>
@@ -145,23 +148,27 @@ class DownloadBAService
                         <td>FOTO STIKER QR DI RUMAH PELANGGAN</td>
                     </tr>
                     <tr>
-                        <td class='box'>
-                            <img src='{$idpelanggan}' width='50%'>
+                        <td class='box' center>
+                            <img src='{$idpelanggan}' width='50%'  >
                         </td>
-                        <td class='box'>
-                           <img src='{$qr}' width='50%' >
+                        <td class='box' center>
+                           <img src='{$qr}' width='50%'  >
                         </td>
                     </tr>
+                
+                </table>
+                <div style='page-break-before: always;'></div>
+                <table border='1'>
                     <tr class='center bold'>
-                        <td>ODP</td>
-                        <td>SN ONT</td>
+                        <td>FOTO ODP</td>
+                        <td>FOTO SN ONT</td>
                     </tr>
                     <tr>
-                        <td class='box'>
-                            <img src='{$odp}' width='50%' height='50%'>
+                        <td class='box' center>
+                            <img src='{$odp}' width='50%' height='25%'>
                         </td>
-                        <td class='box'>
-                           <img src='{$foto_sn_ont}' width='50%' height='50%' >
+                        <td class='box' center>
+                           <img src='{$foto_sn_ont}' width='50%' height='25%' >
                         </td>
                     </tr>
                 </table>
