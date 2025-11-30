@@ -89,6 +89,7 @@ class SalarySlip extends Model
                     
                 $payroll = Payroll::create([
                     'employee_id'           => $salarySlip->employee_id,
+                    'salary_slip_id'        =>$salarySlip->id,
                     'number_of_employees'   => '0',
                     'periode'               => $periodeString ?? Carbon::now()->format('F Y'),
                     'start_date'            => $startDate,

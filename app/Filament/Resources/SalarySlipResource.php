@@ -33,6 +33,7 @@ use App\Services\HariKerjaService;
 use App\Traits\HasOwnRecordPolicy;
 use Spatie\Permission\Traits\HasPermissions;
 use App\Traits\HasNavigationPolicy;
+use Filament\Tables\Filters\SelectFilter;
 
 class SalarySlipResource extends Resource
 {
@@ -610,7 +611,16 @@ class SalarySlipResource extends Resource
                 ->extraAttributes(['class' => '!max-w-none w-full']), 
             ])
             ->filters([
-                
+                SelectFilter::make('periode')
+                    ->label('Filter Periode')
+                    ->options(
+                        \App\Models\SalarySlip::query()
+                            ->select('periode')
+                            ->distinct()
+                            ->orderBy('periode', 'desc')
+                            ->pluck('periode', 'periode')
+                            ->toArray()
+                    )
             ])
             ->actions([
                 
@@ -618,9 +628,9 @@ class SalarySlipResource extends Resource
                 Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
+                // Tables\Actions\BulkActionGroup::make([
+                //     Tables\Actions\DeleteBulkAction::make(),
+                // ]),
             ]);
     }
     

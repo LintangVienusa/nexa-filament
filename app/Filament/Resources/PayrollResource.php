@@ -29,6 +29,7 @@ use App\Services\DownloadSlipService;
 use App\Traits\HasOwnRecordPolicy;
 use Spatie\Permission\Traits\HasPermissions;
 use App\Traits\HasNavigationPolicy;
+use Filament\Tables\Filters\SelectFilter;
 
 class PayrollResource extends Resource
 {
@@ -201,6 +202,23 @@ class PayrollResource extends Resource
             ->columns([
                 Split::make([
                     TextColumn::make('employee_id'),
+                    TextColumn::make('employee.first_name')
+                            ->label('Nama')
+                            ->getStateUsing(fn($record) => $record->employee?->full_name ?? '-')
+                            ->searchable(query: function ($query, $search) {
+                                $query->whereHas('employee', function ($q) use ($search) {
+                                    $q->whereRaw("CONCAT(first_name, ' ', middle_name,' ', last_name) LIKE ?", ["%{$search}%"]);
+                                });
+                            })
+                            ->sortable(function (Builder $query) {
+                                $direction = request()->input('tableSortDirection', 'asc');
+                                return $query->orderBy(
+                                    Employee::selectRaw("CONCAT(first_name,' ', middle_name, ' ', last_name)")
+                                        ->whereColumn('employees.employee_id', 'attendances.employee_id')
+                                        ->limit(1),
+                                    $direction
+                                );
+                            }),
                     TextColumn::make('periode')->sortable()->searchable(),
                     TextColumn::make('status')
                                 ->label('Status')
@@ -240,7 +258,16 @@ class PayrollResource extends Resource
             ])
             
             ->filters([
-                //
+                SelectFilter::make('periode')
+                    ->label('Filter Periode')
+                    ->options(
+                        \App\Models\SalarySlip::query()
+                            ->select('periode')
+                            ->distinct()
+                            ->orderBy('periode', 'desc')
+                            ->pluck('periode', 'periode')
+                            ->toArray()
+                    )
             ])
             ->actions([
                 Action::make('approve')
