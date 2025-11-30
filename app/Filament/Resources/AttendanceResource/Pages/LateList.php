@@ -124,6 +124,18 @@ class LateList extends ListRecords
                     ->modalHeading('Perbarui Status Absensi')
                     ->modalButton('Update'),
             ])
+            ->filters([
+                \Filament\Tables\Filters\Filter::make('attendance_date')
+                    ->form([
+                        \Filament\Forms\Components\DatePicker::make('from')->label('Dari Tanggal'),
+                        \Filament\Forms\Components\DatePicker::make('until')->label('Sampai Tanggal'),
+                    ])
+                    ->query(function ($query, array $data) {
+                        return $query
+                            ->when($data['from'] ?? null, fn($q, $date) => $q->whereDate('attendance_date', '>=', $date))
+                            ->when($data['until'] ?? null, fn($q, $date) => $q->whereDate('attendance_date', '<=', $date));
+                    })
+            ])
             ->defaultSort('attendance_date', 'desc')
             ->paginated([10, 25, 50]);
     }
