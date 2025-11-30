@@ -198,7 +198,22 @@ class AutoCheckout extends Command
                         ]);
 
                     $this->line("✔ {$emp->employee_id} -> Fix checkout teknisi >20:00 diturunkan");
-                }
+                }elseif (!$isTechnician && $attendance->check_out_time > $date .' 23:30:00') {
+                        $attendance->where('employee_id', $emp->employee_id)->whereIn('status', [0,2])->whereDate('attendance_date', $date)->update([
+                            'check_out_time' => $date . ' 23:00:00',
+                            'updated_by' => 'Auto Checkout',
+                        ]);
+
+                        Timesheet::where('attendance_id', $attendance->id)
+                            ->whereDate('created_at', $date)
+                            ->whereIn('status', [0,2])
+                            ->update([
+                                'status' => 1,
+                                'updated_at' => $date . ' ' . $checkoutTime,
+                            ]);
+                            
+                            $this->line("✅ {$emp->employee_id} -> Fix checkout bukan teknisi >23:00 diturunkan");
+                    }
 
                
         }
