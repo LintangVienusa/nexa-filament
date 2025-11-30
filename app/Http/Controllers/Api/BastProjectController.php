@@ -2237,7 +2237,7 @@ class BastProjectController extends Controller
         //     $pole->longitude = 0;
         // }
         
-        $percentage = ($po/5)*100;
+        $percentage = ($po/4)*100;
         $HomeConnect->progress_percentage = $percentage;
         $HomeConnect->status_port = "used";
         $HomeConnect->updated_by = $user->email ?? null;
@@ -2433,7 +2433,7 @@ class BastProjectController extends Controller
                     ->value('jml') ?? 0;
                             
             $jml_all = $HomeConnectprog;
-            $presen = ($jml_all/5)*100;
+            $presen = ($jml_all/4)*100;
         }
         
 
