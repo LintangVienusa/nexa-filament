@@ -28,18 +28,18 @@ class ListOdcDetails extends ListRecords
     protected static ?string $navigationLabel = 'ODC Details';
     protected static ?string $navigationIcon = 'heroicon-o-collection';
     protected static ?string $slug = 'list-odc-details';
-     public ?int $bastId = null;
-     public function mount(?string $bastId = null): void
+     public ?string $site = null;
+     public function mount(?string $site = null): void
     {
-        $this->bastId = $bastId;
+        $this->site = $site;
     }
 
     protected function getTableQuery(): Builder
     {
         return ODCDetail::query()
                 ->Join('BastProject', 'ODCDetail.bast_id', '=', 'BastProject.bast_id')
-                ->when($this->bastId, fn($query) => 
-                        $query->where('ODCDetail.bast_id', $this->bastId)
+                ->when($this->site, fn($query) => 
+                        $query->where('BastProject.site', $this->site)
                     )
                     ->select('ODCDetail.*', 'BastProject.site');
     }
