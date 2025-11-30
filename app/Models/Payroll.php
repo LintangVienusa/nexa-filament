@@ -13,6 +13,7 @@ class Payroll extends Model
 
      protected $fillable = [
         'employee_id',
+        'salary_slip_id',
         'periode',
         'status',
         'number_of_employees',
@@ -38,8 +39,10 @@ class Payroll extends Model
 
     public function salarySlips()
     {
-        return $this->hasMany(SalarySlip::class, 'payroll_id');
+        return $this->hasMany(SalarySlip::class, 'salary_slip_id','id');
     }
+
+    
 
     
 
