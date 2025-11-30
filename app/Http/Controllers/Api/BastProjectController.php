@@ -1023,6 +1023,12 @@ class BastProjectController extends Controller
 
             $base64Files = [];
 
+            $base64Files['odc_name']=$record->odc_name;
+            $base64Files['odp_name']=$record->odp_name;
+            $base64Files['notes']=$record->notes;
+            $base64Files['latitude']=$record->latitude;
+            $base64Files['longitude']=$record->longitude;
+
             foreach ($fileKeys as $key) {
                 $file = $record->$key ?? null;
 
@@ -1182,6 +1188,11 @@ class BastProjectController extends Controller
             ];
 
             $base64Files = [];
+            
+            $base64Files['odc_name']=$record->odc_name;
+            $base64Files['notes']=$record->notes;
+            $base64Files['latitude']=$record->latitude;
+            $base64Files['longitude']=$record->longitude;
 
             foreach ($fileKeys as $key) {
                 $file = $record->$key ?? null;
@@ -1415,7 +1426,10 @@ class BastProjectController extends Controller
                 'instalasi',
             ];
 
-            $base64Files = [];
+            $base64Files = []; 
+
+            $base64Files['feeder_name']=$record->feeder_name;
+            $base64Files['notes']=$record->notes;
 
             foreach ($fileKeys as $key) {
                 $file = $record->$key ?? null;
