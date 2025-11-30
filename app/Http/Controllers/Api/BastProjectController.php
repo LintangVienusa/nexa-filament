@@ -380,6 +380,7 @@ class BastProjectController extends Controller
         $percentage = ($p/7)*100;
         $poleDetail->progress_percentage = $percentage;
 
+        $poleDetail->status = 'submit';
         $poleDetail->updated_by = $user->email ?? null;
         $poleDetail->save();
 
@@ -962,6 +963,7 @@ class BastProjectController extends Controller
         // }
         $percentage = ($po/5)*100;
         $odpDetail->progress_percentage = $percentage;
+        $odpDetail->status = 'submit';
         $odpDetail->updated_by = $user->email ?? null;
         $odpDetail->save();
 
@@ -1370,6 +1372,7 @@ class BastProjectController extends Controller
         // }
         $percentage = ($po/6)*100;
         $odcDetail->progress_percentage = $percentage;
+        $odceDetail->status = 'submit';
         $odcDetail->updated_by = $user->email ?? null;
         $odcDetail->save();
 
@@ -1660,6 +1663,7 @@ class BastProjectController extends Controller
         // }
         $percentage = ($po/2)*100;
         $feederDetail->progress_percentage = $percentage;
+        $feederDetail->status = 'submit';
         $feederDetail->updated_by = $user->email ?? null;
         $feederDetail->save();
 
@@ -2239,6 +2243,7 @@ class BastProjectController extends Controller
         
         $percentage = ($po/4)*100;
         $HomeConnect->progress_percentage = $percentage;
+        $HomeConnect->status = 'submit';
         $HomeConnect->status_port = "used";
         $HomeConnect->updated_by = $user->email ?? null;
         $HomeConnect->save();

@@ -18,6 +18,7 @@ use Filament\Tables\Actions\Action;
 use App\Exports\BastODCExport;
 use Filament\Tables\Columns\ImageColumn;
 use Illuminate\Support\Facades\Auth;
+use Filament\Forms\Form as FilamentForm;
 
 class ListOdcDetails extends ListRecords
 {
@@ -126,27 +127,27 @@ class ListOdcDetails extends ListRecords
                         ->openUrlInNewTab()
                         ->color('success'),
                 
-            Action::make('pending')
-                ->label('Pending')
-                ->icon('heroicon-o-check-circle')
-                ->color('warning')
-                ->requiresConfirmation()
-                ->visible(fn ($record) => $record->status === 'submit'  && (int) $record->progress_percentage >= 100)
-                ->action(function ($record) {
-                    ODCDetail::where('bast_id', $record->bast_id)->where('odc_name', $record->odc_name)
-                    ->update([
-                        'status'       => 'pending',
-                        'approval_by'  => Auth::user()->email,
-                        'approval_at'  => now(),
-                    ]);
-                })->after(fn () => $this->dispatch('refresh'))
-                ->successNotificationTitle('Data berhasil di-pending'),
+            // Action::make('pending')
+            //     ->label('Pending')
+            //     ->icon('heroicon-o-check-circle')
+            //     ->color('warning')
+            //     ->requiresConfirmation()
+            //     ->visible(fn ($record) => $record->status === 'submit'  && (int) $record->progress_percentage >= 100)
+            //     ->action(function ($record) {
+            //         ODCDetail::where('bast_id', $record->bast_id)->where('odc_name', $record->odc_name)
+            //         ->update([
+            //             'status'       => 'pending',
+            //             'approval_by'  => Auth::user()->email,
+            //             'approval_at'  => now(),
+            //         ]);
+            //     })->after(fn () => $this->dispatch('refresh'))
+            //     ->successNotificationTitle('Data berhasil di-pending'),
             Action::make('approve')
                 ->label('Approved')
                 ->icon('heroicon-o-check-circle')
                 ->color('success')
                 ->requiresConfirmation()
-                ->visible(fn ($record) => $record->status !== 'approved' && (int) $record->progress_percentage >= 100)
+                ->visible(fn ($record) => $record->status === 'submit' && (int) $record->progress_percentage >= 100)
                 ->action(function ($record) {
                     ODCDetail::where('bast_id', $record->bast_id)->where('odc_name', $record->odc_name)
                     ->update([
@@ -158,18 +159,50 @@ class ListOdcDetails extends ListRecords
                 ->successNotificationTitle('Data berhasil di-approve'),
             Action::make('reject')
                 ->label('Rejected')
-                ->icon('heroicon-o-check-circle')
+                ->icon('heroicon-o-x-circle')
                 ->color('danger')
                 ->requiresConfirmation()
-                ->visible(fn ($record) => $record->status === 'submit'  && (int) $record->progress_percentage >= 100)
-                ->action(function ($record) {
-                    ODCDetail::where('bast_id', $record->bast_id)->where('odc_name', $record->odc_name)
-                    ->update([
-                        'status'       => 'rejected',
-                        'approval_by'  => Auth::user()->email,
-                        'approval_at'  => now(),
+                ->visible(fn ($record) => $record->status === 'submit' && (int) $record->progress_percentage >= 100)
+
+                ->form([
+                    \Filament\Forms\Components\Textarea::make('notes')
+                        ->label('Alasan Reject / Catatan')
+                        ->rows(4)
+                        ->required(),
+                ])
+
+                ->mountUsing(function (FilamentForm  $form, $record) {
+                    $detail = ODCDetail::where('bast_id', $record->bast_id)
+                        ->where('odc_name', $record->odc_name)
+                        ->first();
+
+                    $form->fill([
+                        'notes' => '',
+                        'old_notes' => $detail?->notes, 
                     ]);
-                })->after(fn () => $this->dispatch('refresh'))
+                })
+
+                ->action(function ($record, array $data) {
+                    $detail = ODCDetail::where('bast_id', $record->bast_id)
+                        ->where('odc_name', $record->odc_name)
+                        ->first();
+
+                    $oldNotes = $detail?->notes ?? '';
+                    $newEntry = "[" . now() . "] " . Auth::user()->email . "-> Reject :\n" .
+                                $data['notes'] . "\n\n";
+                    $finalNotes = $newEntry ." | " . $oldNotes;
+
+                    ODCDetail::where('bast_id', $record->bast_id)
+                        ->where('odc_name', $record->odc_name)
+                        ->update([
+                            'status'       => 'rejected',
+                            'approval_by'  => Auth::user()->email,
+                            'approval_at'  => now(),
+                            'notes'        => $finalNotes,
+                        ]);
+                })
+
+                ->after(fn () => $this->dispatch('refresh'))
                 ->successNotificationTitle('Data berhasil di-reject'),
             // Tables\Actions\ViewAction::make(),
             Action::make('export_implementation')
