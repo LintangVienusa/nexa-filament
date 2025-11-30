@@ -8,6 +8,7 @@ use App\Models\Attendance;
 use App\Models\User;
 use App\Models\Employee;
 use App\Models\Timesheet;
+use App\Services\AttendanceRuleService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
@@ -128,6 +129,8 @@ class AttendanceController extends Controller
                 'created_by' => $email,
             ]);
         }
+        
+            AttendanceRuleService::applyRules($attendance);
 
         return response()->json([
             'message' => 'Check-in berhasil',

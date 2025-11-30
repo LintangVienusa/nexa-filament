@@ -26,7 +26,7 @@ class AttendanceRuleService
         $hasTimesheet = Timesheet::where('attendance_id', $attendance->id)->exists();
 
         if ($now->gt($limitTask) && ! $hasTimesheet) {
-            $status = '3'; // 2 = Alpha
+            $status = '3';
             $info = 'Tidak input task sebelum 09:15 WIB';
         }else{
             if ($checkinTime) {
