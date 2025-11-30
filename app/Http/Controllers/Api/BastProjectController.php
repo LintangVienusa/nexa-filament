@@ -446,6 +446,10 @@ class BastProjectController extends Controller
             ];
 
             $base64Files = [];
+            $base64Files['pole_sn']=$record->pole_sn;
+            $base64Files['notes']=$record->notes;
+            $base64Files['latitude']=$record->latitude;
+            $base64Files['longitude']=$record->longitude;
 
             foreach ($fileKeys as $key) {
                 $file = $record->$key ?? null;
