@@ -24,6 +24,12 @@ use App\Traits\HasNavigationPolicy;
 class LogActivityResource extends Resource
 {
     use HasPermissions, HasOwnRecordPolicy, HasNavigationPolicy;
+    
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
+    }
+    protected static bool $shouldRegisterNavigation = false;
     protected static ?string $model = LogActivity::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-check';
@@ -31,6 +37,7 @@ class LogActivityResource extends Resource
     protected static ?string $navigationLabel = 'Log Activity';
     protected static ?string $pluralModelLabel = 'Log Activities';
     protected static ?string $slug = 'log-activities';
+    
 
     public static function form(Form $form): Form
     {

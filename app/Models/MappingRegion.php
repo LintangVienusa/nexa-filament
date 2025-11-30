@@ -14,6 +14,8 @@ class MappingRegion extends Model
     protected $fillable = [
         'province_name',
         'province_code',
+        'regency_name',
+        'regency_code',
         'district_name',
         'district_code',
         'station_name',

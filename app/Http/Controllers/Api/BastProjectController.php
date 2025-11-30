@@ -2298,11 +2298,11 @@ class BastProjectController extends Controller
             $record = $query->first();
 
             $fileKeys = [
-                // 'foto_label_odp',
+                'foto_label_odp',
                 // 'foto_hasil_ukur_odp',
                 // 'foto_penarikan_outdoor',
                 // 'foto_aksesoris_ikr',
-                // 'foto_sn_ont',
+                'foto_sn_ont',
                 // 'foto_depan_rumah',
                 'foto_label_id_plg',
                 'foto_qr',
@@ -2433,7 +2433,7 @@ class BastProjectController extends Controller
                     ->value('jml') ?? 0;
                             
             $jml_all = $HomeConnectprog;
-            $presen = ($jml_all/3)*100;
+            $presen = ($jml_all/5)*100;
         }
         
 
