@@ -54,9 +54,15 @@ class listFeederDetails extends ListRecords
             TextColumn::make('feeder_name')->searchable(),
             TextColumn::make('notes')->searchable(),
             ImageColumn::make('pulling_cable')
-                ->label('Pulling Cable')
+                ->label('Pulling Cable A')
                 ->disk('public')
                 ->getStateUsing(fn($record) => $record->pulling_cable ? asset('storage/'.$record->pulling_cable) : null)
+                ->width(150)
+                ->height(150),
+            ImageColumn::make('pulling_cable_b')
+                ->label('Pulling Cable B')
+                ->disk('public')
+                ->getStateUsing(fn($record) => $record->pulling_cable_b ? asset('storage/'.$record->pulling_cable_b) : null)
                 ->width(150)
                 ->height(150),
 
