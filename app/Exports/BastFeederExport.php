@@ -116,7 +116,7 @@ class BastFeederExport implements WithEvents
 
                 $sheet->mergeCells('C12:F13');
                 $sheet->fromArray([
-                    [  $details->feeder_name.' Pulling Cable'],
+                    [  $details->feeder_name.' Pulling Cable A'],
                 ], null, 'C12', true);
 
                  $sheet->getStyle('C12:F13')->applyFromArray([
@@ -218,7 +218,7 @@ class BastFeederExport implements WithEvents
 
                 $sheet->mergeCells('H12:K13');
                 $sheet->fromArray([
-                    [  $details->feeder_name.' Instalasi Accsesoris'],
+                    [  $details->feeder_name.' Pulling Cable B'],
                 ], null, 'H12', true);
 
                 $sheet->getStyle('H14:K28')->applyFromArray([
@@ -237,8 +237,99 @@ class BastFeederExport implements WithEvents
                     [$startCol, $startRow, $endCol, $endRow] = sscanf($range, "%[A-Z]%d:%[A-Z]%d");
                                    
                                     
-                                    $photoPath = public_path('storage/' . $details->instalasi);
+                                    $photoPath = public_path('storage/' . $details->pulling_cable_b);
                                     $sheet->setCellValue('H14', '');
+
+                    if (file_exists($photoPath) && $details->pulling_cable_b !='' ) {
+
+                        $colWidth = 0;
+                        foreach (range($startCol, $endCol) as $col) {
+                            $colWidth += $sheet->getColumnDimension($col)->getWidth() * 7;
+                        }
+
+                        $rowHeight = 0;
+                        for ($r = $startRow; $r <= $endRow; $r++) {
+                            $rowHeight += $sheet->getRowDimension($r)->getRowHeight() ?: 15;
+                        }
+
+                        
+                        $imgWidth = 0;
+                        $imgHeight = 0;
+                        $scale = 1;
+
+                        if (file_exists($photoPath)) {
+                            $size = getimagesize($photoPath);
+                            if ($size) {
+                                [$imgWidth, $imgHeight] = $size;
+                                if ($imgWidth > 0 && $imgHeight > 0) {
+                                    $scale = min(($colWidth - 10) / $imgWidth, ($rowHeight - 10) / $imgHeight);
+                                }
+                            }
+                        }
+
+                        $drawing = new Drawing();
+                        $drawing->setPath(public_path('storage/' . $details->pulling_cable_b));
+                        $drawing->setCoordinates($startCol . $startRow);
+                        $drawing->setOffsetX(5);
+                        $drawing->setOffsetY(5);
+                        $drawing->setWidth(190);
+                        $drawing->setHeight(190);
+                        $drawing->setWorksheet($sheet);
+                    }
+                $sheet->mergeCells('H28:K28');
+                // $sheet->mergeCells('H29:K29');
+                $sheet->fromArray([
+                    [ 'Koordinat ',': ',''],
+                ], null, 'H29', true);
+                // $sheet->mergeCells('H30:K30');s
+                $sheet->fromArray([
+                    [ 'Remark ',': ',''],
+                ], null, 'H30', true);
+
+                $sheet->getStyle('H29:K30')->applyFromArray([
+                    'borders' => [
+                        'outline' => [
+                            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
+                            'color' => ['rgb' => '000000']
+                        ]
+                    ]
+                ]);
+
+                ##
+                 $sheet->getStyle('M12:P13')->applyFromArray([
+                    'borders' => [
+                        'outline' => [
+                            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
+                            'color' => ['rgb' => '000000']
+                        ]
+                    ]
+                ])->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+                $sheet->getStyle('M12')->getFont()->setBold(true)->setSize(11);
+                $sheet->getStyle('M12:P13')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('C5EFCA');
+
+                $sheet->mergeCells('M12:P13');
+                $sheet->fromArray([
+                    [  $details->feeder_name.' Instalasi Accsesoris'],
+                ], null, 'M12', true);
+
+                $sheet->getStyle('M14:P28')->applyFromArray([
+                    'borders' => [
+                        'outline' => [
+                            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
+                            'color' => ['rgb' => '000000']
+                        ]
+                    ]
+                ]);
+                
+
+                $sheet->mergeCells('M14:P27');
+
+                $range = 'M14:P27';
+                    [$startCol, $startRow, $endCol, $endRow] = sscanf($range, "%[A-Z]%d:%[A-Z]%d");
+                                   
+                                    
+                                    $photoPath = public_path('storage/' . $details->instalasi);
+                                    $sheet->setCellValue('M14', '');
 
                     if (file_exists($photoPath) && $details->instalasi !='' ) {
 
@@ -276,17 +367,17 @@ class BastFeederExport implements WithEvents
                         $drawing->setHeight(190);
                         $drawing->setWorksheet($sheet);
                     }
-                $sheet->mergeCells('H28:K28');
+                $sheet->mergeCells('M28:P28');
                 // $sheet->mergeCells('H29:K29');
                 $sheet->fromArray([
                     [ 'Koordinat ',': ',''],
-                ], null, 'H29', true);
+                ], null, 'M29', true);
                 // $sheet->mergeCells('H30:K30');s
                 $sheet->fromArray([
                     [ 'Remark ',': ',''],
-                ], null, 'H30', true);
+                ], null, 'M30', true);
 
-                $sheet->getStyle('H29:K30')->applyFromArray([
+                $sheet->getStyle('M29:P30')->applyFromArray([
                     'borders' => [
                         'outline' => [
                             'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,

@@ -1372,7 +1372,7 @@ class BastProjectController extends Controller
         // }
         $percentage = ($po/6)*100;
         $odcDetail->progress_percentage = $percentage;
-        $odceDetail->status = 'submit';
+        $odcDetail->status = 'submit';
         $odcDetail->updated_by = $user->email ?? null;
         $odcDetail->save();
 
@@ -1430,6 +1430,7 @@ class BastProjectController extends Controller
 
             $fileKeys = [
                 'pulling_cable',
+                'pulling_cable_b',
                 'instalasi',
             ];
 
@@ -1575,6 +1576,7 @@ class BastProjectController extends Controller
     
         $photoFields = [
             'pulling_cable',
+            'pulling_cable_b',
             'instalasi'
         ];
         
@@ -1661,7 +1663,7 @@ class BastProjectController extends Controller
             
         //     $pole->longitude = 0;
         // }
-        $percentage = ($po/2)*100;
+        $percentage = ($po/3)*100;
         $feederDetail->progress_percentage = $percentage;
         $feederDetail->status = 'submit';
         $feederDetail->updated_by = $user->email ?? null;
@@ -2241,7 +2243,7 @@ class BastProjectController extends Controller
         //     $pole->longitude = 0;
         // }
         
-        $percentage = ($po/4)*100;
+        $percentage = ($po/5)*100;
         $HomeConnect->progress_percentage = $percentage;
         $HomeConnect->status = 'submit';
         $HomeConnect->status_port = "used";
@@ -2334,6 +2336,8 @@ class BastProjectController extends Controller
                 'port_odp'=> $record->port_odp,
                 'merk_ont'=> $record->merk_ont,
                 'sn_ont'=> $record->sn_ont,
+                'latitude'=> $record->latitude,
+                'longitude'=> $record->longitude,
             ];
 
             return response()->json([
@@ -2413,13 +2417,14 @@ class BastProjectController extends Controller
                                 DB::raw('(
                                     (
                                         (CASE WHEN pulling_cable IS NOT NULL AND pulling_cable <> "" THEN 1 ELSE 0 END) +
+                                        (CASE WHEN pulling_cable_b IS NOT NULL AND pulling_cable_b <> "" THEN 1 ELSE 0 END) +
                                         (CASE WHEN instalasi IS NOT NULL AND instalasi <> "" THEN 1 ELSE 0 END) 
                                     ) 
                                 ) as jml'))
                     ->value('jml') ?? 0;
                             
             $jml_all = $poleProgress + $odcProgress + $odpProgress + $rbsProgress + $feederProgress;
-            $presen = ($jml_all/23)*100;
+            $presen = ($jml_all/24)*100;
         }else{
             $HomeConnectprog = HomeConnect::where('bast_id', $bastId)
                         ->select(
@@ -2438,7 +2443,7 @@ class BastProjectController extends Controller
                     ->value('jml') ?? 0;
                             
             $jml_all = $HomeConnectprog;
-            $presen = ($jml_all/4)*100;
+            $presen = ($jml_all/5)*100;
         }
         
 
