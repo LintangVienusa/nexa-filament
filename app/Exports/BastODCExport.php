@@ -504,6 +504,80 @@ class BastODCExport implements WithEvents
                 
                 
 
+                $sheet->getStyle('M31:P32')->applyFromArray([
+                    'borders' => [
+                        'outline' => [
+                            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
+                            'color' => ['rgb' => '000000']
+                        ]
+                    ]
+                ])->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+                
+                $sheet->getStyle('M31')->getFont()->setBold(true)->setSize(11);
+                $sheet->getStyle('M31:P32')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('C5EFCA');
+
+                $sheet->mergeCells('M31:P32');
+                $sheet->fromArray([
+                    [  'Closure'],
+                ], null, 'M31', true);
+
+                $sheet->getStyle('M33:P49')->applyFromArray([
+                    'borders' => [
+                        'outline' => [
+                            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
+                            'color' => ['rgb' => '000000']
+                        ]
+                    ]
+                ]);
+                $sheet->mergeCells('M33:P49');
+
+                $range = 'M33:P49';
+                    [$startCol, $startRow, $endCol, $endRow] = sscanf($range, "%[A-Z]%d:%[A-Z]%d");
+                                    
+                                    
+                                    $photoPath = public_path('storage/' . $details->closure);
+                                    $sheet->setCellValue('M33', '');
+
+                    if (file_exists($photoPath) && $details->closure !='' ) {
+
+                        $colWidth = 0;
+                        foreach (range($startCol, $endCol) as $col) {
+                            $colWidth += $sheet->getColumnDimension($col)->getWidth() * 7;
+                        }
+
+                        $rowHeight = 0;
+                        for ($r = $startRow; $r <= $endRow; $r++) {
+                            $rowHeight += $sheet->getRowDimension($r)->getRowHeight() ?: 15;
+                        }
+
+                        
+                        $imgWidth = 0;
+                        $imgHeight = 0;
+                        $scale = 1;
+
+                        if (file_exists($photoPath)) {
+                            $size = getimagesize($photoPath);
+                            if ($size) {
+                                [$imgWidth, $imgHeight] = $size;
+                                if ($imgWidth > 0 && $imgHeight > 0) {
+                                    $scale = min(($colWidth - 10) / $imgWidth, ($rowHeight - 10) / $imgHeight);
+                                }
+                            }
+                        }
+
+                        $drawing = new Drawing();
+                        $drawing->setPath(public_path('storage/' . $details->closure));
+                        $drawing->setCoordinates($startCol . $startRow);
+                        $drawing->setOffsetX(5);
+                        $drawing->setOffsetY(5);
+                        $drawing->setWidth(190);
+                        $drawing->setHeight(190);
+                        $drawing->setWorksheet($sheet);
+                    }
+
+                $sheet->fromArray([
+                    [ '' ],
+                ], null, 'M33', true);
 
 
 
