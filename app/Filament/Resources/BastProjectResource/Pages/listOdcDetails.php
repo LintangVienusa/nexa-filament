@@ -85,6 +85,13 @@ class ListOdcDetails extends ListRecords
                 ->width(150)
                 ->height(150),
 
+            ImageColumn::make('closure')
+                ->label('Closure')
+                ->disk('public')
+                ->getStateUsing(fn($record) => $record->closure ? asset('storage/'.$record->closure) : null)
+                ->width(150)
+                ->height(150),
+
             TextColumn::make('progress_percentage')
                 ->label('Progress (%)')
                 ->formatStateUsing(fn ($state) => '

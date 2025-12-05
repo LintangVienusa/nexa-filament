@@ -1191,6 +1191,7 @@ class BastProjectController extends Controller
                 'odc_terbuka',
                 'odc_tertutup',
                 'flexing_conduit',
+                'closure',
             ];
 
             $base64Files = [];
@@ -1285,6 +1286,7 @@ class BastProjectController extends Controller
             'odc_terbuka',
             'odc_tertutup',
             'flexing_conduit',
+            'closure',
         ];
         
         $po = 0;
@@ -1370,7 +1372,7 @@ class BastProjectController extends Controller
             
         //     $pole->longitude = 0;
         // }
-        $percentage = ($po/6)*100;
+        $percentage = ($po/7)*100;
         $odcDetail->progress_percentage = $percentage;
         $odcDetail->status = 'submit';
         $odcDetail->updated_by = $user->email ?? null;
@@ -2383,6 +2385,7 @@ class BastProjectController extends Controller
                                 (CASE WHEN odc_tertutup IS NOT NULL AND odc_tertutup <> "" THEN 1 ELSE 0 END) +
                                 (CASE WHEN power_optic_olt IS NOT NULL AND power_optic_olt <> "" THEN 1 ELSE 0 END) +
                                 (CASE WHEN flexing_conduit IS NOT NULL AND flexing_conduit <> "" THEN 1 ELSE 0 END) +
+                                (CASE WHEN closure IS NOT NULL AND closure <> "" THEN 1 ELSE 0 END) +
                                 (CASE WHEN latitude IS NOT NULL AND latitude <> "" AND longitude IS NOT NULL AND longitude <> "" THEN 1 ELSE 0 END)
                             ) 
                         ) as jml'))
@@ -2424,7 +2427,7 @@ class BastProjectController extends Controller
                     ->value('jml') ?? 0;
                             
             $jml_all = $poleProgress + $odcProgress + $odpProgress + $rbsProgress + $feederProgress;
-            $presen = ($jml_all/24)*100;
+            $presen = ($jml_all/25)*100;
         }else{
             $HomeConnectprog = HomeConnect::where('bast_id', $bastId)
                         ->select(
