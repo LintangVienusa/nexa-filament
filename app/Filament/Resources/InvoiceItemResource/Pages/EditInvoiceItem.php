@@ -6,6 +6,7 @@ use App\Filament\Resources\InvoiceItemResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 use App\Models\InvoiceItem;
+use App\Models\Invoice;
 use Filament\Notifications\Notification;
 use Spatie\Activitylog\Models\Activity;
 
@@ -61,11 +62,9 @@ class EditInvoiceItem extends EditRecord
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
-        // Ambil semua items terkait invoice
-        $invoiceId = $this->record->invoice_id; // ID Invoice
+        $invoiceId = $this->record->invoice_id;
         $items = InvoiceItem::where('invoice_id', $invoiceId)->get();
 
-        // Map ke format Repeater
         $data['items'] = $items->map(function ($item) {
             return [
                 'service_id' => $item->service_id,
@@ -81,11 +80,9 @@ class EditInvoiceItem extends EditRecord
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
-       // Pastikan customer_id dari form
        $record = $this->record;
         $data['customer_id'] = $data['customer_id'] ?? ($this->record?->customer_id ?? null);
 
-        // Jika ini create, buat invoice dulu untuk dapat ID
         if (!$this->record) {
             $invoice = \App\Models\Invoice::create([
                 'invoice_number' => $data['invoice_number'],
@@ -97,20 +94,20 @@ class EditInvoiceItem extends EditRecord
 
             $invoiceId = $invoice->id;
         } else {
-            // Edit: pakai invoice_id yang ada
             $invoiceId = $this->record->invoice_id;
         }
 
-        // Hapus semua item lama jika edit
         if ($this->record) {
             InvoiceItem::where('invoice_id', $invoiceId)->delete();
+            Invoice::where('id', $invoiceId)->delete();
         }
 
-        // Simpan semua item dari repeater
         if (!empty($data['items'])) {
             foreach ($data['items'] as $component) {
                 InvoiceItem::create([
-                     'customer_id' => $data['customer_id'],
+                    'po_number' => $data['po_number'],
+                    'po_description' => $data['po_description'],
+                    'customer_id' => $data['customer_id'],
                     'service_id' => $component['service_id'],
                     'description' => $component['description'],
                     'invoice_date' => $data['invoice_date'],
@@ -137,10 +134,8 @@ class EditInvoiceItem extends EditRecord
                 'menu' => 'Invoice Items',
                 'record_id' => $record->id,
             ]);
-        // Hapus key 'items' agar tidak ikut disimpan di Invoice model
         unset($data['items']);
 
-        // Pastikan invoice_id selalu ada
         $data['id'] ??= $invoiceId;
 
         return $data;

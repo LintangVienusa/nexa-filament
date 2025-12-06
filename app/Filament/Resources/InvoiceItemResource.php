@@ -338,7 +338,7 @@ class InvoiceItemResource extends Resource
         ];
     }
 
-    public static function getPages(): array
+    public static function getPages(): array 
     {
         return [
             'index' => Pages\ListInvoiceItems::route('/'),

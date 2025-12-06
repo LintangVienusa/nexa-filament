@@ -415,23 +415,85 @@ class AssetTransactionResource extends Resource
                                 ->columns(2)
                                 ->disableItemCreation()
                                 ->disableItemDeletion()
-                                ->visible(fn (callable $get) => $get('transaction_type') === 'RELEASE')
+                                ->visible(fn (callable $get) => $get('transaction_type') === 'RELEASE' )
                                 ->maxItems(fn (callable $get) => $get('../../request_asset_qty') ?? null)
                                 ->required(),
+                        
+                                Repeater::make('requested_items')
+                                ->label('Detail item')
+                                ->schema([
+                                    Select::make('asset_id')
+                                        ->label('Serial Number')
+                                        ->options(function (callable $get) {
+                                            $categoryId = $get('../../category_id');
+                                            if (!$categoryId) return [];
+                                            return Assets::where('category_id', $categoryId)
+                                                ->where('status', 1)
+                                                ->pluck('serialNumber', 'id');
+                                        })
+                                        ->reactive()
+                                        ->searchable()
+                                        ->afterStateUpdated(function ($state, callable $get, callable $set, $livewire) {
+
+                                            $items = collect($get('../../requested_items'))->pluck('asset_id')->filter();
+
+                                                if ($items->duplicates()->isNotEmpty()) {
+                                                    $set('asset_id', null);
+                                                    Notification::make()
+                                                        ->title('Serial Number sudah digunakan di item lain!')
+                                                        ->danger()
+                                                        ->duration(3000)
+                                                        ->send();
+
+                                                    return;
+                                                }
+                                            $asset = Assets::find($state);
+                                            if ($asset) {
+                                                $set('item_code', $asset->item_code);
+                                                $set('merk', $asset->merk);
+                                                $set('type', $asset->type);
+                                                $set('serialNumber', $asset->serialNumber);
+                                                $set('description', $asset->description);
+                                                $set('status', 0);
+                                            }
+                                        })
+                                        ->required(),
+
+                                    TextInput::make('item_code')
+                                                ->label('Code Item')
+                                                ->disabled()
+                                                ->dehydrated(false),
+                                    TextInput::make('merk')
+                                                ->label('Merk')
+                                                ->disabled()
+                                                ->dehydrated(false) ,
+                                    TextInput::make('type')
+                                                ->label('Tipe Item')
+                                                ->disabled()
+                                                ->dehydrated(false),
+                                    TextInput::make('serialNumber')
+                                                ->label('Serial Number')
+                                                ->disabled()
+                                                ->dehydrated(false),
+                                    Textarea::make('description')
+                                            ->label('Deskripsi')
+                                            ->disabled()
+                                            ->dehydrated(false),
+                                ])
+                                ->columns(2)
+                                ->disableItemCreation()
+                                ->disableItemDeletion()
+                                ->visible(fn (callable $get) => $get('usage_type') === 'RETURN WAREHOUSE')
+                                ->maxItems(fn (callable $get) => $get('../../request_asset_qty') ?? null)
+                                ->required(),
+                        
+                        
 
                         Repeater::make('requested_items')
                                 ->label('Detail Item')
                                 ->schema([
                                     Section::make('Asset Information')
                                         ->schema([
-                                            //  Hidden::make('category_code')
-                                            //     ->label('Kode Kategori')
-                                            //     ->required()->dehydrated(true),
-                                            // TextInput::make('item_code')
-                                            //     ->label('Item Code')
-                                            //     ->readOnly()
-                                            //     ->dehydrated(true)
-                                            //     ->helperText('Akan diisi otomatis setelah disimpan'),
 
                                             TextInput::make('name')
                                                 ->label('Nama Item')
@@ -518,7 +580,7 @@ class AssetTransactionResource extends Resource
                                 ->disableItemDeletion()
 
                                 ->maxItems(fn (callable $get) => $get('../../request_asset_qty') ?? null)
-                                ->visible(fn (callable $get) => $get('transaction_type') === 'RECEIVE'),
+                                ->visible(fn (callable $get) => $get('transaction_type') === 'RECEIVE' && $get('usage_type') != 'RETURN WAREHOUSE'),
                         ]),
                 ]);
     }
