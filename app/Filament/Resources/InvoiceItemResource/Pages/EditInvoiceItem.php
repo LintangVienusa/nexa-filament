@@ -46,6 +46,9 @@ class EditInvoiceItem extends EditRecord
                 'record_id' => $record->id,
             ]);
         }
+
+
+        
     }
 
     protected function canEdit(): bool
@@ -83,6 +86,8 @@ class EditInvoiceItem extends EditRecord
        $record = $this->record;
         $data['customer_id'] = $data['customer_id'] ?? ($this->record?->customer_id ?? null);
 
+        
+
         if (!$this->record) {
             $invoice = \App\Models\Invoice::create([
                 'invoice_number' => $data['invoice_number'],
@@ -118,21 +123,22 @@ class EditInvoiceItem extends EditRecord
             }
         }
 
-        $activity = activity('InvoiceItems-action')
+        $activity = activity('Invoice-action')
             ->causedBy(auth()->user())
             ->withProperties([
                 'ip' =>  request()->ip(),
-                'menu' => 'Invoice Items',
+                'menu' => 'Invoice',
                 'email' => auth()->user()->email,
                 'record_id' => $record->id,
-                'record_name' => $record->name ?? null,
+                'po_number' => $record->po_number,
+                'record_name' => $record->name ?? null,  
             ])
-            ->log('Mengedit record InvoiceItem');
+            ->log('Mengedit record Invoice Items');
 
             Activity::latest()->first()->update([
                 'email' => auth()->user()?->email,
-                'menu' => 'Invoice Items',
-                'record_id' => $record->id,
+                'menu' => 'Invoice',
+                'record_id' => $record->po_number,
             ]);
         unset($data['items']);
 
@@ -146,29 +152,7 @@ class EditInvoiceItem extends EditRecord
         return $this->getResource()::getUrl('index');
     }
 
-    // protected function afterSave(): void
-    // {
-    //     parent::afterSave();
-
-    //     $record = $this->record; // record yang baru diupdate
-
-    //     $activity = activity('InvoiceItems-action')
-    //         ->causedBy(auth()->user())
-    //         ->withProperties([
-    //             'ip' =>  request()->ip(),
-    //             'menu' => 'Invoice Items',
-    //             'email' => auth()->user()->email,
-    //             'record_id' => $record->id,
-    //             'record_name' => $record->name ?? null,
-    //         ])
-    //         ->log('Mengedit record InvoiceItem');
-
-    //         Activity::latest()->first()->update([
-    //             'email' => auth()->user()?->email,
-    //             'menu' => 'Invoice Items',
-    //             'record_id' => $record->id,
-    //         ]);
-    // }
+    // protected functions
 
    
 }

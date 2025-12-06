@@ -49,10 +49,10 @@ class listFeederDetails extends ListRecords
     protected function getTableColumns(): array
     {
         return [
-            TextColumn::make('bast_id')->label('BAST ID')->searchable(),
-            TextColumn::make('site')->label('Site')->searchable(),
-            TextColumn::make('feeder_name')->searchable(),
-            TextColumn::make('notes')->searchable(),
+            TextColumn::make('bast_id')->label('BAST ID')->searchable(['BastProject.bast_id']),
+            TextColumn::make('site')->label('Site')->searchable(['BastProject.site']),
+            TextColumn::make('feeder_name')->searchable(['FeederDetail.feeder_name']),
+            TextColumn::make('notes')->searchable(['FeederDetail.notes']),
             ImageColumn::make('pulling_cable')
                 ->label('Pulling Cable A')
                 ->disk('public')
