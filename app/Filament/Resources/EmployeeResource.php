@@ -69,6 +69,7 @@ class EmployeeResource extends Resource
                             ->numeric()
                             ->required()
                             ->unique(ignoreRecord: true)
+                            ->disabled(fn($record) => filled($record)) 
                             ->maxLength(20),
 
                         TextInput::make('first_name')
@@ -201,9 +202,26 @@ class EmployeeResource extends Resource
                                 $number = preg_replace('/[^0-9]/', '', $state);
                                 $set('basic_salary', $number === '' ? 0 : number_format((int) $number, 0, ',', '.'));
                             })
+                             ->hidden(function ($record) {
+                                $user = auth()->user();
+                                $organizationName = $user->employee?->organization?->unit_name;
+                                if (filled($record) && $organizationName !== 'HR') {
+                                        return true;  
+                                    }
+
+                                    return false;     
+                            })
                             ->dehydrateStateUsing(fn($state) => (string) preg_replace('/[^0-9]/', '', $state))
                             ->required(),
-                    ])->columns(2),
+                    ])->columns(2)->disabled(function ($record) {
+                                $user = auth()->user();
+                                $organizationName = $user->employee?->organization?->unit_name;
+                                if (filled($record) && $organizationName !== 'HR') {
+                                        return true;  
+                                    }
+
+                                    return false;     
+                            }) ,
 
                 Section::make('Kontak dan Informasi Detail')
                     ->schema([

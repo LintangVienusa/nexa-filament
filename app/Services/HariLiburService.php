@@ -11,7 +11,12 @@ class HariLiburService
 {
     public function getLiburTahun($year)
     {
-        $response = Http::get("https://api-harilibur.vercel.app/api?year={$year}");
+        // $response = Http::get("https://api-harilibur.vercel.app/api?year={$year}");
+        $response = Http::withOptions([
+                        'curl' => [
+                            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                        ],
+                    ])->get('https://api-harilibur.vercel.app/api?year={$year}');
 
         if ($response->ok()) {
             $data = $response->json();

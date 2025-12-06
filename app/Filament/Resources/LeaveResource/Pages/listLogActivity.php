@@ -37,7 +37,7 @@ class listLogActivity extends ListRecords
                 Tables\Columns\TextColumn::make('description')->label('Deskripsi')->limit(60),
                 Tables\Columns\TextColumn::make('email')->label('User'),
                 Tables\Columns\TextColumn::make('event')->label('Action'),
-            ])
+            ])->recordUrl(null)
             ->defaultSort('id', 'desc');
     }
 
