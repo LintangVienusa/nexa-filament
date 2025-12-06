@@ -27,7 +27,7 @@ class Employee extends Model
         'gender',
         'date_of_birth',
         'date_of_joining',
-        'employe_type',
+        'employee_type',
         'basic_salary',
         'mobile_no',
         'email',
