@@ -119,9 +119,6 @@ class EmployeeResource extends Resource
                                     'organik'   => 'organik',
                                     'mitra'     => 'mitra'
                                 ];
-
-                                
-
                                 return $options;
                             })
 
