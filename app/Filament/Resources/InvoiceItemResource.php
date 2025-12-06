@@ -224,18 +224,18 @@ class InvoiceItemResource extends Resource
         ->columns([
                     TextColumn::make('po_number')
                         ->label('PO Number')
-                        ->numeric()
                        ->getStateUsing(function ($record) {
                                 return "
-                                    <div class='text-xl font-semibold'>Invoice</div>
+                                    <div class='text-xl font-semibold'>Invoice {$record->po_number}</div>
                                 ";
                             })
                             ->html()
-                        ->sortable(),
+                        ->sortable()
+                        ->searchable(),
                     TextColumn::make('invoice.invoice_number')
                         ->label('Invoice ID')
-                        ->numeric()
-                        ->sortable(),
+                        ->sortable()
+                        ->searchable(),
 
                     TextColumn::make('invoice.customer.customer_name')
                         ->label('Customer')
@@ -338,7 +338,7 @@ class InvoiceItemResource extends Resource
         ];
     }
 
-    public static function getPages(): array
+    public static function getPages(): array 
     {
         return [
             'index' => Pages\ListInvoiceItems::route('/'),

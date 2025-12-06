@@ -21,7 +21,7 @@ use Spatie\Permission\Traits\HasPermissions;
 use App\Models\Employee;
 use Filament\Forms\Components\FileUpload;
 use Filament\Notifications\Notification;
-use App\Services\HariKerjaService;
+use App\Services\HariLiburService;
 use Filament\Forms\Components\Placeholder;
 use Illuminate\Support\HtmlString;
 use App\Traits\HasNavigationPolicy;
@@ -171,9 +171,9 @@ class LeaveResource extends Resource
                                 if ($get('start_date') && $get('end_date')) {
                                      $startDate = $get('start_date');
                                      $endDate = $get('end_date');
-                                     $hariKerjaService = app(HariKerjaService::class);
-                                     $hariKerjaData = $hariKerjaService->hitungHariKerja($state, $startDate, $endDate);
-                                     $jml = $hariKerjaData['jumlah_hari_kerja'] ?? 0;
+                                     $hariKerjaService = app(HariLiburService::class);
+                                     $jml = $hariKerjaService->hitungHariCuti( $startDate, $endDate);
+                                     
                                     $set('leave_duration', $jml);
                                 }
                             }),
@@ -187,11 +187,11 @@ class LeaveResource extends Resource
                                 if ($get('start_date') && $get('end_date')) {
                                      $startDate = $get('start_date');
                                      $endDate = $get('end_date');
-                                     $hariKerjaService = app(HariKerjaService::class);
-                                     $hariKerjaData = $hariKerjaService->hitungHariKerja($state, $startDate, $endDate);
-                                     $jml = $hariKerjaData['jumlah_hari_kerja'] ?? 0;
+                                     $hariKerjaService = app(HariLiburService::class);
+                                     $jml = $hariKerjaService->hitungHariCuti( $startDate, $endDate);
+                                     
                                     $set('leave_duration', $jml);
-                                    return $hariKerjaData['jumlah_hari_kerja'] ?? 0;
+                                    return $jml ?? 0;
                                 }else{
                                     return 0;
                                 }
@@ -537,9 +537,9 @@ class LeaveResource extends Resource
                     ->openUrlInNewTab()
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
+                // Tables\Actions\BulkActionGroup::make([
+                //     Tables\Actions\DeleteBulkAction::make(),
+                // ]),
             ]);
     }
 
