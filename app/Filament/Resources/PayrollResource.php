@@ -40,7 +40,7 @@ class PayrollResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
     protected static ?string $navigationGroup = 'HR Management';
-    protected static ?string $navigationLabel = 'Payroll';
+    protected static ?string $navigationLabel = 'Salary Slip';
 
     public static function canCreate(): bool
     {
@@ -315,11 +315,11 @@ class PayrollResource extends Resource
                 Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()
-                        ->visible(fn () => auth()->user()?->hasAnyRole(['superadmin', 'admin', 'manager']))
-                        ->authorize(fn () => auth()->user()?->hasAnyRole(['superadmin', 'admin', 'manager'])),
-                ]),
+                // Tables\Actions\BulkActionGroup::make([
+                //     Tables\Actions\DeleteBulkAction::make()
+                //         ->visible(fn () => auth()->user()?->hasAnyRole(['superadmin', 'admin', 'manager']))
+                //         ->authorize(fn () => auth()->user()?->hasAnyRole(['superadmin', 'admin', 'manager'])),
+                // ]),
             ]);
     }
 
