@@ -52,13 +52,13 @@ class listHomeconnectDetails extends ListRecords
     {
         return [
             // TextColumn::make('bast_id')->label('BAST ID')->searchable(),
-            TextColumn::make('site')->label('Site')->searchable(),
-            TextColumn::make('odp_name')->label('ODP')->searchable(),
-            TextColumn::make('port_odp')->label('Port ODP')->searchable(),
-            TextColumn::make('status_port')->label('Status')->searchable(),
-            TextColumn::make('merk_ont')->label('Merk ONT')->searchable(),
-            TextColumn::make('sn_ont')->label('SN ONT')->searchable(),
-            TextColumn::make('notes')->searchable(),
+            TextColumn::make('site')->label('Site')->searchable(['BastProject.site']),
+            TextColumn::make('odp_name')->label('ODP')->searchable(['HomeConnect.odp_name']),
+            TextColumn::make('port_odp')->label('Port ODP')->searchable(['HomeConnect.port_odp']),
+            TextColumn::make('status_port')->label('Status')->searchable(['HomeConnect.status_port']),
+            TextColumn::make('merk_ont')->label('Merk ONT')->searchable(['HomeConnect.merk_ont']),
+            TextColumn::make('sn_ont')->label('SN ONT')->searchable(['HomeConnect.sn_ont']),
+            TextColumn::make('notes')->searchable(['HomeConnect.notes']),
 
             ImageColumn::make('foto_label_id_plg')
                 ->label('ID Pelanggan di ODP')

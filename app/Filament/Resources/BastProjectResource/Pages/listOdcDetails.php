@@ -48,10 +48,10 @@ class ListOdcDetails extends ListRecords
     protected function getTableColumns(): array
     {
         return [
-            TextColumn::make('bast_id')->label('BAST ID')->searchable(),
-            TextColumn::make('site')->label('Site')->searchable(),
-            TextColumn::make('odc_name')->searchable(),
-            TextColumn::make('notes')->searchable(),
+            TextColumn::make('bast_id')->label('BAST ID')->searchable(['BastProject.bast_id']),
+            TextColumn::make('site')->label('Site')->searchable(['BastProject.Site']),
+            TextColumn::make('odc_name')->searchable(['ODCDetail.odc_name']),
+            TextColumn::make('notes')->searchable(['ODCDetail.notes']),
             ImageColumn::make('instalasi')
                 ->label('Instalasi ODC')
                 ->disk('public')

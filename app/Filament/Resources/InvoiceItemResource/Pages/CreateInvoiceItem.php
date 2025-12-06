@@ -50,16 +50,18 @@ class CreateInvoiceItem extends CreateRecord
                 
                 ->withProperties([
                     'ip' =>  request()->ip(),
-                    'menu' => 'Invoice Items',
+                    'menu' => 'Invoice',
                     'email' => auth()->user()?->email,
                     'record_id' => $record->id,
+                    'po_number' => $record->po_number,
                     'url' => request()->fullUrl(),
                     'name' => $record->name ?? null,
                 ])
                 ->log('Membuat record Invoice baru');
                 Activity::latest()->first()->update([
                     'email' => auth()->user()?->email,
-                    'record_id' => $record->id,
+                    'menu' => 'Invoice',
+                    'record_id' => $record->po_number,
                 ]);
     }
 
