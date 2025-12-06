@@ -28,7 +28,7 @@ class EditProfile extends EditRecord
 
     public function getBreadcrumbs(): array
     {
-        return []; // Kosongkan semua breadcrumb
+        return []; 
     }
 
     public  function getTitle(): string
@@ -40,7 +40,6 @@ class EditProfile extends EditRecord
     {
         $email = urldecode($key ?? auth()->user()?->email);
 
-        // Kembalikan instance Employee — bukan string
         return Profile::where('email', $email)->firstOrFail();
     }
 

@@ -45,6 +45,8 @@ trait HasNavigationPolicy
                     \App\Filament\Resources\OvertimeResource::class,
                     \App\Filament\Resources\TimesheetResource::class,
                     \App\Filament\Resources\PayrollResource::class,
+                    \App\Filament\Resources\LeaveResource::class,
+                    \App\Filament\Resources\ProfileResource::class,
                 ];
 
                 return in_array($resourceClass, $allowedResources);
@@ -66,6 +68,8 @@ trait HasNavigationPolicy
                 \App\Filament\Resources\AssetResource::class,
                 \App\Filament\Resources\AssetTransactionResource::class,
                 \App\Filament\Resources\InventoryAssetResource::class,
+                    \App\Filament\Resources\ProfileResource::class,
+                    \App\Filament\Resources\LeaveResource::class,
             ];
 
             return in_array($resourceClass, $allowedResources);
@@ -81,6 +85,8 @@ trait HasNavigationPolicy
                     \App\Filament\Resources\OvertimeResource::class,
                     \App\Filament\Resources\TimesheetResource::class,
                     \App\Filament\Resources\PayrollResource::class,
+                    \App\Filament\Resources\LeaveResource::class,
+                    \App\Filament\Resources\ProfileResource::class,
                 ];
 
                 return in_array($resourceClass, $allowedResources);
@@ -95,6 +101,8 @@ trait HasNavigationPolicy
                     \App\Filament\Resources\OvertimeResource::class,
                     \App\Filament\Resources\TimesheetResource::class,
                     \App\Filament\Resources\PayrollResource::class,
+                    \App\Filament\Resources\LeaveResource::class,
+                    \App\Filament\Resources\ProfileResource::class,
                 ];
 
                 return in_array($resourceClass, $allowedResources);

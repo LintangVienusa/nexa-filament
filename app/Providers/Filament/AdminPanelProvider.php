@@ -39,7 +39,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->brandName('HRMS - DPNG')
-            ->profile()
+            ->profile(false)
             ->font('Roboto')
             ->brandLogo(asset('assets/images/Harmonis-01_v4.png') . '?v=sidebar')
             ->brandLogoHeight('4rem')

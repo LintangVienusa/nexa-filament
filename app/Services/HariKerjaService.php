@@ -6,6 +6,7 @@ use App\Models\Attendance;
 use Illuminate\Support\Facades\Http;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
+use App\Models\Leave;
 
 class HariKerjaService
 {
@@ -14,7 +15,12 @@ class HariKerjaService
      */
     protected function getLiburTahun($year): array
     {
-        $response = Http::get("https://api-harilibur.vercel.app/api?year={$year}");
+        $response = Http::withOptions([
+                        'curl' => [
+                            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                        ],
+                    ])->get('https://api-harilibur.vercel.app/api?year={$year}');
+        // $response = Http::get("https://api-harilibur.vercel.app/api?year={$year}");
         if ($response->ok()) {
             $data = $response->json();
             return collect($data)->pluck('date')->toArray();
@@ -53,18 +59,55 @@ class HariKerjaService
             ->whereBetween('attendance_date', [$startDate, $endDate])
             ->get();
 
+       $leaves = Leave::where('employee_id', $employeeId)
+            ->whereIn('status', [2]) // APPROVED
+            ->where(function($q) use ($startDate, $endDate) {
+                $q->whereBetween('start_date', [$startDate, $endDate])
+                ->orWhereBetween('end_date', [$startDate, $endDate]);
+            })
+            ->get();
+
+        
+
         $potonganAlpha = 0;
         $h = 0;
+        
 
         foreach ($attendances as $att) {
             
             $h++;
         }
-        $jml_alpha = $jumlahHariKerja-$h;
+        $jumlahLeave = 0;
+
+        foreach ($leaves as $leave) {
+
+            $leavePeriod = CarbonPeriod::create(
+                Carbon::parse($leave->start_date),
+                Carbon::parse($leave->end_date)
+            );
+
+            foreach ($leavePeriod as $tanggalCuti) {
+
+                $wday = $tanggalCuti->dayOfWeekIso;
+
+                // Bukan weekend
+                if ($wday < 6) {
+                    // Bukan hari libur nasional
+                    if (!in_array($tanggalCuti->toDateString(), $libur)) {
+                        $jumlahLeave++;
+                    }
+                }
+            }
+        }
+
+
+        $jml_alpha = $jumlahHariKerja- ($h + $jumlahLeave);
+        $jml_absensi = $h + $jumlahLeave;
 
         return [
             'jumlah_hari_kerja' => $jumlahHariKerja,
-            'jml_absensi' => $h,
+            'jml_absensi' => $jml_absensi,
+            // 'jml_leave'      => $jumlahLeave,
             'jml_alpha' => $jml_alpha,
         ];
     }

@@ -53,7 +53,7 @@ class listLogActivity extends ListRecords
                 Tables\Columns\TextColumn::make('created_at')->label('Tanggal')->dateTime()->sortable(),
                 Tables\Columns\TextColumn::make('description')->label('Deskripsi')->limit(60),
                 Tables\Columns\TextColumn::make('properties.email')->label('User'),
-            ])
+            ])->recordUrl(null)
             ->defaultSort('id', 'desc');
     }
 

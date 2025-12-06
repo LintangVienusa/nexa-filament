@@ -32,7 +32,7 @@ use App\Filament\Resources\LeaveResource\Pages\listLogActivity;
 class LeaveResource extends Resource
 {
     
-    use HasPermissions, HasOwnRecordPolicy, HasNavigationPolicy;
+    use HasPermissions,HasOwnRecordPolicy , HasNavigationPolicy;
 
     protected static ?string $model = Leave::class;
     protected static ?string $permissionPrefix = 'employees';

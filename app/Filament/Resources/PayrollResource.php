@@ -199,6 +199,7 @@ class PayrollResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+        ->recordUrl(null)
             ->columns([
                 Split::make([
                     TextColumn::make('employee_id'),
@@ -312,7 +313,7 @@ class PayrollResource extends Resource
                         }),
                     
                 
-                Tables\Actions\EditAction::make(),
+                // Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
                 // Tables\Actions\BulkActionGroup::make([
