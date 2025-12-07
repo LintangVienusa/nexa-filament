@@ -148,11 +148,11 @@ class DownloadBAService
                         <td>FOTO STIKER QR DI RUMAH PELANGGAN</td>
                     </tr>
                     <tr>
-                        <td class='box' center>
-                            <img src='{$idpelanggan}' width='50%'  >
+                        <td class='box' right width='50%'>
+                            <img src='{$idpelanggan}' width='100%'  >
                         </td>
-                        <td class='box' center>
-                           <img src='{$qr}' width='50%'  >
+                        <td class='box' right width='50%'>
+                           <img src='{$qr}' width='100%'  >
                         </td>
                     </tr>
                 
@@ -164,11 +164,11 @@ class DownloadBAService
                         <td>FOTO SN ONT</td>
                     </tr>
                     <tr>
-                        <td class='box' center>
-                            <img src='{$odp}' width='50%' height='25%'>
+                        <td class='box' right width='50%'>
+                            <img src='{$odp}' width='100%' height='25%'>
                         </td>
-                        <td class='box' center>
-                           <img src='{$foto_sn_ont}' width='50%' height='25%' >
+                        <td class='box' right width='50%'>
+                           <img src='{$foto_sn_ont}' width='100%' height='25%' >
                         </td>
                     </tr>
                 </table>

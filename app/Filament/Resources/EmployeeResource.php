@@ -40,7 +40,7 @@ class EmployeeResource extends Resource
 
     public static function canCreate(): bool
     {
-        return auth()->user()->hasAnyRole(['admin', 'manager', 'superadmin', 'Supervisor', 'Admin']);
+        return auth()->user()->setConnection('mysql')->hasAnyRole(['admin', 'manager', 'superadmin', 'Supervisor', 'Admin']);
     }
 
     public static function form(Form $form): Form
@@ -135,7 +135,7 @@ class EmployeeResource extends Resource
                                     'VP'      => 'VP',
                                 ];
 
-                                if (auth()->user()->hasRole('superadmin')) {
+                                if (auth()->user()->setConnection('mysql')->hasRole('superadmin')) {
                                     $options['CTO'] = 'CTO';
                                     $options['CEO'] = 'CEO';
                                 }

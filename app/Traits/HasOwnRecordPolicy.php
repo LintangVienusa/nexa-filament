@@ -116,7 +116,7 @@ trait HasOwnRecordPolicy
 
     public static function canDelete($record): bool
     {
-        $user = auth()->user();
+        $user = auth()->user()->setConnection('mysql');
 
         if ($record instanceof \App\Models\Employee) {
             return $user->hasAnyRole(['superadmin','admin', 'manager']);
