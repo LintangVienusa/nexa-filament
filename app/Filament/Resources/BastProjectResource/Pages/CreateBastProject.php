@@ -175,13 +175,11 @@ class CreateBastProject extends CreateRecord
                 $counter = 0;
                 $validPoleList = [];
 
-                // Cek header
                 $sheetArray = Excel::toArray(new FormulaValueBinderService, $path)[0] ?? [];
                 $header = array_map('strtoupper', array_map('trim', $sheetArray[0] ?? []));
                 $expectedHeaders = ['TIANG','ODP','ODC','FEEDER'];
 
 
-                // Loop mulai dari baris 2
                 for ($i = 2; $i <= $sheetExcel->getHighestRow(); $i++) {
                     
                     $cell = $sheetExcel->getCell('A' . $i);
@@ -312,13 +310,6 @@ class CreateBastProject extends CreateRecord
 
                 // $sheet = Excel::toArray([], $path)[0] ?? [];
                 $sheet = Excel::toArray(new FormulaValueBinderService, $path)[0] ?? [];
-                // $sheet = Excel::toArray(
-                //     new FormulaValueBinderService,
-                //     $path,
-                //     null,
-                //     \Maatwebsite\Excel\Excel::XLSX,
-                //     true // penting!
-                // )[0] ?? [];
                 $spreadsheet = IOFactory::load($path);
                 $sheetExcel = $spreadsheet->getActiveSheet();
                 $startNumber = 1; 
@@ -369,11 +360,9 @@ class CreateBastProject extends CreateRecord
                     $odc    = trim($cellodc->getCalculatedValue());
                     $feeder = trim($cellf->getCalculatedValue());
 
-                    // Skip header atau row kosong
                     if ($feeder === '' && $odc === '' && $odp === '' && $pole === '') continue;
                     if (strtoupper($feeder) === 'FEEDER' || strtoupper($odc) === 'ODC' || strtoupper($odp) === 'ODP') continue;
 
-                    // Simpan valid pole
                     $validPoleList[] = $pole;
 
                     // Update or create Feeder
@@ -439,85 +428,6 @@ class CreateBastProject extends CreateRecord
                         ]
                     );
                 }
-
-                // foreach ($sheet as $row) {
-                //     if (empty($row[3]) || strtoupper(trim($row[3]))=== 'FEEDER') continue;
-
-                //     FeederDetail::updateOrCreate([
-                //         'site' => $record->site,
-                //         'bast_id' => $record->bast_id,
-                //         'feeder_name' => trim($row[3]),
-                //     ]);
-                // }
-
-                // foreach ($sheet as $row) {
-                //     if (empty($row[2]) || strtoupper(trim($row[2]))=== 'ODC') continue;
-
-                //     ODCDetail::updateOrCreate([
-                //         'site' => $record->site,
-                //         'bast_id' => $record->bast_id,
-                //         'feeder_name' => trim($row[3]),
-                //         'odc_name' => trim($row[2]),
-                //     ]);
-                // }
-
-                // foreach ($sheet as $row) {
-                //     if (empty($row[1]) || strtoupper(trim($row[1]))=== 'ODP') continue;
-
-                //     ODPDetail::updateOrCreate([
-                //         'site' => $record->site,
-                //         'bast_id' => $record->bast_id,
-                //         'odc_name' => trim($row[2]),
-                //         'odp_name' => trim($row[1]),
-                //     ]);
-
-                //     for ($i = 1; $i <= 8; $i++) {
-
-                //         HomeConnect::updateOrCreate(
-                //             [
-                //                 'bast_id'   => $record->bast_id,
-                //                 'odp_name'  => trim($row[1]),
-                //                 'port_odp'  => $i, 
-                //             ],
-                //             [
-                //                 'site'      => $record->site,
-                //                 'status_port' => 'idle', 
-                //             ]
-                //         );
-                //     }
-                // }
-
-                // foreach ($sheet as $row) {
-                //     $feeder = trim($row[3] ?? '');
-                //     $odc    = trim($row[2] ?? '');
-                //     $odp    = trim($row[1] ?? '');
-                //     $pole    = trim($row[0] ?? '');
-
-                //     if ($feeder === '' || $odc === '' || $odp === '' || $pole === '') continue;
-                //     if (strtoupper($feeder) === 'FEEDER') continue;
-
-
-                //     MappingHomepass::updateOrCreate(
-                //          [
-                //             'pole'=> $pole,
-                //             'ODC' => $odc,
-                //             'ODP' => $odp,
-                //         ],
-                //         [
-                //             'province_name' => $record->province_name,
-                //             'regency_name'  => $record->regency_name,
-                //             'village_name'  => $record->village_name,
-                //             'station_name'  => $record->station_name,
-                //             'site'          => $record->site,
-                //             'feeder_name'   => $feeder,
-                //             'created_at'    => now(),
-                //         ],
-                //         [
-                //             'updated_at'    => now(),
-                //         ]
-                //     );
-
-                //  }
 
             }
 
