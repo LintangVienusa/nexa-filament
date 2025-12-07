@@ -4,7 +4,7 @@ namespace App\Filament\Resources\BastProjectResource\Pages;
 
 use App\Filament\Resources\BastProjectResource;
 use App\Models\BastProject;
-use App\Models\FeederDetail;
+use App\Models\ODPDetail;
 use Filament\Pages\Page;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -15,22 +15,23 @@ use Filament\Resources\Pages\ListRecords;
 use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Facades\Excel;
 use Filament\Tables\Actions\Action;
-use App\Exports\BastFeederExport;
+use App\Exports\BastODPExport;
 use Filament\Tables\Columns\ImageColumn;
 use Illuminate\Support\Facades\Auth;
 use Filament\Forms\Form as FilamentForm;
 
-class listFeederDetails extends ListRecords
+class ListOdpDetails extends ListRecords
 {
     use InteractsWithTable;
     protected static string $resource = BastProjectResource::class;
 
-    protected static ?string $title = 'List Feeder Details';
+    protected static ?string $title = 'List ODP Details';
 
-    protected static ?string $navigationLabel = 'Feeder Details';
+    protected static ?string $navigationLabel = 'ODP Details';
     protected static ?string $navigationIcon = 'heroicon-o-collection';
-    protected static ?string $slug = 'list-feeder-details';
+    protected static ?string $slug = 'list-odp-details';
     public ?string $site = null;
+
     public function mount(?string $site = null): void
     {
         $this->site = $site;
@@ -38,12 +39,12 @@ class listFeederDetails extends ListRecords
 
     protected function getTableQuery(): Builder
     {
-        return FeederDetail::query()
-                ->Join('BastProject', 'FeederDetail.bast_id', '=', 'BastProject.bast_id')
-                ->when($this->site, fn($query) => 
-                        $query->where('FeederDetail.site', $this->site)
+        return ODPDetail::query()
+                ->Join('BastProject', 'ODPDetail.bast_id', '=', 'BastProject.bast_id')
+                ->when($this->site, fn($query) =>
+                        $query->where('BastProject.site', $this->site)
                     )
-                    ->select('FeederDetail.*', 'BastProject.site');
+                    ->select('ODPDetail.*', 'BastProject.site');
     }
 
     protected function getTableColumns(): array
@@ -51,25 +52,32 @@ class listFeederDetails extends ListRecords
         return [
             TextColumn::make('bast_id')->label('BAST ID')->searchable(['BastProject.bast_id']),
             TextColumn::make('site')->label('Site')->searchable(['BastProject.site']),
-            TextColumn::make('feeder_name')->searchable(['FeederDetail.feeder_name']),
-            TextColumn::make('notes')->searchable(['FeederDetail.notes']),
-            ImageColumn::make('pulling_cable')
-                ->label('Pulling Cable A')
+            TextColumn::make('odc_name')->searchable(['ODPDetail.odc_name']),
+            TextColumn::make('odp_name')->searchable(['ODPDetail.odp_name']),
+            TextColumn::make('notes')->searchable(['ODPDetail.notes']),
+            ImageColumn::make('instalasi')
+                ->label('Instalasi')
                 ->disk('public')
-                ->getStateUsing(fn($record) => $record->pulling_cable ? asset('storage/'.$record->pulling_cable) : null)
+                ->getStateUsing(fn($record) => $record->instalasi ? asset('storage/'.$record->instalasi) : null)
                 ->width(150)
                 ->height(150),
-            ImageColumn::make('pulling_cable_b')
-                ->label('Pulling Cable B')
+            ImageColumn::make('odp_terbuka')
+                ->label('ODP Terbuka')
                 ->disk('public')
-                ->getStateUsing(fn($record) => $record->pulling_cable_b ? asset('storage/'.$record->pulling_cable_b) : null)
+                ->getStateUsing(fn($record) => $record->odp_terbuka ? asset('storage/'.$record->odp_terbuka) : null)
+                ->width(150)
+                ->height(150),
+            ImageColumn::make('odp_tertutup')
+                ->label('ODP Tertutup')
+                ->disk('public')
+                ->getStateUsing(fn($record) => $record->odp_tertutup ? asset('storage/'.$record->odp_tertutup) : null)
                 ->width(150)
                 ->height(150),
 
-            ImageColumn::make('instalasi')
-                ->label('Instalasi Accesoris')
+            ImageColumn::make('power_optic_odc')
+                ->label('Power Optic ODC')
                 ->disk('public')
-                ->getStateUsing(fn($record) => $record->instalasi ? asset('storage/'.$record->instalasi) : null)
+                ->getStateUsing(fn($record) => $record->power_optic_odc ? asset('storage/'.$record->power_optic_odc) : null)
                 ->width(150)
                 ->height(150),
 
@@ -83,7 +91,7 @@ class listFeederDetails extends ListRecords
                     </div>
                     <div style="font-size:12px; text-align:center; margin-top:2px;">'.number_format($state,0).'%</div>
                 ')
-                ->html() 
+                ->html()
                 ->sortable(),
             TextColumn::make('status')
                     ->badge()
@@ -108,6 +116,12 @@ class listFeederDetails extends ListRecords
     protected function getTableActions(): array
     {
         return [
+            Action::make('maps')
+                        ->label('Lihat Maps')
+                        ->icon('heroicon-o-map')
+                        ->url(fn ($record) => "https://www.google.com/maps?q={$record->latitude},{$record->longitude}")
+                        ->openUrlInNewTab()
+                        ->color('success'),
             // Action::make('pending')
             //     ->label('Pending')
             //     ->icon('heroicon-o-check-circle')
@@ -115,7 +129,7 @@ class listFeederDetails extends ListRecords
             //     ->requiresConfirmation()
             //     ->visible(fn ($record) => $record->status === 'submit'  && (int) $record->progress_percentage >= 100)
             //     ->action(function ($record) {
-            //         FeederDetail::where('bast_id', $record->bast_id)->where('feeder_name', $record->feeder_name)
+            //         ODPDetail::where('bast_id', $record->bast_id)->where('odp_name', $record->odp_name)
             //         ->update([
             //             'status'       => 'pending',
             //             'approval_by'  => Auth::user()->email,
@@ -130,7 +144,7 @@ class listFeederDetails extends ListRecords
                 ->requiresConfirmation()
                 ->visible(fn ($record) => $record->status === 'submit' && (int) $record->progress_percentage >= 100)
                 ->action(function ($record) {
-                    FeederDetail::where('bast_id', $record->bast_id)->where('feeder_name', $record->feeder_name)
+                    ODPDetail::where('bast_id', $record->bast_id)->where('odp_name', $record->odp_name)
                     ->update([
                         'status'       => 'approved',
                         'approval_by'  => Auth::user()->email,
@@ -152,30 +166,29 @@ class listFeederDetails extends ListRecords
                         ->required(),
                 ])
 
-                ->mountUsing(function (FilamentForm $form, $record) {
-                    $detail = FeederDetail::where('bast_id', $record->bast_id)
-                        ->where('feeder_name', $record->feeder_name)
+                ->mountUsing(function (FilamentForm  $form, $record) {
+                    $detail = ODPDetail::where('bast_id', $record->bast_id)
+                        ->where('odp_name', $record->odp_name)
                         ->first();
 
-                    
                     $form->fill([
                         'notes' => '',
-                        'old_notes' => $detail?->notes, 
+                        'old_notes' => $detail?->notes,
                     ]);
                 })
 
                 ->action(function ($record, array $data) {
-                    $detail = FeederDetail::where('bast_id', $record->bast_id)
-                        ->where('feeder_name', $record->feeder_name)
+                    $detail = ODPDetail::where('bast_id', $record->bast_id)
+                        ->where('odp_name', $record->odp_name)
                         ->first();
 
                     $oldNotes = $detail?->notes ?? '';
                     $newEntry = "[" . now() . "] " . Auth::user()->email . "-> Reject :\n" .
                                 $data['notes'] . "\n\n";
-                    $finalNotes = $newEntry ." | " . $oldNotes;
+                    $finalNotes = $newEntry  ." | ". $oldNotes;
 
-                    FeederDetail::where('bast_id', $record->bast_id)
-                        ->where('feeder_name', $record->feeder_name)
+                    ODPDetail::where('bast_id', $record->bast_id)
+                        ->where('odp_name', $record->odp_name)
                         ->update([
                             'status'       => 'rejected',
                             'approval_by'  => Auth::user()->email,
@@ -190,7 +203,7 @@ class listFeederDetails extends ListRecords
             Action::make('export_implementation')
                     ->label('Print')
                     ->icon('heroicon-o-document-arrow-down')
-                    ->action(fn ($record) => Excel::download(new BastFeederExport($record), "Implementation_Feeder_{$record->feeder_name}.xlsx"))
+                    ->action(fn ($record) => Excel::download(new BastODPExport($record), "Implementation_ODP_{$record->odp_name}.xlsx"))
                     ->visible(fn ($record) => $record->status === 'approved'),
         ];
     }
@@ -201,6 +214,4 @@ class listFeederDetails extends ListRecords
             // Tables\Actions\DeleteBulkAction::make(),
         ];
     }
-
-
 }
