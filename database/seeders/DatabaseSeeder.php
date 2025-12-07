@@ -3,8 +3,9 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Role;
 
 class DatabaseSeeder extends Seeder
 {
@@ -13,11 +14,39 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        $roles = ['admin', 'manager', 'employee'];
+        foreach ($roles as $role) {
+            Role::firstOrCreate(['name' => $role]);
+        }
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        $admin = User::firstOrCreate(
+            ['email' => config('admin.email')],
+            [
+                'name' => config('admin.name'),
+                'email_verified_at' => now(),
+                'password' => Hash::make(config('admin.password')),
+            ]
+        );
+        $admin->assignRole('admin');
+
+        $manager = User::firstOrCreate(
+            ['email' => 'manager@testing.site'],
+            [
+                'name' => 'Manager User',
+                'email_verified_at' => now(),
+                'password' => Hash::make('password123'),
+            ]
+        );
+        $manager->assignRole('manager');
+
+        $employee = User::firstOrCreate(
+            ['email' => 'employee@testing.site'],
+            [
+                'name' => 'Employee User',
+                'email_verified_at' => now(),
+                'password' => Hash::make('password123'),
+            ]
+        );
+        $employee->assignRole('employee');
     }
 }
