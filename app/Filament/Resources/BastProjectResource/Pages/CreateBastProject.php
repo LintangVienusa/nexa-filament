@@ -16,6 +16,9 @@ use App\Models\HomeConnect;
 use App\Models\MappingHomepass;
 use Filament\Notifications\Notification;
 use Illuminate\Validation\ValidationException;
+use App\Services\FormulaValueBinderService;
+use Maatwebsite\Excel\Concerns\WithCustomValueBinder;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class CreateBastProject extends CreateRecord
 {
@@ -43,7 +46,9 @@ class CreateBastProject extends CreateRecord
                     ]);
                 }
 
-                $sheet = Excel::toArray([], $path)[0] ?? [];
+                // $sheet = Excel::toArray([], $path)[0] ?? [];
+                $sheet = Excel::toArray(new FormulaValueBinderService, $path)[0] ?? [];
+                
 
                 if (empty($sheet) || empty($sheet[0][0]) || strtoupper(trim($sheet[0][0])) !== 'NO_TIANG') {
                     Notification::make()
@@ -56,6 +61,75 @@ class CreateBastProject extends CreateRecord
                         'list_pole' => 'Format Excel Tiang salah.',
                     ]);
                 }
+
+                $firstValue = trim($sheet[1][0] ?? '');
+                if (preg_match('/^T(\d{3})$/', $firstValue, $matches)) {
+                    $startNumber = intval($matches[1]); 
+                } else {
+                    Notification::make()
+                        ->title('Baris pertama tiang tidak sesuai format')
+                        ->body("Baris pertama: $firstValue tidak sesuai T + 3 angka")
+                        ->warning()
+                        ->send();
+                    $startNumber = 1; 
+                    throw ValidationException::withMessages([
+                        'list_pole' => 'Format Excel Tiang salah.',
+                    ]);
+                }
+
+                
+                $spreadsheet = IOFactory::load($path);
+                $sheetExcel = $spreadsheet->getActiveSheet();
+                $startNumber = 1; 
+                $counter = 0;
+                $validPoleList = [];
+
+                for ($i = 2; $i <= $sheetExcel->getHighestRow(); $i++) {
+                    $cell = $sheetExcel->getCell('A' . $i);
+
+                    if ($cell->isFormula()) {
+                        
+                        $poleSn = $cell->getCalculatedValue(); 
+                        if (!preg_match('/^="\s*T"\s*&\s*TEXT\(RIGHT\(A\d+,3\)\+1,"000"\)$/', $poleSn)) {
+                                if (!preg_match('/^T\d{3}$/', $poleSn)) {
+                                    Notification::make()
+                                        ->title('Formula Excel Tidak Sesuai')
+                                        ->body("Baris ke-$i File Tiang memiliki formula tidak standar: $poleSn.")
+                                        ->warning()
+                                        ->send();
+
+                                    $poleSn = 'T' . str_pad($counter + 1, 3, '0', STR_PAD_LEFT);
+                                    throw ValidationException::withMessages([
+                                        'list_pole' => 'Format Excel Tiang salah.',
+                                    ]);
+                                }
+                            }
+                        $poleSn = $cell->getCalculatedValue(); 
+                    } else {
+                        $poleSn = trim($cell->getValue());
+
+                        if (!preg_match('/^T\d{3}$/', $poleSn)) {
+                             
+                                Notification::make()
+                                    ->title('Formula Excel Tidak Sesuai')
+                                    ->body("Baris ke-$i File Tiang 2 memiliki formula tidak standar: $poleSn.")
+                                    ->warning()
+                                    ->send();
+
+                                $poleSn = 'T' . str_pad($counter + 1, 3, '0', STR_PAD_LEFT);
+                                throw ValidationException::withMessages([
+                                    'list_pole' => 'Format Excel Tiang salah.',
+                                ]);
+                            
+
+                            
+                        }
+                    }
+
+                    $validPoleList[] = $poleSn;
+                    $counter++;
+                }
+
             }
 
             if (!empty($data['list_feeder_odc_odp'])) {
@@ -73,12 +147,15 @@ class CreateBastProject extends CreateRecord
                     ]);
                 }
 
-                $sheet = Excel::toArray([], $path)[0] ?? [];
+                // $sheet = Excel::toArray([], $path)[0] ?? [];
+                // $sheet = Excel::toArray(new \App\Imports\SimpleArrayImport, $path)[0] ?? [];
+                
+                $sheet = Excel::toArray(new FormulaValueBinderService, $path)[0] ?? [];
 
                 $header = array_map('strtoupper', array_map('trim', $sheet[0] ?? []));
                 $expectedHeaders = ['TIANG','ODP', 'ODC', 'FEEDER'];
 
-                if (!in_array('TIANG', $header) || !in_array('ODP', $header) || !in_array('ODC', $header) || !in_array('FEEDER', $header)) {
+                if (!in_array('TIANG', $header)  && !in_array('ODP', $header)  && !in_array('ODC', $header)  && !in_array('FEEDER', $header)) {
                     Notification::make()
                         ->title('Format Excel Tiang/Feeder/ODC/ODP salah')
                         ->body('Pastikan file memiliki kolom ODP, ODC, dan FEEDER.')
@@ -88,6 +165,64 @@ class CreateBastProject extends CreateRecord
                     throw ValidationException::withMessages([
                         'list_feeder_odc_odp' => 'Format Excel Tiang/Feeder/ODC/ODP salah.',
                     ]);
+
+                    
+                }
+
+                 $spreadsheet = IOFactory::load($path);
+                $sheetExcel = $spreadsheet->getActiveSheet();
+                $startNumber = 1;
+                $counter = 0;
+                $validPoleList = [];
+
+                $sheetArray = Excel::toArray(new FormulaValueBinderService, $path)[0] ?? [];
+                $header = array_map('strtoupper', array_map('trim', $sheetArray[0] ?? []));
+                $expectedHeaders = ['TIANG','ODP','ODC','FEEDER'];
+
+
+                for ($i = 2; $i <= $sheetExcel->getHighestRow(); $i++) {
+                    
+                    $cell = $sheetExcel->getCell('A' . $i);
+
+                    if ($cell->isFormula()) {
+                        $poleSn = $cell->getValue(); 
+                        if (!preg_match('/^="\s*T"\s*&\s*TEXT\(RIGHT\(A\d+,3\)\+1,"000"\)$/', $poleSn)) {
+                                    Notification::make()
+                                        ->title('Formula Excel Tidak Sesuai')
+                                        ->body("Baris ke-$i File Feder-ODC-ODP-Tiang memiliki formula tidak standar: $poleSn.")
+                                        ->warning()
+                                        ->send();
+
+                                    $poleSn = 'T' . str_pad($counter + 1, 3, '0', STR_PAD_LEFT);
+                                    throw ValidationException::withMessages([
+                                        'list_pole' => 'Format Excel Tiang salah.',
+                                    ]);
+                                
+                            }
+                        $poleSn = $cell->getCalculatedValue(); 
+                    } else {
+                        $poleSn = trim($cell->getValue());
+
+                        if (!preg_match('/^T\d{3}$/', $poleSn)) {
+                             
+                                Notification::make()
+                                    ->title('Formula Excel Tidak Sesuai')
+                                    ->body("Baris ke-$i File Feder-ODC-ODP-Tiang memiliki formula tidak standar: $poleSn.")
+                                    ->warning()
+                                    ->send();
+
+                                $poleSn = 'T' . str_pad($counter + 1, 3, '0', STR_PAD_LEFT);
+                                throw ValidationException::withMessages([
+                                    'list_pole' => 'Format Excel Tiang salah.',
+                                ]);
+                            
+
+                            
+                        }
+                    }
+
+                    $validPoleList[] = $poleSn;
+                    $counter++;
                 }
             }
         }
@@ -173,23 +308,29 @@ class CreateBastProject extends CreateRecord
 
                 if (!file_exists($path)) return;
 
-                $sheet = Excel::toArray([], $path)[0] ?? [];
+                // $sheet = Excel::toArray([], $path)[0] ?? [];
+                $sheet = Excel::toArray(new FormulaValueBinderService, $path)[0] ?? [];
+                $spreadsheet = IOFactory::load($path);
+                $sheetExcel = $spreadsheet->getActiveSheet();
+                $startNumber = 1; 
+                $counter = 0;
+                $validPoleList = [];
 
-                foreach ($sheet as $row) {
-                    if (empty($row[0]) || strtoupper(trim($row[0]))=== 'NO_TIANG') continue;
+                for ($i = 1; $i <= $sheetExcel->getHighestRow(); $i++) {
+                    $cell = $sheetExcel->getCell('A' . $i);
 
-                    PoleDetail::create([
-                        'site' => $record->site,
-                        'bast_id' => $record->bast_id,
-                        'pole_sn' => trim($row[0]),
-                    ]);
+                        $poleSn = $cell->getCalculatedValue(); 
+                    // foreach ($sheet as $index => $row) {
+                        if (empty($poleSn) || strtoupper(trim($poleSn)) === 'NO_TIANG') continue;
 
-                    //  CableDetail::create([
-                    //     'site' => $record->site,
-                    //     'bast_id' => $record->bast_id,
-                    //     'pole_sn' => trim($row[0]),
-                    // ]);
-                }
+                        
+
+                        PoleDetail::create([
+                            'site' => $record->site,
+                            'bast_id' => $record->bast_id,
+                            'pole_sn' => $poleSn,
+                        ]);
+                    }
 
             }
 
@@ -199,70 +340,81 @@ class CreateBastProject extends CreateRecord
 
                 if (!file_exists($path)) return;
 
-                $sheet = Excel::toArray([], $path)[0] ?? [];
+                // $sheet = Excel::toArray([], $path)[0] ?? [];
+                
+                $sheet = Excel::toArray(new FormulaValueBinderService, $path)[0] ?? [];
 
-                foreach ($sheet as $row) {
-                    if (empty($row[3]) || strtoupper(trim($row[3]))=== 'FEEDER') continue;
+                $spreadsheet = IOFactory::load($path);
+                $sheetExcel = $spreadsheet->getActiveSheet();
 
-                    FeederDetail::updateOrCreate([
-                        'site' => $record->site,
-                        'bast_id' => $record->bast_id,
-                        'feeder_name' => trim($row[3]),
-                    ]);
-                }
+                $validPoleList = [];
 
-                foreach ($sheet as $row) {
-                    if (empty($row[2]) || strtoupper(trim($row[2]))=== 'ODC') continue;
+                for ($rowIndex = 2; $rowIndex <= $sheetExcel->getHighestRow(); $rowIndex++) {
+                    $cellp = $sheetExcel->getCell('A' . $rowIndex);
+                    $cellodp = $sheetExcel->getCell('B' . $rowIndex);
+                    $cellodc = $sheetExcel->getCell('C' . $rowIndex);
+                    $cellf = $sheetExcel->getCell('D' . $rowIndex);
 
-                    ODCDetail::updateOrCreate([
-                        'site' => $record->site,
-                        'bast_id' => $record->bast_id,
-                        'feeder_name' => trim($row[3]),
-                        'odc_name' => trim($row[2]),
-                    ]);
-                }
+                    $pole   = trim($cellp->getCalculatedValue());
+                    $odp    = trim($cellodp->getCalculatedValue());
+                    $odc    = trim($cellodc->getCalculatedValue());
+                    $feeder = trim($cellf->getCalculatedValue());
 
-                foreach ($sheet as $row) {
-                    if (empty($row[1]) || strtoupper(trim($row[1]))=== 'ODP') continue;
+                    if ($feeder === '' && $odc === '' && $odp === '' && $pole === '') continue;
+                    if (strtoupper($feeder) === 'FEEDER' || strtoupper($odc) === 'ODC' || strtoupper($odp) === 'ODP') continue;
 
-                    ODPDetail::updateOrCreate([
-                        'site' => $record->site,
-                        'bast_id' => $record->bast_id,
-                        'odc_name' => trim($row[2]),
-                        'odp_name' => trim($row[1]),
-                    ]);
+                    $validPoleList[] = $pole;
 
-                    for ($i = 1; $i <= 8; $i++) {
-
-                        HomeConnect::updateOrCreate(
-                            [
-                                'bast_id'   => $record->bast_id,
-                                'odp_name'  => trim($row[1]),
-                                'port_odp'  => $i, 
-                            ],
-                            [
-                                'site'      => $record->site,
-                                'status_port' => 'idle', 
-                            ]
-                        );
+                    // Update or create Feeder
+                    if ($feeder !== '') {
+                        FeederDetail::updateOrCreate([
+                            'site' => $record->site,
+                            'bast_id' => $record->bast_id,
+                            'feeder_name' => $feeder,
+                        ]);
                     }
-                }
 
-                foreach ($sheet as $row) {
-                    $feeder = trim($row[3] ?? '');
-                    $odc    = trim($row[2] ?? '');
-                    $odp    = trim($row[1] ?? '');
-                    $pole    = trim($row[0] ?? '');
+                    // Update or create ODC
+                    if ($odc !== '') {
+                        ODCDetail::updateOrCreate([
+                            'site' => $record->site,
+                            'bast_id' => $record->bast_id,
+                            'feeder_name' => $feeder,
+                            'odc_name' => $odc,
+                        ]);
+                    }
 
-                    if ($feeder === '' || $odc === '' || $odp === '' || $pole === '') continue;
-                    if (strtoupper($feeder) === 'FEEDER') continue;
+                    // Update or create ODP
+                    if ($odp !== '') {
+                        ODPDetail::updateOrCreate([
+                            'site' => $record->site,
+                            'bast_id' => $record->bast_id,
+                            'odc_name' => $odc,
+                            'odp_name' => $odp,
+                        ]);
 
+                        // Buat 8 port HomeConnect
+                        for ($portIndex = 1; $portIndex <= 8; $portIndex++) {
+                            HomeConnect::updateOrCreate(
+                                [
+                                    'bast_id'  => $record->bast_id,
+                                    'odp_name' => $odp,
+                                    'port_odp' => $portIndex,
+                                ],
+                                [
+                                    'site'        => $record->site,
+                                    'status_port' => 'idle',
+                                ]
+                            );
+                        }
+                    }
 
+                    // MappingHomepass
                     MappingHomepass::updateOrCreate(
-                         [
-                            'pole'=> $pole,
-                            'ODC' => $odc,
-                            'ODP' => $odp,
+                        [
+                            'pole' => $pole,
+                            'ODC'  => $odc,
+                            'ODP'  => $odp,
                         ],
                         [
                             'province_name' => $record->province_name,
@@ -272,13 +424,10 @@ class CreateBastProject extends CreateRecord
                             'site'          => $record->site,
                             'feeder_name'   => $feeder,
                             'created_at'    => now(),
-                        ],
-                        [
                             'updated_at'    => now(),
                         ]
                     );
-
-                 }
+                }
 
             }
 
