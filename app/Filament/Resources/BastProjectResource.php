@@ -438,9 +438,9 @@ class BastProjectResource extends Resource
 
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
+                // Tables\Actions\BulkActionGroup::make([
+                //     Tables\Actions\DeleteBulkAction::make(),
+                // ]),
             ]);
     }
 
@@ -461,7 +461,6 @@ class BastProjectResource extends Resource
             'list-odc-details' => Pages\ListOdcDetails::route('/list-odc-details/{site}'),
             'list-odp-details' => Pages\ListOdpDetails::route('/list-odp-details/{site}'),
             'list-feeder-details' => Pages\ListFeederDetails::route('/list-feeder-details/{site}'),
-            'list-rbs-details' => Pages\ListRbsDetails::route('/list-rbs-details/{site}'),
             'list-homeconnect-details' => Pages\ListHomeConnectDetails::route('/list-homeconnect-details/{site}'),
         ];
     }
