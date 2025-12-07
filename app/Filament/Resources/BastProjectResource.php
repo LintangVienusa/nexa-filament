@@ -93,7 +93,7 @@ class BastProjectResource extends Resource
 
                 Section::make('Project Info')
                     ->schema([
-                        
+
                         TextInput::make('site')->maxLength(255),
                         Hidden::make('bast_id')
                             ->label('BAST ID')
@@ -115,7 +115,7 @@ class BastProjectResource extends Resource
                                 ->required()
                                 ->default(fn ($record) =>
                                     $record?->email ?? auth()->user()->employee?->email
-                                ) 
+                                )
                                 ->afterStateUpdated(function ($state, $set) {
                                     if ($state) {
                                         $employee = Employee::find($state);
@@ -155,7 +155,7 @@ class BastProjectResource extends Resource
                             ])
                             ->default('not started')
                             ->required(),
-                        
+
                     ])->columns(2),
 
                     Section::make('Upload Data Homepass')
@@ -177,7 +177,7 @@ class BastProjectResource extends Resource
                                 ->directory('homepass_excels/tiang')
                                 ->required(fn (callable $get) => $get('pass') === 'HOMEPASS')
                                 ->visible(fn (callable $get) => $get('pass') === 'HOMEPASS')->dehydrated(true),
-                            
+
                             Placeholder::make('photo')
                                 ->label('Contoh Format Excel List FEEDER-ODC-ODP')
                                  ->content(function () {
@@ -353,7 +353,7 @@ class BastProjectResource extends Resource
                 //         </div>
                 //         <div style="font-size:12px; text-align:center; margin-top:2px;">'.number_format($state,0).'%</div>
                 //     ')
-                //     ->html() 
+                //     ->html()
                 //     ->sortable(),
                 TextColumn::make('bast_date')
                     ->date()
@@ -377,7 +377,7 @@ class BastProjectResource extends Resource
                 Select::make('province_name')
                     ->label('Province')
                     ->options(fn() => \App\Models\BastProject::distinct()
-                        ->whereNotNull('province_name') 
+                        ->whereNotNull('province_name')
                         ->pluck('province_name', 'province_name')
                         ->toArray()
                     )
@@ -435,7 +435,7 @@ class BastProjectResource extends Resource
 
             ])
             ->actions([
-                
+
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
