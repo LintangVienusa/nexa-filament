@@ -19,6 +19,8 @@ use App\Exports\BastODPExport;
 use Filament\Tables\Columns\ImageColumn;
 use Illuminate\Support\Facades\Auth;
 use Filament\Forms\Form as FilamentForm;
+use Filament\Tables\Actions\BulkAction;
+use Filament\Notifications\Notification;
 
 class ListOdpDetails extends ListRecords
 {
@@ -211,7 +213,37 @@ class ListOdpDetails extends ListRecords
     protected function getTableBulkActions(): array
     {
         return [
-            // Tables\Actions\DeleteBulkAction::make(),
+             BulkAction::make('export_implementation_odp_bulk')
+            ->label('Print Bulk ODP')
+            ->icon('heroicon-o-document-arrow-down')
+            ->color('primary')
+            ->action(function (\Illuminate\Support\Collection $records) {
+                
+                $records = $records->filter(fn($record) => $record->status === 'approved');
+
+                if ($records->isEmpty()) {
+                    Notification::make()
+                        ->title('Tidak ada record yang approved!')
+                        ->danger()
+                        ->send();
+                    return;
+                }
+
+                $zipFileName = 'Implementation_ODP_' . now()->format('Ymd_His') . '.zip';
+                $zipPath = storage_path($zipFileName);
+
+                $zip = new \ZipArchive();
+                if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
+                    foreach ($records as $record) {
+                        $excelFileName = "Implementation_ODP_{$record->odp_name}.xlsx";
+                        $excelContent = Excel::raw(new BastODPExport($record), \Maatwebsite\Excel\Excel::XLSX);
+                        $zip->addFromString($excelFileName, $excelContent);
+                    }
+                    $zip->close();
+                }
+
+                return response()->download($zipPath)->deleteFileAfterSend(true);
+            }),
         ];
     }
 }
