@@ -5,6 +5,7 @@ namespace App\Filament\Resources\BastProjectResource\Pages;
 use App\Filament\Resources\BastProjectResource;
 use App\Models\BastProject;
 use App\Models\HomeConnect;
+use Filament\Forms\Components\Textarea;
 use Filament\Pages\Page;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -26,16 +27,16 @@ use Filament\Forms\Form as FilamentForm;
 class ListHomeConnectDetails extends ListRecords
 {
     use InteractsWithTable;
+
     protected static string $resource = BastProjectResource::class;
 
     protected static ?string $title = 'List Home Connect Details';
 
     protected static ?string $navigationLabel = 'Home Connect Details';
     protected static ?string $navigationIcon = 'heroicon-o-collection';
-    protected static ?string $slug = 'list-homeconnect-details';
-     public ?string  $site = null;
+    public ?string $site = null;
 
-     public function mount(?string $site = null): void
+    public function mount(?string $site = null): void
     {
         $this->site = $site;
     }
@@ -43,15 +44,14 @@ class ListHomeConnectDetails extends ListRecords
     protected function getTableQuery(): Builder
     {
         return HomeConnect::query()
-                ->Join('BastProject', 'HomeConnect.bast_id', '=', 'BastProject.bast_id')
-                ->where('HomeConnect.site', $this->site)
-                    ->select('HomeConnect.*', 'BastProject.site');
+            ->Join('BastProject', 'HomeConnect.bast_id', '=', 'BastProject.bast_id')
+            ->where('HomeConnect.site', $this->site)
+            ->select('HomeConnect.*', 'BastProject.site');
     }
 
     protected function getTableColumns(): array
     {
         return [
-            // TextColumn::make('bast_id')->label('BAST ID')->searchable(),
             TextColumn::make('site')->label('Site')->searchable(['BastProject.site']),
             TextColumn::make('odp_name')->label('ODP')->searchable(['HomeConnect.odp_name']),
             TextColumn::make('port_odp')->label('Port ODP')->searchable(['HomeConnect.port_odp']),
@@ -63,58 +63,58 @@ class ListHomeConnectDetails extends ListRecords
             ImageColumn::make('foto_label_id_plg')
                 ->label('ID Pelanggan di ODP')
                 ->disk('public')
-                ->getStateUsing(fn($record) => $record->foto_label_id_plg ? asset('storage/'.$record->foto_label_id_plg) : null)
+                ->getStateUsing(fn($record) => $record->foto_label_id_plg ? asset('storage/' . $record->foto_label_id_plg) : null)
                 ->width(150)
                 ->height(150),
 
             ImageColumn::make('foto_qr')
                 ->label('QR Code')
                 ->disk('public')
-                ->getStateUsing(fn($record) => $record->foto_qr ? asset('storage/'.$record->foto_qr) : null)
+                ->getStateUsing(fn($record) => $record->foto_qr ? asset('storage/' . $record->foto_qr) : null)
                 ->width(150)
                 ->height(150),
             ImageColumn::make('foto_label_odp')
                 ->label('ODP')
                 ->disk('public')
-                ->getStateUsing(fn($record) => $record->foto_label_odp ? asset('storage/'.$record->foto_label_odp) : null)
+                ->getStateUsing(fn($record) => $record->foto_label_odp ? asset('storage/' . $record->foto_label_odp) : null)
                 ->width(150)
                 ->height(150),
 
             ImageColumn::make('foto_sn_ont')
                 ->label('SN ONT')
                 ->disk('public')
-                ->getStateUsing(fn($record) => $record->foto_sn_ont ? asset('storage/'.$record->foto_sn_ont) : null)
+                ->getStateUsing(fn($record) => $record->foto_sn_ont ? asset('storage/' . $record->foto_sn_ont) : null)
                 ->width(150)
                 ->height(150),
             TextColumn::make('progress_percentage')
                 ->label('Progress (%)')
-                ->formatStateUsing(fn ($state) => '
+                ->formatStateUsing(fn($state) => '
                     <div style="width:300%; background:#e5e7eb; border-radius:8px; overflow:hidden;">
-                        <div style="width:'.$state.'%; background:'.
-                            ($state < 30 ? '#ef4444' : ($state < 70 ? '#f59e0b' : '#10b981')).
-                            '; height:8px;"></div>
+                        <div style="width:' . $state . '%; background:' .
+                    ($state < 30 ? '#ef4444' : ($state < 70 ? '#f59e0b' : '#10b981')) .
+                    '; height:8px;"></div>
                     </div>
-                    <div style="font-size:12px; text-align:center; margin-top:2px;">'.number_format($state,0).'%</div>
+                    <div style="font-size:12px; text-align:center; margin-top:2px;">' . number_format($state, 0) . '%</div>
                 ')
                 ->html()
                 ->sortable(),
             TextColumn::make('status')
-                    ->badge()
-                    ->formatStateUsing(fn ($state) => match ($state) {
-                        'submit' => 'submit',
-                        'pending' => 'Pending',
-                        'approved' => 'Approved',
-                        'rejected' => 'Rejected',
-                        default => $state,
-                    })
-                    ->color(fn ($state): string => match ($state) {
-                        'submit' => 'warning',
-                        'pending' => 'warning',
-                        'approved' => 'success',
-                        'rejected' => 'danger',
-                        default => 'primary',
-                    })
-                    ->sortable(),
+                ->badge()
+                ->formatStateUsing(fn($state) => match ($state) {
+                    'submit' => 'submit',
+                    'pending' => 'Pending',
+                    'approved' => 'Approved',
+                    'rejected' => 'Rejected',
+                    default => $state,
+                })
+                ->color(fn($state): string => match ($state) {
+                    'submit' => 'warning',
+                    'pending' => 'warning',
+                    'approved' => 'success',
+                    'rejected' => 'danger',
+                    default => 'primary',
+                })
+                ->sortable(),
         ];
 
     }
@@ -123,56 +123,39 @@ class ListHomeConnectDetails extends ListRecords
     {
         return [
             Action::make('maps')
-                        ->label('Lihat Maps')
-                        ->icon('heroicon-o-map')
-                        ->url(fn ($record) => "https://www.google.com/maps?q={$record->latitude},{$record->longitude}")
-                        ->openUrlInNewTab()
-                        ->color('success'),
-            // Action::make('pending')
-            //     ->label('Pending')
-            //     ->icon('heroicon-o-check-circle')
-            //     ->color('warning')
-            //     ->requiresConfirmation()
-            //     ->visible(fn ($record) => $record->status === 'submit'  && (int) $record->progress_percentage >= 100)
-            //     ->action(function ($record) {
-            //         HomeConnect::where('bast_id', $record->bast_id)->where('id_pelanggan', $record->id_pelanggan)
-            //         ->update([
-            //             'status'       => 'pending',
-            //             'approval_by'  => Auth::user()->email,
-            //             'approval_at'  => now(),
-            //         ]);
-            //     })->after(fn () => $this->dispatch('refresh'))
-            //     ->successNotificationTitle('Data berhasil di-pending'),
+                ->label('Lihat Maps')
+                ->icon('heroicon-o-map')
+                ->url(fn($record) => "https://www.google.com/maps?q={$record->latitude},{$record->longitude}")
+                ->openUrlInNewTab()
+                ->color('success'),
             Action::make('approve')
                 ->label('Approved')
                 ->icon('heroicon-o-check-circle')
                 ->color('success')
                 ->requiresConfirmation()
-                ->visible(fn ($record) => $record->status === 'submit' && (int) $record->progress_percentage >= 100)
+                ->visible(fn($record) => $record->status === 'submit' && (int)$record->progress_percentage >= 100)
                 ->action(function ($record) {
                     HomeConnect::where('bast_id', $record->bast_id)->where('id_pelanggan', $record->id_pelanggan)
-                    ->update([
-                        'status'       => 'approved',
-                        'approval_by'  => Auth::user()->email,
-                        'approval_at'  => now(),
-                    ]);
-                })->after(fn () => $this->dispatch('refresh'))
+                        ->update([
+                            'status' => 'approved',
+                            'approval_by' => Auth::user()->email,
+                            'approval_at' => now(),
+                        ]);
+                })->after(fn() => $this->dispatch('refresh'))
                 ->successNotificationTitle('Data berhasil di-approve'),
-             Action::make('reject')
+            Action::make('reject')
                 ->label('Rejected')
                 ->icon('heroicon-o-x-circle')
                 ->color('danger')
                 ->requiresConfirmation()
-                ->visible(fn ($record) => $record->status === 'submit' && (int) $record->progress_percentage >= 100)
-
+                ->visible(fn($record) => $record->status === 'submit' && (int)$record->progress_percentage >= 100)
                 ->form([
-                    \Filament\Forms\Components\Textarea::make('notes')
+                    Textarea::make('notes')
                         ->label('Alasan Reject / Catatan')
                         ->rows(4)
                         ->required(),
                 ])
-
-                ->mountUsing(function (FilamentForm  $form, $record) {
+                ->mountUsing(function (FilamentForm $form, $record) {
                     $detail = HomeConnect::where('bast_id', $record->bast_id)
                         ->where('id_pelanggan', $record->id_pelanggan)
                         ->first();
@@ -182,7 +165,6 @@ class ListHomeConnectDetails extends ListRecords
                         'old_notes' => $detail?->notes,
                     ]);
                 })
-
                 ->action(function ($record, array $data) {
                     $detail = HomeConnect::where('bast_id', $record->bast_id)
                         ->where('id_pelanggan', $record->id_pelanggan)
@@ -190,20 +172,19 @@ class ListHomeConnectDetails extends ListRecords
 
                     $oldNotes = $detail?->notes ?? '';
                     $newEntry = "[" . now() . "] " . Auth::user()->email . "-> Reject :\n" .
-                                $data['notes'] . "\n\n";
-                    $finalNotes = $newEntry ." | " . $oldNotes;
+                        $data['notes'] . "\n\n";
+                    $finalNotes = $newEntry . " | " . $oldNotes;
 
                     HomeConnect::where('bast_id', $record->bast_id)
                         ->where('id_pelanggan', $record->id_pelanggan)
                         ->update([
-                            'status'       => 'rejected',
-                            'approval_by'  => Auth::user()->email,
-                            'approval_at'  => now(),
-                            'notes'        => $finalNotes,
+                            'status' => 'rejected',
+                            'approval_by' => Auth::user()->email,
+                            'approval_at' => now(),
+                            'notes' => $finalNotes,
                         ]);
                 })
-
-                ->after(fn () => $this->dispatch('refresh'))
+                ->after(fn() => $this->dispatch('refresh'))
                 ->successNotificationTitle('Data berhasil di-reject'),
             Action::make('export_ba_pdf')
                 ->label('Export BA PDF')
@@ -211,19 +192,14 @@ class ListHomeConnectDetails extends ListRecords
                 ->color('danger')
                 ->action(function ($record) {
                     $pdf = app(DownloadBAService::class)->downloadBA($record);
-
-                    // return response()->streamDownload(
-                    //     fn () => print($pdf->output()),
-                    //     "BA_{$record->site}.pdf"
-                    // );
                     return response()->streamDownload(
-                    fn () =>print($pdf->output()),
-                    "BA_Pelanggan_{$record->id_pelanggan}.pdf",
-                    [
-                        "Content-Type" => "application/pdf",
-                    ]
-                );
-                })->visible(fn ($record) => $record->status === 'approved'),
+                        fn() => print($pdf->output()),
+                        "BA_Pelanggan_{$record->id_pelanggan}.pdf",
+                        [
+                            "Content-Type" => "application/pdf",
+                        ]
+                    );
+                })->visible(fn($record) => $record->status === 'approved'),
         ];
     }
 
@@ -276,7 +252,6 @@ class ListHomeConnectDetails extends ListRecords
 
         ];
     }
-
 
 
     protected function getTableBulkActions(): array

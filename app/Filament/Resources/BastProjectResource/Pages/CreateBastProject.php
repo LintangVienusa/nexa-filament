@@ -62,73 +62,7 @@ class CreateBastProject extends CreateRecord
                     ]);
                 }
 
-                $firstValue = trim($sheet[1][0] ?? '');
-                if (preg_match('/^T(\d{3})$/', $firstValue, $matches)) {
-                    $startNumber = intval($matches[1]); 
-                } else {
-                    Notification::make()
-                        ->title('Baris pertama tiang tidak sesuai format')
-                        ->body("Baris pertama: $firstValue tidak sesuai T + 3 angka")
-                        ->warning()
-                        ->send();
-                    $startNumber = 1; 
-                    throw ValidationException::withMessages([
-                        'list_pole' => 'Format Excel Tiang salah.',
-                    ]);
-                }
-
                 
-                $spreadsheet = IOFactory::load($path);
-                $sheetExcel = $spreadsheet->getActiveSheet();
-                $startNumber = 1; 
-                $counter = 0;
-                $validPoleList = [];
-
-                for ($i = 2; $i <= $sheetExcel->getHighestRow(); $i++) {
-                    $cell = $sheetExcel->getCell('A' . $i);
-
-                    if ($cell->isFormula()) {
-                        
-                        $poleSn = $cell->getCalculatedValue(); 
-                        if (!preg_match('/^="\s*T"\s*&\s*TEXT\(RIGHT\(A\d+,3\)\+1,"000"\)$/', $poleSn)) {
-                                if (!preg_match('/^T\d{3}$/', $poleSn)) {
-                                    Notification::make()
-                                        ->title('Formula Excel Tidak Sesuai')
-                                        ->body("Baris ke-$i File Tiang memiliki formula tidak standar: $poleSn.")
-                                        ->warning()
-                                        ->send();
-
-                                    $poleSn = 'T' . str_pad($counter + 1, 3, '0', STR_PAD_LEFT);
-                                    throw ValidationException::withMessages([
-                                        'list_pole' => 'Format Excel Tiang salah.',
-                                    ]);
-                                }
-                            }
-                        $poleSn = $cell->getCalculatedValue(); 
-                    } else {
-                        $poleSn = trim($cell->getValue());
-
-                        if (!preg_match('/^T\d{3}$/', $poleSn)) {
-                             
-                                Notification::make()
-                                    ->title('Formula Excel Tidak Sesuai')
-                                    ->body("Baris ke-$i File Tiang 2 memiliki formula tidak standar: $poleSn.")
-                                    ->warning()
-                                    ->send();
-
-                                $poleSn = 'T' . str_pad($counter + 1, 3, '0', STR_PAD_LEFT);
-                                throw ValidationException::withMessages([
-                                    'list_pole' => 'Format Excel Tiang salah.',
-                                ]);
-                            
-
-                            
-                        }
-                    }
-
-                    $validPoleList[] = $poleSn;
-                    $counter++;
-                }
 
             }
 
@@ -169,61 +103,7 @@ class CreateBastProject extends CreateRecord
                     
                 }
 
-                 $spreadsheet = IOFactory::load($path);
-                $sheetExcel = $spreadsheet->getActiveSheet();
-                $startNumber = 1;
-                $counter = 0;
-                $validPoleList = [];
-
-                $sheetArray = Excel::toArray(new FormulaValueBinderService, $path)[0] ?? [];
-                $header = array_map('strtoupper', array_map('trim', $sheetArray[0] ?? []));
-                $expectedHeaders = ['TIANG','ODP','ODC','FEEDER'];
-
-
-                for ($i = 2; $i <= $sheetExcel->getHighestRow(); $i++) {
-                    
-                    $cell = $sheetExcel->getCell('A' . $i);
-
-                    if ($cell->isFormula()) {
-                        $poleSn = $cell->getValue(); 
-                        if (!preg_match('/^="\s*T"\s*&\s*TEXT\(RIGHT\(A\d+,3\)\+1,"000"\)$/', $poleSn)) {
-                                    Notification::make()
-                                        ->title('Formula Excel Tidak Sesuai')
-                                        ->body("Baris ke-$i File Feder-ODC-ODP-Tiang memiliki formula tidak standar: $poleSn.")
-                                        ->warning()
-                                        ->send();
-
-                                    $poleSn = 'T' . str_pad($counter + 1, 3, '0', STR_PAD_LEFT);
-                                    throw ValidationException::withMessages([
-                                        'list_pole' => 'Format Excel Tiang salah.',
-                                    ]);
-                                
-                            }
-                        $poleSn = $cell->getCalculatedValue(); 
-                    } else {
-                        $poleSn = trim($cell->getValue());
-
-                        if (!preg_match('/^T\d{3}$/', $poleSn)) {
-                             
-                                Notification::make()
-                                    ->title('Formula Excel Tidak Sesuai')
-                                    ->body("Baris ke-$i File Feder-ODC-ODP-Tiang memiliki formula tidak standar: $poleSn.")
-                                    ->warning()
-                                    ->send();
-
-                                $poleSn = 'T' . str_pad($counter + 1, 3, '0', STR_PAD_LEFT);
-                                throw ValidationException::withMessages([
-                                    'list_pole' => 'Format Excel Tiang salah.',
-                                ]);
-                            
-
-                            
-                        }
-                    }
-
-                    $validPoleList[] = $poleSn;
-                    $counter++;
-                }
+                 
             }
         }
 
