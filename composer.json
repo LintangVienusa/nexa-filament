@@ -23,7 +23,7 @@
         "pxlrbt/filament-excel": "^2.5",
         "shkubu18/filament-widget-tabs": "^1.0",
         "spatie/laravel-activitylog": "^4.10",
-        "spatie/laravel-permission": "^6.21"
+        "spatie/laravel-permission": "^6.23"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
