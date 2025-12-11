@@ -6,10 +6,17 @@ use App\Filament\Resources\AssetTransactionResource;
 use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
 use App\Models\AssetMovement;
 use App\Models\AssetTransactionItem;
 use App\Models\Assets;
 use App\Models\InventoryAsset;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use Filament\Notifications\Notification;
+use App\Services\FormulaValueBinderService;
+use Illuminate\Validation\ValidationException;
+use Maatwebsite\Excel\Concerns\WithCustomValueBinder;
+use Illuminate\Support\Facades\Storage;
 
 class CreateAssetTransaction extends CreateRecord
 {
@@ -22,11 +29,102 @@ class CreateAssetTransaction extends CreateRecord
         return $this->getResource()::getUrl('index');
     }
 
-    // protected function mutateFormDataBeforeCreate(array $data): array
-    // {
-    //     \Log::info('Form State', $data);
-    //     return $data;
-    // }
+    protected function beforeValidate(): void
+    {
+        $data = $this->form->getState();
+
+        if (($data['input_mode'] ?? null) === 'IMPORT') {
+            $path = storage_path('app/public/' . ($data['file_asset']));
+
+            if (!file_exists($path)) {
+                Notification::make()
+                    ->title('File tidak ditemukan!')
+                    ->danger()
+                    ->send();
+
+               throw ValidationException::withMessages([
+                        'list_pole' => 'File Item tidak ditemukan.',
+                    ]);
+            }
+
+            $sheet = Excel::toArray(new FormulaValueBinderService, $path)[0] ?? [];
+            // $sheet = $spreadsheet->getActiveSheet()->toArray();
+
+            if (count($sheet) < 1) {
+                Notification::make()
+                    ->title('File Excel kosong!')
+                    ->danger()
+                    ->send();
+                 throw ValidationException::withMessages([
+                        'list_pole' => 'File Item tidak ditemukan.',
+                    ]);
+            }
+
+            // Validasi header
+            $header = $sheet[0];
+            $expectedHeader = ['nama item', 'merk item', 'tipe item','serialNumber', 'kondisi',  'catatan'];
+            if ($header !== $expectedHeader) {
+                Notification::make()
+                    ->title('Urutan kolom Excel salah!')
+                    ->body('Pastikan urutan kolom sesuai: ' . implode(', ', $expectedHeader))
+                    ->danger()
+                    ->send();
+                $this->halt();
+                return;
+            }
+
+            // Validasi duplikat serialNumber
+            $serialNumbersInFile = [];
+            foreach (array_slice($sheet, 1) as $row) {
+                $serialNumber = $row[4] ?? null;
+                if (!$serialNumber) continue;
+
+                if (in_array($serialNumber, $serialNumbersInFile)) {
+                    Notification::make()
+                        ->title('Duplikat Serial Number di file!')
+                        ->body("Serial Number $serialNumber muncul lebih dari sekali.")
+                        ->danger()
+                        ->send();
+                    $this->halt();
+                    return;
+                }
+                $serialNumbersInFile[] = $serialNumber;
+
+                $existsInDb = Assets::where('serialNumber', $serialNumber)->exists();
+                if ($existsInDb) {
+                    Notification::make()
+                        ->title('Serial Number sudah ada di database!')
+                        ->body("Serial Number $serialNumber sudah digunakan.")
+                        ->danger()
+                        ->send();
+                    $this->halt();
+                    return;
+                }
+            }
+
+            // Jika semua valid, set requested_items
+            $items = [];
+            foreach (array_slice($sheet, 1) as $row) {
+                $assetId = $row[0] ?? null;
+                $asset = Assets::find($assetId);
+                if ($asset) {
+                    $items[] = [
+                        'asset_id' => $asset->id,
+                        'item_code' => $asset->item_code,
+                        'merk' => $asset->merk,
+                        'type' => $asset->type,
+                        'serialNumber' => $asset->serialNumber,
+                        'description' => $asset->description,
+                    ];
+                }
+            }
+
+            $this->form->fill([
+                'requested_items' => $items,
+            ]);
+        }    
+        
+    }
 
     protected function handleRecordCreation(array $data): \Illuminate\Database\Eloquent\Model
     {

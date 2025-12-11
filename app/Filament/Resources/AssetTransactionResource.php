@@ -30,6 +30,8 @@ use Filament\Notifications\Notification;
 use App\Traits\HasOwnRecordPolicy;
 use Spatie\Permission\Traits\HasPermissions;
 use App\Traits\HasNavigationPolicy;
+use Filament\Forms\Components\FileUpload;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class AssetTransactionResource extends Resource
 {
@@ -212,8 +214,19 @@ class AssetTransactionResource extends Resource
                             Textarea::make('ba_description')
                                 ->label('Deskripsi')
                                 ->columnSpanFull(),
+                            Select::make('input_mode')
+                                ->label('Metode Input Barang')
+                                ->options([
+                                    'IMPORT' => 'Import dari File',
+                                    'MANUAL' => 'Input Manual Satuan',
+                                ])
+                                ->reactive()
+                                ->required()
+                                ->default('MANUAL'),
                         ])
                          ->columns(2),
+
+                    
 
                     Section::make('Usage & Assignment')
                         ->schema([
@@ -351,6 +364,24 @@ class AssetTransactionResource extends Resource
 
                     Section::make('Detail item')
                         ->schema([
+                            FileUpload::make('file_asset')
+                                ->label('Upload Excel')
+                                ->acceptedFileTypes([
+                                    'application/vnd.ms-excel',
+                                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                                    'application/octet-stream',
+                                ])
+                                ->directory('asset/list_asset')
+                                ->required(fn (callable $get) => $get('input_mode') === 'IMPORT')
+                                ->visible(fn (callable $get) => $get('input_mode') === 'IMPORT')
+                                ->dehydrated(true)
+                                ->reactive()
+                                
+                        ])
+                        ->visible(fn (callable $get) => $get('input_mode') === 'IMPORT'),
+
+                    Section::make('Detail item')
+                        ->schema([
                             Repeater::make('requested_items')
                                 ->label('Detail item')
                                 ->schema([
@@ -433,30 +464,7 @@ class AssetTransactionResource extends Resource
                                         })
                                         ->reactive()
                                         ->searchable()
-                                        ->afterStateUpdated(function ($state, callable $get, callable $set, $livewire) {
-
-                                            $items = collect($get('../../requested_items'))->pluck('asset_id')->filter();
-
-                                                if ($items->duplicates()->isNotEmpty()) {
-                                                    $set('asset_id', null);
-                                                    Notification::make()
-                                                        ->title('Serial Number sudah digunakan di item lain!')
-                                                        ->danger()
-                                                        ->duration(3000)
-                                                        ->send();
-
-                                                    return;
-                                                }
-                                            $asset = Assets::find($state);
-                                            if ($asset) {
-                                                $set('item_code', $asset->item_code);
-                                                $set('merk', $asset->merk);
-                                                $set('type', $asset->type);
-                                                $set('serialNumber', $asset->serialNumber);
-                                                $set('description', $asset->description);
-                                                $set('status', 0);
-                                            }
-                                        })
+                                        
                                         ->required(),
 
                                     TextInput::make('item_code')
@@ -581,7 +589,7 @@ class AssetTransactionResource extends Resource
 
                                 ->maxItems(fn (callable $get) => $get('../../request_asset_qty') ?? null)
                                 ->visible(fn (callable $get) => $get('transaction_type') === 'RECEIVE' && $get('usage_type') != 'RETURN WAREHOUSE'),
-                        ]),
+                        ])->visible(fn (callable $get) => $get('input_mode') === 'MANUAL' ),
                 ]);
     }
 
