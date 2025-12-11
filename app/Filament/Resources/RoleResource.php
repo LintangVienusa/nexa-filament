@@ -29,7 +29,7 @@ class RoleResource extends Resource
     protected static ?string $pluralLabel = 'Roles';
 
     public static function form(Form $form): Form
-    {
+    { 
         $resources = FilamentHelper::getResources();
         $sections = [];
 
