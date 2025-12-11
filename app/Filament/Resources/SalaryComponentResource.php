@@ -28,7 +28,7 @@ class SalaryComponentResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';
     protected static ?string $navigationGroup = 'HR Management';
-    protected static ?string $navigationLabel = 'Salary Components';
+    protected static ?string $navigationLabel = 'Payroll Components';
 
     public static function form(Form $form): Form
     {
@@ -75,9 +75,9 @@ class SalaryComponentResource extends Resource
                 Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
+                // Tables\Actions\BulkActionGroup::make([
+                //     Tables\Actions\DeleteBulkAction::make(),
+                // ]),
             ]);
     }
 

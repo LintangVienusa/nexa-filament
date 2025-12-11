@@ -5,12 +5,14 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\BastProject;
+use App\Models\CableDetail;
 use App\Models\PoleDetail;
 use App\Models\ODPDetail;
 use App\Models\ODCDetail;
 use App\Models\FeederDetail;
 use App\Models\RBSDetail;
 use App\Models\HomeConnect;
+use App\Models\MappingHomepass;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -29,22 +31,35 @@ class BastProjectController extends Controller
             ], 401);
         }
 
-        // $validated = $request->validate([
-        //     'village_name' => 'required|string',
+        $validated = $request->validate([
+            'pass' => 'required|string',
+            'station_name' => 'nullable|string',
             
-        // ]);
+        ]);
 
 
-        // $village_name  = $validated['village_name'];s
-
-        $basts = BastProject::where('status', '!=', 'completed')
+        $station_name  = $validated['station_name'];
+        $pass  = $validated['pass'];
+        if($pass != '' && $station_name != ''){
+            $basts = BastProject::where('status', '!=', 'completed')
+            ->where('pass', $pass)
+            ->where('station_name', $station_name)
             ->orderBy('created_at', 'desc')
             ->get()
-            ->groupBy('village_name'); 
+            ->groupBy('station_name'); 
+        }else{
+            $basts = BastProject::where('status', '!=', 'completed')
+            ->where('pass', $pass)
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->groupBy('station_name'); 
+        }
 
-        $data = $basts->map(function ($items, $village_name) {
+        
+
+        $data = $basts->map(function ($items, $station_name) {
             return [
-                'village_name' => $village_name,
+                'station_name' => $station_name,
                 'total_bast' => $items->count(),
                 'details' => $items->map(function ($item) {
                     return [
@@ -53,16 +68,17 @@ class BastProjectController extends Controller
                         'regency_name' => $item->regency_name,
                         'village_name' => $item->village_name,
                         'project_name' => $item->project_name,
+                        'station_name' => $item->station_name,
                         'notes' => $item->notes,
                         'pass' => $item->pass,
                         'PIC' => $item->pic,
                         'status' => $item->status,
                         'progress_percentage' => $item->progress_percentage,
-                        'presentase_tian' => 0,
-                        'presentase_rbs' => 0,
-                        'presentase_odc' => 0,
-                        'presentase_odp' => 0,
-                        'presentase_feeder' => 0,
+                        // 'presentase_tian' => 0,
+                        // 'presentase_rbs' => 0,
+                        // 'presentase_odc' => 0,
+                        // 'presentase_odp' => 0,
+                        // 'presentase_feeder' => 0,
                         'created_at' => $item->created_at->format('Y-m-d H:i:s'),
                     ];
                 })->values(),
@@ -88,10 +104,10 @@ class BastProjectController extends Controller
             ], 401);
         }
 
-        $query = BastProject::select('village_name', DB::raw('COUNT(bast_id) as total_bast'))
+        $query = BastProject::select('station_name', DB::raw('COUNT(bast_id) as total_bast'))
                 ->where('status', '!=', 'completed')
-                ->groupBy('village_name')
-                ->orderBy('village_name', 'asc')
+                ->groupBy('station_name')
+                ->orderBy('station_name', 'asc')
                 ->get();
 
         
@@ -160,6 +176,7 @@ class BastProjectController extends Controller
         
     }
 
+    #POLE
     public function listpole(Request $request)
     {
         date_default_timezone_set('Asia/Jakarta');
@@ -173,30 +190,48 @@ class BastProjectController extends Controller
         }
 
         $validated = $request->validate([
-            'bast_id' => 'required|string|exists:mysql_inventory.BastProject,bast_id',
+            'station_name' => 'required|string',
+            'pole_sn'         => 'nullable|string',
+            'per_page'     => 'nullable|integer|min:1|max:200',
+            'page'         => 'nullable|integer|min:1',
         ]);
 
-        $bastId = $validated['bast_id'];
+        // $bastId = $validated['bast_id'];
+        $station_name = $validated['station_name'];
+        $pole_sn = $validated['pole_sn'];
+        $perPage = $request->per_page ?? 20;
+
+        if($pole_sn != ''){
+            $poles = PoleDetail::on('mysql_inventory')
+            ->join('BastProject', 'PoleDetail.bast_id', '=', 'BastProject.bast_id')
+            ->where('PoleDetail.pole_sn', $pole_sn)
+            ->select('PoleDetail.bast_id','PoleDetail.pole_sn')
+            ->distinct()
+            ->paginate($perPage);
+
+        }else{
+            $poles = PoleDetail::on('mysql_inventory')
+            ->join('BastProject', 'PoleDetail.bast_id', '=', 'BastProject.bast_id')
+            ->where('BastProject.station_name', $station_name)
+            ->select('PoleDetail.bast_id','PoleDetail.pole_sn')
+            ->distinct()
+            ->paginate($perPage);
+        }
         
 
-        $bast = BastProject::on('mysql_inventory')->where('bast_id', $bastId)->first();
-
-        if (! $bast) {
+        if ($poles->isEmpty()) {
             return response()->json([
                 'status' => 'error',
-                'message' => "BAST dengan ID {$bastId} tidak ditemukan",
+                'message' => "Tidak ada Pole untuk station {$station_name}",
             ], 404);
         }
-
-        $query = PoleDetail::where('bast_id', $bastId)->pluck('pole_sn')
-                ->toArray();
         
         
 
         return response()->json([
             'status' => 'success',
-            'message' => 'List Pole',
-            'list_pole' => $query,
+            'message' => "List Pole — {$station_name}",
+            'data' => $poles,
         ]);
         
     }
@@ -216,6 +251,7 @@ class BastProjectController extends Controller
         $validated = $request->validate([
             'bast_id' => 'required|string|exists:mysql_inventory.BastProject,bast_id',
             'pole_sn' => 'nullable|string',
+            'notes' => 'nullable|string',
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
             
@@ -259,6 +295,9 @@ class BastProjectController extends Controller
             'labeling_tiang',
             'aksesoris_tiang',
         ];
+        $p=0;
+        $percentage =0;
+        $poleDetail->progress_percentage = 0;
 
         foreach ($photoFields as $field) {
             $filePhoto = $request->input($field);
@@ -309,10 +348,12 @@ class BastProjectController extends Controller
                     imagedestroy($tempImage);
                     imagedestroy($compressedImage);
 
-
+                    $p = $p+1;
                     
                     $poleDetail->$field = $path;
                 } else {
+                    
+                    $p = $p+1;
                     $poleDetail->$field = $filePhoto;
                 }
             }
@@ -326,13 +367,20 @@ class BastProjectController extends Controller
         // }
 
         if ($request->filled('longitude')) {
+            $p = $p+1;
             $poleDetail->longitude = $validated['longitude']  ?? 0;
+        }
+        if ($request->filled('notes')) {
+            $poleDetail->notes = $validated['notes']  ?? '';
         }
         // else{
             
         //     $pole->longitude = 0;
         // }
+        $percentage = ($p/7)*100;
+        $poleDetail->progress_percentage = $percentage;
 
+        $poleDetail->status = 'submit';
         $poleDetail->updated_by = $user->email ?? null;
         $poleDetail->save();
 
@@ -342,6 +390,8 @@ class BastProjectController extends Controller
             $bast->updated_by = $user->email;
             $bast->save();
         }
+        
+        $this->updateBastProgress($bastId);
 
         return response()->json([
             'status' => 'success',
@@ -397,14 +447,19 @@ class BastProjectController extends Controller
             ];
 
             $base64Files = [];
+            $base64Files['pole_sn']=$record->pole_sn;
+            $base64Files['notes']=$record->notes;
+            $base64Files['latitude']=$record->latitude;
+            $base64Files['longitude']=$record->longitude;
 
             foreach ($fileKeys as $key) {
                 $file = $record->$key ?? null;
 
                 if (!empty($file)) {
                     $filePath = storage_path('app/public/' . $file);
+                    $filePath = preg_replace('/^data:image\/[a-zA-Z0-9]+;base64,/', '', $filePath);
                     $base64Files[$key] = file_exists($filePath)
-                        ? 'data:image/' . pathinfo($filePath, PATHINFO_EXTENSION) . ';base64,' . base64_encode(file_get_contents($filePath))
+                        ? base64_encode(file_get_contents($filePath))
                         : null;
                 } else {
                     $base64Files[$key] = null;
@@ -426,7 +481,9 @@ class BastProjectController extends Controller
         
     }
 
-    public function listodp(Request $request)
+
+    #CABLE
+    public function listcable(Request $request)
     {
         date_default_timezone_set('Asia/Jakarta');
         $user = Auth::user();
@@ -439,7 +496,7 @@ class BastProjectController extends Controller
         }
 
         $validated = $request->validate([
-            'bast_id' => 'required|string|exists:mysql_inventory.BastProject,bast_id',
+            'bast_id' => 'required|string'
         ]);
 
         $bastId = $validated['bast_id'];
@@ -454,8 +511,308 @@ class BastProjectController extends Controller
             ], 404);
         }
 
-        $query = ODPDetail::where('bast_id', $bastId)->pluck('odp_name')
+        $query = CableDetail::where('bast_id', $bastId)->pluck('pole_sn')
                 ->toArray();
+        
+        
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'List Cable Pole',
+            'list_Cable_pole' => $query,
+        ]);
+        
+    }
+
+
+    public function updatecable(Request $request)
+    {
+        date_default_timezone_set('Asia/Jakarta');
+        $user = Auth::user();
+
+        if (! $user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthorized',
+            ], 401);
+        }
+
+        $validated = $request->validate([
+            'bast_id' => 'required|string|exists:mysql_inventory.BastProject,bast_id',
+            'pole_sn' => 'nullable|string',
+            'notes' => 'nullable|string',
+            
+        ]);
+
+        $bastId = $validated['bast_id'];
+        $poleSn = $validated['pole_sn'] ?? null;
+
+        $bast = BastProject::on('mysql_inventory')->where('bast_id', $bastId)->first();
+
+        if (! $bast) {
+            return response()->json([
+                'status' => 'error',
+                'message' => "BAST dengan ID {$bastId} tidak ditemukan",
+            ], 404);
+        }
+
+        $query = CableDetail::where('bast_id', $bastId);
+        if ($poleSn) {
+            $query->where('pole_sn', $poleSn);
+        }
+        $CableDetail = $query->first();
+
+         
+
+        if (! $CableDetail) {
+            $CableDetail = new CableDetail();
+            $CableDetail->bast_id = $bastId;
+            if ($poleSn) {
+                $CableDetail->pole_sn = $poleSn;
+            }
+            $CableDetail->created_by = $user->email;
+        }
+
+    
+        $photoFields = [
+            'pulling_cable',
+            'instalasi',
+        ];
+        $p=0;
+        $percentage =0;
+        $CableDetail->progress_percentage = 0;
+
+        foreach ($photoFields as $field) {
+            $filePhoto = $request->input($field);
+
+            if (!empty($filePhoto)) {
+                $filePhoto = "data:image/png;base64," . $filePhoto;
+                if (preg_match('/^data:image\/(\w+);base64,/', $filePhoto, $type)) {
+                    $filePhoto = substr($filePhoto, strpos($filePhoto, ',') + 1);
+                    $type = strtolower($type[1]);
+                    $decoded = base64_decode($filePhoto);
+
+                    if ($decoded === false) {
+                        return response()->json([
+                            'status' => 'error',
+                            'message' => "Invalid base64 format for {$field}",
+                        ], 400);
+                    }
+
+                    // $fileName = $field . '_' . time() . '.' . $type;
+                    // Storage::disk('public')->put($path, $decoded);
+                    $fileName = $field . '_' . time() . '.' . $type;
+                    $path = 'cable/' . $fileName;
+                    $folder = public_path('storage/cable');
+
+                    if (!file_exists($folder)) {
+                        mkdir($folder, 0777, true);
+                    }
+
+                    $tempImage = imagecreatefromstring($decoded);
+                    if ($tempImage === false) {
+                        return response()->json(['error' => 'Failed to create image from data'], 400);
+                    }
+
+                    $width = imagesx($tempImage);
+                    $height = imagesy($tempImage);
+
+                    $maxWidth = 800;
+                    $maxHeight = 800;
+                    $ratio = min($maxWidth / $width, $maxHeight / $height, 1);
+                    $newWidth = (int)($width * $ratio);
+                    $newHeight = (int)($height * $ratio);
+
+                    $compressedImage = imagecreatetruecolor($newWidth, $newHeight);
+                    imagecopyresampled($compressedImage, $tempImage, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+
+                    imagejpeg($compressedImage, $folder . '/' . $fileName, 75);
+
+                    imagedestroy($tempImage);
+                    imagedestroy($compressedImage);
+
+                    $p = $p+1;
+                    
+                    $CableDetail->$field = $path;
+                } else {
+                    
+                    $p = $p+1;
+                    $CableDetail->$field = $filePhoto;
+                }
+            }
+        }
+
+       
+        if ($request->filled('notes')) {
+            $CableDetail->notes = $validated['notes']  ?? '';
+        }
+        // else{
+            
+        //     $pole->longitude = 0;
+        // }
+        $percentage = ($p/2)*100;
+        $CableDetail->progress_percentage = $percentage;
+
+        $CableDetail->updated_by = $user->email ?? null;
+        $CableDetail->save();
+
+        if ($bast) {
+            $bast->info_pole = 1;
+            $bast->status = 'in progress';
+            $bast->updated_by = $user->email;
+            $bast->save();
+        }
+        
+        $this->updateBastProgress($bastId);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Cable data updated successfully',
+            'data' => $CableDetail,
+        ]);
+        
+    }
+
+    public function detailcable(Request $request)
+    {
+        date_default_timezone_set('Asia/Jakarta');
+        $user = Auth::user();
+
+        if (! $user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthorized',
+            ], 401);
+        }
+
+        $validated = $request->validate([
+            'bast_id' => 'required|string|exists:mysql_inventory.BastProject,bast_id',
+            'pole_sn' => 'nullable|string',
+            
+        ]);
+
+        $bastId = $validated['bast_id'];
+        $poleSn = $validated['pole_sn'] ?? null;
+
+        $bast = BastProject::on('mysql_inventory')->where('bast_id', $bastId)->first();
+
+        if (! $bast) {
+            return response()->json([
+                'status' => 'error',
+                'message' => "BAST dengan ID {$bastId} tidak ditemukan",
+            ], 404);
+        }
+
+        $query = CableDetail::where('bast_id', $bastId);
+        if ($poleSn) {
+             $query->where('pole_sn', $poleSn);
+
+            $record = $query->first();
+
+            $fileKeys = [
+                'pulling_cable',
+                'instalasi',
+            ];
+
+            $base64Files = [];
+
+            foreach ($fileKeys as $key) {
+                $file = $record->$key ?? null;
+
+                if (!empty($file)) {
+                    $filePath = storage_path('app/public/' . $file);
+                    $base64Files[$key] = file_exists($filePath)
+                        ? base64_encode(file_get_contents($filePath))
+                        : null;
+                } else {
+                    $base64Files[$key] = null;
+                }
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $base64Files,
+            ]);
+        }else{
+            $CableDetail = $query->first();
+            return response()->json([
+                'status' => 'error',
+                'message' => "BAST dengan ID {$bastId} tidak ditemukan",
+            ], 404);
+        }
+        
+        
+    }
+
+
+
+    #ODP
+    public function listodp(Request $request)
+    {
+        date_default_timezone_set('Asia/Jakarta');
+        $user = Auth::user();
+
+        if (! $user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthorized',
+            ], 401);
+        }
+
+        $validated = $request->validate([
+            'bast_id' => 'required|string',
+            'odc_name' => 'required|string',
+            'odp_name' => 'nullable|string',
+        ]);
+
+        $bastId = $validated['bast_id'];
+        $odc_name = $validated['odc_name'];
+        $odp_name = $validated['odp_name'];
+        
+
+        if($odp_name ==""){
+            // $bast = BastProject::on('mysql_inventory')->where('bast_id', $bastId)->first();
+
+            // $bast2 = BastProject::on('mysql_inventory')
+            //     ->where('bast_id', $bastId)
+            //     ->whereHas('ODCDetail', function($q) use ($odc_name) {
+            //         $q->where('odc_name', $odc_name);
+            //     })
+            //     ->with(['ODCDetail' => function($q) use ($odc_name) {
+            //         $q->where('odc_name', $odc_name);
+            //     }])
+            //     ->first();
+
+            // if (!$bast2) {
+            //     return response()->json([
+            //         'status' => 'error',
+            //         'message' => "ODC dengan {$odc_name} tidak ditemukan",
+            //     ], 404);
+            // }
+
+            $query = ODPDetail::where('odc_name', $odc_name)->pluck('odp_name')
+                ->toArray();
+
+                if (!$query) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => "ODC dengan {$odc_name} tidak ditemukan",
+                    ], 404);
+                }
+        }else{
+             $query = ODPDetail::where('odp_name', $odp_name)->pluck('odp_name')
+                ->toArray();
+
+                if (!$query) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => "ODP dengan {$odp_name} tidak ditemukan",
+                    ], 404);
+                }
+        }
+         
+
+        
         
         
 
@@ -521,9 +878,11 @@ class BastProjectController extends Controller
             'instalasi',
             'odp_terbuka',
             'odp_tertutup',
-            'hasil_ukur_opm',
-            'labeling_odp',
+            'power_optic_odc',
         ];
+
+        $po = 0;
+        $percentage = 0;
 
         foreach ($photoFields as $field) {
             $filePhoto = $request->input($field);
@@ -575,9 +934,10 @@ class BastProjectController extends Controller
                     imagedestroy($compressedImage);
 
 
-                    
+                    $po = $po+1;
                     $odpDetail->$field = $path;
                 } else {
+                    $po = $po+1;
                     $odpDetail->$field = $filePhoto;
                 }
             }
@@ -591,13 +951,19 @@ class BastProjectController extends Controller
         // }
 
         if ($request->filled('longitude')) {
+            $po = $po+1;
             $odpDetail->longitude = $validated['longitude']  ?? 0;
+        }
+        if ($request->filled('notes')) {
+            $odpDetail->notes = $validated['notes']  ?? '';
         }
         // else{
             
         //     $pole->longitude = 0;
         // }
-
+        $percentage = ($po/5)*100;
+        $odpDetail->progress_percentage = $percentage;
+        $odpDetail->status = 'submit';
         $odpDetail->updated_by = $user->email ?? null;
         $odpDetail->save();
 
@@ -607,6 +973,8 @@ class BastProjectController extends Controller
             $bast->updated_by = $user->email;
             $bast->save();
         }
+        
+        $this->updateBastProgress($bastId);
 
         return response()->json([
             'status' => 'success',
@@ -629,7 +997,7 @@ class BastProjectController extends Controller
         }
 
         $validated = $request->validate([
-            'bast_id' => 'required|string|exists:mysql_inventory.BastProject,bast_id',
+            'bast_id' => 'nullable|string|exists:mysql_inventory.BastProject,bast_id',
             'odp_name' => 'nullable|string',
             
         ]);
@@ -656,19 +1024,25 @@ class BastProjectController extends Controller
                 'instalasi',
                 'odp_terbuka',
                 'odp_tertutup',
-                'hasil_ukur_opm',
-                'labeling_odp',
+                'power_optic_odc',
             ];
 
             $base64Files = [];
+
+            $base64Files['odc_name']=$record->odc_name;
+            $base64Files['odp_name']=$record->odp_name;
+            $base64Files['notes']=$record->notes;
+            $base64Files['latitude']=$record->latitude;
+            $base64Files['longitude']=$record->longitude;
 
             foreach ($fileKeys as $key) {
                 $file = $record->$key ?? null;
 
                 if (!empty($file)) {
                     $filePath = storage_path('app/public/' . $file);
+                     $filePath = preg_replace('/^data:image\/[a-zA-Z0-9]+;base64,/', '', $filePath);
                     $base64Files[$key] = file_exists($filePath)
-                        ? 'data:image/' . pathinfo($filePath, PATHINFO_EXTENSION) . ';base64,' . base64_encode(file_get_contents($filePath))
+                        ? base64_encode(file_get_contents($filePath))
                         : null;
                 } else {
                     $base64Files[$key] = null;
@@ -704,30 +1078,73 @@ class BastProjectController extends Controller
         }
 
         $validated = $request->validate([
-            'bast_id' => 'required|string|exists:mysql_inventory.BastProject,bast_id',
+            // 'pass' => 'required|string',
+            'station_name' => 'required|string',
+            'odc_name' => 'nullable|string',
         ]);
 
-        $bastId = $validated['bast_id'];
+        $station_name = $validated['station_name'];
+        $odc_name = $validated['odc_name'];
+        
+        if($odc_name == ''){
+            $bastList = BastProject::on('mysql_inventory')->where('station_name', $station_name)->get(['bast_id', 'site']);;
+
+            // if (!$bast) {
+            //     return response()->json([
+            //         'status' => 'error',
+            //         'message' => "SITE di Stasiun {$station_name} tidak ditemukan",
+            //     ], 404);
+            // }
+
+            if ($bastList->isEmpty()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => "Tidak ada BAST pada site {$station_name}",
+                ], 404);
+            }
+
+            // $query = ODCDetail::where('bast_id', $bastId);
+            $odcQuery = ODCDetail::query();
+
+            foreach ($bastList as $bast) {
+                $odcQuery->orWhere(function($q) use ($bast) {
+                    $q->where('bast_id', $bast->bast_id)
+                    ->where('site', $bast->site);
+                });
+            }
+
+        }else{
+            $odcQuery = ODCDetail::where('odc_name', $odc_name);
+        }
         
 
-        $bast = BastProject::on('mysql_inventory')->where('bast_id', $bastId)->first();
+        $odcData = $odcQuery->get(['odc_name', 'bast_id', 'site']);
 
-        if (! $bast) {
+        if ($odcData->isEmpty()) {
             return response()->json([
                 'status' => 'error',
-                'message' => "BAST dengan ID {$bastId} tidak ditemukan",
+                'message' => "Tidak ada ODC {$odc_name}",
             ], 404);
         }
 
-        $query = ODCDetail::where('bast_id', $bastId)->pluck('odc_name')
-                ->toArray();
-        
+        // --- GROUP BY ODC NAME ---
+        $grouped = $odcData->groupBy('odc_name')->map(function ($items, $odcName) {
+            return [
+                'odc_name' => $odcName,
+                'detail' => $items->map(function ($item) {
+                    return [
+                        'bast_id' => $item->bast_id,
+                        'site'    => $item->site
+                    ];
+                })->values()
+            ];
+        })->values();
+
         
 
         return response()->json([
             'status' => 'success',
-            'message' => 'List ODC',
-            'list_odc' => $query,
+            'data' => $grouped
         ]);
         
     }
@@ -770,21 +1187,28 @@ class BastProjectController extends Controller
 
             $fileKeys = [
                 'instalasi',
+                'power_optic_olt',
                 'odc_terbuka',
                 'odc_tertutup',
-                'hasil_ukur_opm',
-                'labeling_odc',
+                'flexing_conduit',
+                'closure',
             ];
 
             $base64Files = [];
+            
+            $base64Files['odc_name']=$record->odc_name;
+            $base64Files['notes']=$record->notes;
+            $base64Files['latitude']=$record->latitude;
+            $base64Files['longitude']=$record->longitude;
 
             foreach ($fileKeys as $key) {
                 $file = $record->$key ?? null;
 
                 if (!empty($file)) {
                     $filePath = storage_path('app/public/' . $file);
+                    $filePath = preg_replace('/^data:image\/[a-zA-Z0-9]+;base64,/', '', $filePath);
                     $base64Files[$key] = file_exists($filePath)
-                        ? 'data:image/' . pathinfo($filePath, PATHINFO_EXTENSION) . ';base64,' . base64_encode(file_get_contents($filePath))
+                        ? base64_encode(file_get_contents($filePath))
                         : null;
                 } else {
                     $base64Files[$key] = null;
@@ -858,11 +1282,15 @@ class BastProjectController extends Controller
     
         $photoFields = [
             'instalasi',
+            'power_optic_olt',
             'odc_terbuka',
             'odc_tertutup',
-            'hasil_ukur_opm',
-            'labeling_odc',
+            'flexing_conduit',
+            'closure',
         ];
+        
+        $po = 0;
+        $percentage=0;
 
         foreach ($photoFields as $field) {
             $filePhoto = $request->input($field);
@@ -913,10 +1341,13 @@ class BastProjectController extends Controller
                     imagedestroy($tempImage);
                     imagedestroy($compressedImage);
 
-
+                    
+                    $po = $po+1;
                     
                     $odcDetail->$field = $path;
                 } else {
+                    
+                    $po = $po+1;
                     $odcDetail->$field = $filePhoto;
                 }
             }
@@ -930,13 +1361,20 @@ class BastProjectController extends Controller
         // }
 
         if ($request->filled('longitude')) {
+            $po = $po+1;
             $odcDetail->longitude = $validated['longitude']  ?? 0;
+        }
+
+        if ($request->filled('notes')) {
+            $odcDetail->notes = $validated['notes']  ?? '';
         }
         // else{
             
         //     $pole->longitude = 0;
         // }
-
+        $percentage = ($po/7)*100;
+        $odcDetail->progress_percentage = $percentage;
+        $odcDetail->status = 'submit';
         $odcDetail->updated_by = $user->email ?? null;
         $odcDetail->save();
 
@@ -946,6 +1384,7 @@ class BastProjectController extends Controller
             $bast->updated_by = $user->email;
             $bast->save();
         }
+        $this->updateBastProgress($bastId);
 
         return response()->json([
             'status' => 'success',
@@ -992,13 +1431,15 @@ class BastProjectController extends Controller
             $record = $query->first();
 
             $fileKeys = [
-                'foto_utara',
-                'foto_barat',
-                'foto_selatan',
-                'foto_timur',
+                'pulling_cable',
+                'pulling_cable_b',
+                'instalasi',
             ];
 
-            $base64Files = [];
+            $base64Files = []; 
+
+            $base64Files['feeder_name']=$record->feeder_name;
+            $base64Files['notes']=$record->notes;
 
             foreach ($fileKeys as $key) {
                 $file = $record->$key ?? null;
@@ -1006,7 +1447,7 @@ class BastProjectController extends Controller
                 if (!empty($file)) {
                     $filePath = storage_path('app/public/' . $file);
                     $base64Files[$key] = file_exists($filePath)
-                        ? 'data:image/' . pathinfo($filePath, PATHINFO_EXTENSION) . ';base64,' . base64_encode(file_get_contents($filePath))
+                        ? base64_encode(file_get_contents($filePath))
                         : null;
                 } else {
                     $base64Files[$key] = null;
@@ -1041,10 +1482,12 @@ class BastProjectController extends Controller
         }
 
         $validated = $request->validate([
-            'bast_id' => 'required|string|exists:mysql_inventory.BastProject,bast_id',
+            'bast_id' => 'required|string',
+            'odc_name' => 'required|string',
         ]);
 
         $bastId = $validated['bast_id'];
+        $odc_name = $validated['odc_name'];
         
 
         $bast = BastProject::on('mysql_inventory')->where('bast_id', $bastId)->first();
@@ -1056,7 +1499,19 @@ class BastProjectController extends Controller
             ], 404);
         }
 
-        $query = FeederDetail::where('bast_id', $bastId)
+        $MappingHomepass = MappingHomepass::on('mysql_inventory')
+                    ->where('ODC', $odc_name)->first();
+
+        if (! $MappingHomepass) {
+            return response()->json([
+                'status' => 'error',
+                'message' => "ODC dengan {$odc_name} tidak ditemukan",
+            ], 404);
+        }
+
+        $query = MappingHomepass::where('ODC', $odc_name)
+                ->select('feeder_name')
+                ->groupBy('feeder_name')
                 ->pluck('feeder_name')
                 ->toArray();
 
@@ -1122,11 +1577,13 @@ class BastProjectController extends Controller
 
     
         $photoFields = [
-            'foto_utara',
-            'foto_barat',
-            'foto_selatan',
-            'foto_timur',
+            'pulling_cable',
+            'pulling_cable_b',
+            'instalasi'
         ];
+        
+            $po= 0;
+            $percentage =0;
 
         foreach ($photoFields as $field) {
             $filePhoto = $request->input($field);
@@ -1179,8 +1636,11 @@ class BastProjectController extends Controller
 
 
                     
+                    $po= $po+1;
                     $feederDetail->$field = $path;
                 } else {
+                    
+                    $po= $po+1;
                     $feederDetail->$field = $filePhoto;
                 }
             }
@@ -1194,13 +1654,20 @@ class BastProjectController extends Controller
         // }
 
         if ($request->filled('longitude')) {
+            $po= $po+1;
             $feederDetail->longitude = $validated['longitude']  ?? 0;
+        }
+
+        if ($request->filled('notes')) {
+            $feederDetail->notes = $validated['notes']  ?? '';
         }
         // else{
             
         //     $pole->longitude = 0;
         // }
-
+        $percentage = ($po/3)*100;
+        $feederDetail->progress_percentage = $percentage;
+        $feederDetail->status = 'submit';
         $feederDetail->updated_by = $user->email ?? null;
         $feederDetail->save();
 
@@ -1210,6 +1677,8 @@ class BastProjectController extends Controller
             $bast->updated_by = $user->email;
             $bast->save();
         }
+        
+        $this->updateBastProgress($bastId);
 
         return response()->json([
             'status' => 'success',
@@ -1322,6 +1791,8 @@ class BastProjectController extends Controller
             'hasil_ukur_otdr',
             'pengambungan_core',
         ];
+        $po=0;
+        $percentage=0;
 
         foreach ($photoFields as $field) {
             $filePhoto = $request->input($field);
@@ -1374,8 +1845,11 @@ class BastProjectController extends Controller
 
 
                     
+                    $po=$po+1;
                     $RBSDetail->$field = $path;
                 } else {
+                    
+                    $po=$po+1;
                     $RBSDetail->$field = $filePhoto;
                 }
             }
@@ -1389,12 +1863,19 @@ class BastProjectController extends Controller
         // }
 
         if ($request->filled('longitude')) {
+            $po=$po+1;
             $RBSDetail->longitude = $validated['longitude']  ?? 0;
+        }
+
+        if ($request->filled('notes')) {
+            $RBSDetail->notes = $validated['notes']  ?? '';
         }
         // else{
             
         //     $pole->longitude = 0;
         // }
+        $percentage = ($po/3)*100;
+        $RBSDetail->progress_percentage = $percentage;
 
         $RBSDetail->updated_by = $user->email ?? null;
         $RBSDetail->save();
@@ -1405,6 +1886,8 @@ class BastProjectController extends Controller
             $bast->updated_by = $user->email;
             $bast->save();
         }
+        
+        $this->updateBastProgress($bastId);
 
         return response()->json([
             'status' => 'success',
@@ -1463,7 +1946,7 @@ class BastProjectController extends Controller
                 if (!empty($file)) {
                     $filePath = storage_path('app/public/' . $file);
                     $base64Files[$key] = file_exists($filePath)
-                        ? 'data:image/' . pathinfo($filePath, PATHINFO_EXTENSION) . ';base64,' . base64_encode(file_get_contents($filePath))
+                        ? base64_encode(file_get_contents($filePath))
                         : null;
                 } else {
                     $base64Files[$key] = null;
@@ -1485,6 +1968,108 @@ class BastProjectController extends Controller
         
     }
 
+    public function listodphc(Request $request)
+    {
+        date_default_timezone_set('Asia/Jakarta');
+        $user = Auth::user();
+
+        if (! $user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthorized',
+            ], 401);
+        }
+
+        $validated = $request->validate([
+            'station_name' => 'nullable|string',
+            'odp_name' => 'nullable|string',
+        ]);
+
+        $station_name = $validated['station_name'];
+        $odp_name = $validated['odp_name'];
+        
+        if($odp_name==''){
+            if($station_name!=''){
+                $odpNames = ODPDetail::join('BastProject as bp', 'bp.bast_id', '=', 'ODPDetail.bast_id')
+                    ->where('bp.station_name', $station_name)
+                    ->groupBy('ODPDetail.odp_name')
+                    ->pluck('ODPDetail.odp_name')
+                    ->toArray();
+            }else{
+                $odpNames = ODPDetail::join('BastProject as bp', 'bp.bast_id', '=', 'ODPDetail.bast_id')
+                    ->groupBy('ODPDetail.odp_name')
+                    ->pluck('ODPDetail.odp_name')
+                    ->toArray();
+            }
+        }else{
+            $odpNames = ODPDetail::join('BastProject as bp', 'bp.bast_id', '=', 'ODPDetail.bast_id')
+                    ->where('ODPDetail.odp_name', $odp_name)
+                    ->groupBy('ODPDetail.odp_name')
+                    ->pluck('ODPDetail.odp_name')
+                    ->toArray();
+        }
+        
+        
+
+       if (empty($odpNames)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'ODP tidak ditemukan',
+            ], 404);
+        }
+
+        
+        
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'List ODP',
+            'list_odp' => $odpNames,
+        ]);
+        
+    }
+
+    public function listodp_porthc(Request $request)
+    {
+        date_default_timezone_set('Asia/Jakarta');
+        $user = Auth::user();
+
+        if (! $user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthorized',
+            ], 401);
+        }
+
+        $validated = $request->validate([
+            'odp_name' => 'required|string',
+        ]);
+
+        $odp_name = $validated['odp_name'];
+        
+             $HomeConnect = HomeConnect::on('mysql_inventory')
+                            ->select('odp_name','port_odp','status_port', 'bast_id')
+                            ->where('odp_name', $odp_name)
+                            ->where('status_port', 'idle')
+                            ->get()
+                            ->toArray();;
+
+            if (!$HomeConnect) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => "Tidak ada PORT IDLE untuk ODP {$odp_name}",
+                ], 404);
+            }
+        
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'List ODP PORT' ,
+            'list_odp_port' => $HomeConnect,
+        ]);
+        
+    }
+
     public function updatehomeconnect(Request $request)
     {
         date_default_timezone_set('Asia/Jakarta');
@@ -1498,43 +2083,81 @@ class BastProjectController extends Controller
         }
 
         $validated = $request->validate([
-            'bast_id' => 'required|string|exists:mysql_inventory.BastProject,bast_id',
+            'bast_id' => 'required|string',
+            'id_pelanggan' => 'required|string',
+            'name_pelanggan' => 'required|string',
+            'odp_name' => 'required|string',
+            'port_odp' => 'nullable|string',
+            'merk_ont' => 'required|string',
+            'sn_ont' => 'required|string',
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
             
         ]);
 
         $bastId = $validated['bast_id'];
+        $id_pelanggan = $validated['id_pelanggan'];
+        $name_pelanggan = $validated['name_pelanggan'];
+        $odp_name = $validated['odp_name'];
+        $port_odp = $validated['port_odp'];
+        $merk_ont = $validated['merk_ont'];
+        $sn_ont = $validated['sn_ont'];
 
-        $bast = BastProject::on('mysql_inventory')->where('bast_id', $bastId)->where('pass', 'HOMECONNECT')->first();
+        $bast = BastProject::on('mysql_inventory')->where('bast_id', $bastId)->first();
 
         if (! $bast) {
             return response()->json([
                 'status' => 'error',
-                'message' => "BAST dengan ID {$bastId} tidak ditemukan",
+                'message' => "SITE dengan ID {$bastId} tidak ditemukan",
             ], 404);
         }
 
-        $query = HomeConnect::where('bast_id', $bastId);
+        $query = HomeConnect::where('bast_id', $bastId)->where('odp_name', $odp_name)->where('port_odp', $port_odp);
         $HomeConnect = $query->first();
-
+        // $id_pelanggan = $HomeConnect->id_pelanggan;
+        // $name_pelanggan = $HomeConnect->name_pelanggan;
+        // $odp_name = $HomeConnect->odp_name;
+        // $port_odp = $HomeConnect->port_odp;
+        // $merk_ont = $HomeConnect->merk_ont;
+        // $sn_ont = $HomeConnect->sn_ont;
          
 
-        if (! $HomeConnect) {
-            $HomeConnect = new HomeConnect();
-            $HomeConnect->bast_id = $bastId;
-            $HomeConnect->created_by = $user->email;
+        if (!$HomeConnect && $HomeConnect->odp_name != '') {
+            return response()->json([
+                'status' => 'error',
+                'message' => "ODP dengan {$odp_name} tidak ditemukan",
+            ], 404);
+        //     $HomeConnect = new HomeConnect();
+        //     $HomeConnect->bast_id = $bastId;
+        //     $HomeConnect->id_pelanggan = $id_pelanggan;
+        //     $HomeConnect->name_pelanggan = $name_pelanggan;
+        //     $HomeConnect->odp_name = $odp_name;
+        //     $HomeConnect->port_odp = $port_odp;
+        //     $HomeConnect->merk_ont = $merk_ont;
+        //     $HomeConnect->sn_ont = $sn_ont;
+        //     $HomeConnect->created_by = $user->email;
+        // }else{
+            
+           
+            // $HomeConnect->bast_id = $bastId;
+            // $HomeConnect->odp_name = $request->input('odp_name', $HomeConnect->odp_name);
+            // $HomeConnect->port_odp = $request->input('port_odp', $HomeConnect->port_odp);
         }
 
     
         $photoFields = [
             'foto_label_odp',
-            'foto_hasil_ukur_odp',
-            'foto_penarikan_outdoor',
-            'foto_aksesoris_ikr',
+            // 'foto_hasil_ukur_odp',
+            // 'foto_penarikan_outdoor',
+            // 'foto_aksesoris_ikr',
             'foto_sn_ont',
-            'foto_depan_rumah',
+            // 'foto_depan_rumah',
+            'foto_label_id_plg',
+            'foto_qr',
         ];
+        
+            $po = 0;
+            $percentage = 0;
 
         foreach ($photoFields as $field) {
             $filePhoto = $request->input($field);
@@ -1587,12 +2210,20 @@ class BastProjectController extends Controller
 
 
                     
+                    $po = $po+1;
                     $HomeConnect->$field = $path;
                 } else {
+                    
+                    $po = $po+1;
                     $HomeConnect->$field = $filePhoto;
                 }
             }
         }
+        
+        $HomeConnect->id_pelanggan = $request->input('id_pelanggan', $HomeConnect->id_pelanggan);
+        $HomeConnect->name_pelanggan = $request->input('name_pelanggan', $HomeConnect->name_pelanggan);
+        $HomeConnect->merk_ont = $request->input('merk_ont', $HomeConnect->merk_ont);
+        $HomeConnect->sn_ont = $request->input('sn_ont', $HomeConnect->sn_ont);
 
         if ($request->filled('latitude')) {
             $HomeConnect->latitude = $validated['latitude'] ?? 0;
@@ -1602,13 +2233,22 @@ class BastProjectController extends Controller
         // }
 
         if ($request->filled('longitude')) {
+            $po = $po+1;
             $HomeConnect->longitude = $validated['longitude']  ?? 0;
+        }
+
+        if ($request->filled('notes')) {
+            $HomeConnect->notes = $validated['notes']  ?? '';
         }
         // else{
             
         //     $pole->longitude = 0;
         // }
-
+        
+        $percentage = ($po/5)*100;
+        $HomeConnect->progress_percentage = $percentage;
+        $HomeConnect->status = 'submit';
+        $HomeConnect->status_port = "used";
         $HomeConnect->updated_by = $user->email ?? null;
         $HomeConnect->save();
 
@@ -1618,6 +2258,8 @@ class BastProjectController extends Controller
             $bast->updated_by = $user->email;
             $bast->save();
         }
+        
+        $this->updateBastProgress($bastId);
 
         return response()->json([
             'status' => 'success',
@@ -1640,11 +2282,15 @@ class BastProjectController extends Controller
         }
 
         $validated = $request->validate([
-            'bast_id' => 'required|string|exists:mysql_inventory.BastProject,bast_id',
+            'bast_id' => 'required|string',
+            'odp_name' => 'required|string',
+            'port_odp' => 'required|string',
             
         ]);
 
         $bastId = $validated['bast_id'];
+        $odp_name = $validated['odp_name'];
+        $port_odp = $validated['port_odp'];
 
         $bast = BastProject::on('mysql_inventory')->where('bast_id', $bastId)->first();
 
@@ -1655,18 +2301,20 @@ class BastProjectController extends Controller
             ], 404);
         }
 
-        $query = HomeConnect::where('bast_id', $bastId);
+        $query = HomeConnect::where('bast_id', $bastId)->where('odp_name', $odp_name)->where('port_odp', $port_odp);
         if ($bastId) {
              
             $record = $query->first();
 
             $fileKeys = [
                 'foto_label_odp',
-                'foto_hasil_ukur_odp',
-                'foto_penarikan_outdoor',
-                'foto_aksesoris_ikr',
+                // 'foto_hasil_ukur_odp',
+                // 'foto_penarikan_outdoor',
+                // 'foto_aksesoris_ikr',
                 'foto_sn_ont',
-                'foto_depan_rumah',
+                // 'foto_depan_rumah',
+                'foto_label_id_plg',
+                'foto_qr',
             ];
 
             $base64Files = [];
@@ -1677,16 +2325,26 @@ class BastProjectController extends Controller
                 if (!empty($file)) {
                     $filePath = storage_path('app/public/' . $file);
                     $base64Files[$key] = file_exists($filePath)
-                        ? 'data:image/' . pathinfo($filePath, PATHINFO_EXTENSION) . ';base64,' . base64_encode(file_get_contents($filePath))
+                        ? base64_encode(file_get_contents($filePath))
                         : null;
                 } else {
                     $base64Files[$key] = null;
                 }
             }
+            $detail=[
+                'id_pelanggan'=> $record->id_pelanggan,
+                'name_pelanggan'=> $record->name_pelanggan,
+                'odp_name'=> $record->odp_name,
+                'port_odp'=> $record->port_odp,
+                'merk_ont'=> $record->merk_ont,
+                'sn_ont'=> $record->sn_ont,
+                'latitude'=> $record->latitude,
+                'longitude'=> $record->longitude,
+            ];
 
             return response()->json([
                 'status' => 'success',
-                'data' => $base64Files,
+                'data' => array_merge($base64Files, $detail),
             ]);
         }else{
             $poleDetail = $query->first();
@@ -1697,6 +2355,107 @@ class BastProjectController extends Controller
         }
         
         
+    }
+
+    private function updateBastProgress($bastId)
+    {
+        $bast = BastProject::on('mysql_inventory')->where('bast_id', $bastId)->first();
+        if($bast->pass==="HOMEPASS"){
+            $poleProgress = PoleDetail::where('bast_id', $bastId)
+                    ->select(
+                        DB::raw('(
+                            (
+                                (CASE WHEN digging IS NOT NULL AND digging <> "" THEN 1 ELSE 0 END) +
+                                (CASE WHEN instalasi IS NOT NULL AND instalasi <> "" THEN 1 ELSE 0 END) +
+                                (CASE WHEN coran IS NOT NULL AND coran <> "" THEN 1 ELSE 0 END) +
+                                (CASE WHEN tiang_berdiri IS NOT NULL AND tiang_berdiri <> "" THEN 1 ELSE 0 END) +
+                                (CASE WHEN labeling_tiang IS NOT NULL AND labeling_tiang <> "" THEN 1 ELSE 0 END) +
+                                (CASE WHEN aksesoris_tiang IS NOT NULL AND aksesoris_tiang <> "" THEN 1 ELSE 0 END) +
+                                (CASE WHEN latitude IS NOT NULL AND latitude <> "" AND longitude IS NOT NULL AND longitude <> "" THEN 1 ELSE 0 END)
+                            ) 
+                        ) as jml'))
+                    ->value('jml') ?? 0;
+            $odcProgress = ODCDetail::where('bast_id', $bastId)
+                    ->select(
+                        'ODCDetail.*',
+                        DB::raw('(
+                            (
+                                (CASE WHEN instalasi IS NOT NULL AND instalasi <> "" THEN 1 ELSE 0 END) +
+                                (CASE WHEN odc_terbuka IS NOT NULL AND odc_terbuka <> "" THEN 1 ELSE 0 END) +
+                                (CASE WHEN odc_tertutup IS NOT NULL AND odc_tertutup <> "" THEN 1 ELSE 0 END) +
+                                (CASE WHEN power_optic_olt IS NOT NULL AND power_optic_olt <> "" THEN 1 ELSE 0 END) +
+                                (CASE WHEN flexing_conduit IS NOT NULL AND flexing_conduit <> "" THEN 1 ELSE 0 END) +
+                                (CASE WHEN closure IS NOT NULL AND closure <> "" THEN 1 ELSE 0 END) +
+                                (CASE WHEN latitude IS NOT NULL AND latitude <> "" AND longitude IS NOT NULL AND longitude <> "" THEN 1 ELSE 0 END)
+                            ) 
+                        ) as jml'))
+                    ->value('jml') ?? 0;
+            $odpProgress = ODPDetail::where('bast_id', $bastId)
+                        ->select(
+                                'ODPDetail.*',
+                                DB::raw('(
+                                    (
+                                        (CASE WHEN instalasi IS NOT NULL AND instalasi <> "" THEN 1 ELSE 0 END) +
+                                        (CASE WHEN odp_terbuka IS NOT NULL AND odp_terbuka <> "" THEN 1 ELSE 0 END) +
+                                        (CASE WHEN odp_tertutup IS NOT NULL AND odp_tertutup <> "" THEN 1 ELSE 0 END) +
+                                        (CASE WHEN power_optic_odc IS NOT NULL AND power_optic_odc <> "" THEN 1 ELSE 0 END) +
+                                        (CASE WHEN latitude IS NOT NULL AND latitude <> "" AND longitude IS NOT NULL AND longitude <> "" THEN 1 ELSE 0 END)
+                                    ) 
+                                ) as jml'))
+                    ->value('jml') ?? 0;
+            $rbsProgress = RBSDetail::where('bast_id', $bastId)
+                        ->select(
+                                'RBSDetail.*',
+                                DB::raw('(
+                                    (
+                                        (CASE WHEN hasil_otdr IS NOT NULL AND hasil_otdr <> "" THEN 1 ELSE 0 END) +
+                                        (CASE WHEN penyambungan_core IS NOT NULL AND penyambungan_core <> "" THEN 1 ELSE 0 END) +
+                                        (CASE WHEN latitude IS NOT NULL AND latitude <> "" AND longitude IS NOT NULL AND longitude <> "" THEN 1 ELSE 0 END)
+                                    ) 
+                                ) as jml'))
+                    ->value('jml') ?? 0;
+            $feederProgress = FeederDetail::where('bast_id', $bastId)
+                        ->select(
+                                'FeederDetail.*',
+                                DB::raw('(
+                                    (
+                                        (CASE WHEN pulling_cable IS NOT NULL AND pulling_cable <> "" THEN 1 ELSE 0 END) +
+                                        (CASE WHEN pulling_cable_b IS NOT NULL AND pulling_cable_b <> "" THEN 1 ELSE 0 END) +
+                                        (CASE WHEN instalasi IS NOT NULL AND instalasi <> "" THEN 1 ELSE 0 END) 
+                                    ) 
+                                ) as jml'))
+                    ->value('jml') ?? 0;
+                            
+            $jml_all = $poleProgress + $odcProgress + $odpProgress + $rbsProgress + $feederProgress;
+            $presen = ($jml_all/25)*100;
+        }else{
+            $HomeConnectprog = HomeConnect::where('bast_id', $bastId)
+                        ->select(
+                                'HomeConnect.*',
+                                DB::raw('(
+                                    (
+                                        (CASE WHEN foto_label_odp IS NOT NULL AND foto_label_odp <> "" THEN 1 ELSE 0 END) +
+                                        (CASE WHEN foto_hasil_ukur_odp IS NOT NULL AND foto_hasil_ukur_odp <> "" THEN 1 ELSE 0 END) +
+                                        (CASE WHEN foto_penarikan_outdoor IS NOT NULL AND foto_penarikan_outdoor <> "" THEN 1 ELSE 0 END) +
+                                        (CASE WHEN foto_aksesoris_ikr IS NOT NULL AND foto_aksesoris_ikr <> "" THEN 1 ELSE 0 END) +
+                                        (CASE WHEN foto_sn_ont IS NOT NULL AND foto_sn_ont <> "" THEN 1 ELSE 0 END) +
+                                        (CASE WHEN foto_depan_rumah IS NOT NULL AND foto_depan_rumah <> "" THEN 1 ELSE 0 END) +
+                                        (CASE WHEN latitude IS NOT NULL AND latitude <> "" AND longitude IS NOT NULL AND longitude <> "" THEN 1 ELSE 0 END)
+                                    ) 
+                                ) as jml'))
+                    ->value('jml') ?? 0;
+                            
+            $jml_all = $HomeConnectprog;
+            $presen = ($jml_all/5)*100;
+        }
+        
+
+        
+        if ($bast) {
+            $bast->progress_percentage = $presen;
+            $bast->updated_at = now();
+            $bast->save();
+        }
     }
 
     

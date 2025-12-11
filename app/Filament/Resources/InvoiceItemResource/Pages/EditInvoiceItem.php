@@ -6,6 +6,7 @@ use App\Filament\Resources\InvoiceItemResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 use App\Models\InvoiceItem;
+use App\Models\Invoice;
 use Filament\Notifications\Notification;
 use Spatie\Activitylog\Models\Activity;
 
@@ -42,8 +43,12 @@ class EditInvoiceItem extends EditRecord
             Activity::latest()->first()->update([
                 'email' => auth()->user()?->email,
                 'menu' => 'Invoice Items',
+                'record_id' => $record->id,
             ]);
         }
+
+
+        
     }
 
     protected function canEdit(): bool
@@ -60,11 +65,9 @@ class EditInvoiceItem extends EditRecord
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
-        // Ambil semua items terkait invoice
-        $invoiceId = $this->record->invoice_id; // ID Invoice
+        $invoiceId = $this->record->invoice_id;
         $items = InvoiceItem::where('invoice_id', $invoiceId)->get();
 
-        // Map ke format Repeater
         $data['items'] = $items->map(function ($item) {
             return [
                 'service_id' => $item->service_id,
@@ -80,10 +83,11 @@ class EditInvoiceItem extends EditRecord
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
-       // Pastikan customer_id dari form
+       $record = $this->record;
         $data['customer_id'] = $data['customer_id'] ?? ($this->record?->customer_id ?? null);
 
-        // Jika ini create, buat invoice dulu untuk dapat ID
+        
+
         if (!$this->record) {
             $invoice = \App\Models\Invoice::create([
                 'invoice_number' => $data['invoice_number'],
@@ -95,20 +99,20 @@ class EditInvoiceItem extends EditRecord
 
             $invoiceId = $invoice->id;
         } else {
-            // Edit: pakai invoice_id yang ada
             $invoiceId = $this->record->invoice_id;
         }
 
-        // Hapus semua item lama jika edit
         if ($this->record) {
             InvoiceItem::where('invoice_id', $invoiceId)->delete();
+            Invoice::where('id', $invoiceId)->delete();
         }
 
-        // Simpan semua item dari repeater
         if (!empty($data['items'])) {
             foreach ($data['items'] as $component) {
                 InvoiceItem::create([
-                     'customer_id' => $data['customer_id'],
+                    'po_number' => $data['po_number'],
+                    'po_description' => $data['po_description'],
+                    'customer_id' => $data['customer_id'],
                     'service_id' => $component['service_id'],
                     'description' => $component['description'],
                     'invoice_date' => $data['invoice_date'],
@@ -119,10 +123,25 @@ class EditInvoiceItem extends EditRecord
             }
         }
 
-        // Hapus key 'items' agar tidak ikut disimpan di Invoice model
+        $activity = activity('Invoice-action')
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'ip' =>  request()->ip(),
+                'menu' => 'Invoice',
+                'email' => auth()->user()->email,
+                'record_id' => $record->id,
+                'po_number' => $record->po_number,
+                'record_name' => $record->name ?? null,  
+            ])
+            ->log('Mengedit record Invoice Items');
+
+            Activity::latest()->first()->update([
+                'email' => auth()->user()?->email,
+                'menu' => 'Invoice',
+                'record_id' => $record->po_number,
+            ]);
         unset($data['items']);
 
-        // Pastikan invoice_id selalu ada
         $data['id'] ??= $invoiceId;
 
         return $data;
@@ -133,28 +152,7 @@ class EditInvoiceItem extends EditRecord
         return $this->getResource()::getUrl('index');
     }
 
-    protected function afterSave(): void
-    {
-        parent::afterSave();
-
-        $record = $this->record; // record yang baru diupdate
-
-        $activity = activity('InvoiceItems-action')
-            ->causedBy(auth()->user())
-            ->withProperties([
-                'ip' =>  request()->ip(),
-                'menu' => 'Invoice Items',
-                'email' => auth()->user()->email,
-                'record_id' => $record->id,
-                'record_name' => $record->name ?? null,
-            ])
-            ->log('Mengedit record InvoiceItem');
-
-            Activity::latest()->first()->update([
-                'email' => auth()->user()?->email,
-                'menu' => 'Invoice Items',
-            ]);
-    }
+    // protected functions
 
    
 }

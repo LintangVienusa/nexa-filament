@@ -232,6 +232,7 @@ class AttendanceResource extends Resource
     {
         $totalAttendance = Attendance::count();
         return $table
+            ->modifyQueryUsing(fn ($query) => $query->where('status', '!=', 2))
             ->columns([
                 TextColumn::make('employee.employee_id')->label('NIK'),
                 TextColumn::make('employee.first_name')

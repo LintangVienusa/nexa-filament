@@ -519,7 +519,9 @@ class OvertimeResource extends Resource
                 Tables\Actions\DeleteAction::make()
                     ->visible(fn ($record) => $record->status != 1),
             ])
-            ->bulkActions([Tables\Actions\DeleteBulkAction::make()]);
+            ->bulkActions([
+                // Tables\Actions\DeleteBulkAction::make()
+            ]);
     }
 
     public static function getRelations(): array

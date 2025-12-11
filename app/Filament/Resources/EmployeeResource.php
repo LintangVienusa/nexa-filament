@@ -40,7 +40,7 @@ class EmployeeResource extends Resource
 
     public static function canCreate(): bool
     {
-        return auth()->user()->hasAnyRole(['admin', 'manager', 'superadmin', 'Supervisor', 'Admin']);
+        return auth()->user()->setConnection('mysql')->hasAnyRole(['admin', 'manager', 'superadmin', 'Supervisor', 'Admin']);
     }
 
     public static function form(Form $form): Form
@@ -69,6 +69,7 @@ class EmployeeResource extends Resource
                             ->numeric()
                             ->required()
                             ->unique(ignoreRecord: true)
+                            ->disabled(fn($record) => filled($record)) 
                             ->maxLength(20),
 
                         TextInput::make('first_name')
@@ -112,7 +113,18 @@ class EmployeeResource extends Resource
                             ->label('Tanggal Masuk')
                             ->default(now()),
 
-                        
+                        Select::make('employee_type')
+                            ->label('Tipe')
+                            ->options(function () {
+                                $options = [
+                                    'organik'   => 'organik',
+                                    'mitra'     => 'mitra'
+                                ];
+                                return $options;
+                            })
+
+                            ->required(),
+
                         Select::make('job_title')
                             ->label('Jabatan')
                             ->options(function () {
@@ -123,7 +135,7 @@ class EmployeeResource extends Resource
                                     'VP'      => 'VP',
                                 ];
 
-                                if (auth()->user()->hasRole('superadmin')) {
+                                if (auth()->user()->setConnection('mysql')->hasRole('superadmin')) {
                                     $options['CTO'] = 'CTO';
                                     $options['CEO'] = 'CEO';
                                 }
@@ -190,9 +202,26 @@ class EmployeeResource extends Resource
                                 $number = preg_replace('/[^0-9]/', '', $state);
                                 $set('basic_salary', $number === '' ? 0 : number_format((int) $number, 0, ',', '.'));
                             })
+                             ->hidden(function ($record) {
+                                $user = auth()->user();
+                                $organizationName = $user->employee?->organization?->unit_name;
+                                if (filled($record) && $organizationName !== 'HR') {
+                                        return true;  
+                                    }
+
+                                    return false;     
+                            })
                             ->dehydrateStateUsing(fn($state) => (string) preg_replace('/[^0-9]/', '', $state))
                             ->required(),
-                    ])->columns(2),
+                    ])->columns(2)->disabled(function ($record) {
+                                $user = auth()->user();
+                                $organizationName = $user->employee?->organization?->unit_name;
+                                if (filled($record) && $organizationName !== 'HR') {
+                                        return true;  
+                                    }
+
+                                    return false;     
+                            }) ,
 
                 Section::make('Kontak dan Informasi Detail')
                     ->schema([
@@ -321,6 +350,8 @@ class EmployeeResource extends Resource
                             $direction
                         );
                     }),
+                
+                TextColumn::make('employee_type')->label('Tipe')->searchable()->sortable(),
                 TextColumn::make('organization.divisi_name')->label('Divisi')->searchable()->sortable(),
                 TextColumn::make('organization.unit_name')->label('Unit')->searchable()->sortable(),
                 TextColumn::make('job_title')->label('Jabatan')->searchable()->sortable(),

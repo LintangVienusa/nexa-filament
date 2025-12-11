@@ -12,6 +12,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Actions;
+use Filament\Tables\Actions\Action;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Columns\BadgeColumn;
@@ -20,17 +21,18 @@ use Spatie\Permission\Traits\HasPermissions;
 use App\Models\Employee;
 use Filament\Forms\Components\FileUpload;
 use Filament\Notifications\Notification;
-use App\Services\HariKerjaService;
+use App\Services\HariLiburService;
 use Filament\Forms\Components\Placeholder;
 use Illuminate\Support\HtmlString;
 use App\Traits\HasNavigationPolicy;
+use App\Filament\Resources\LeaveResource\Pages\listLogActivity;
 
 
 
 class LeaveResource extends Resource
 {
     
-    use HasPermissions, HasOwnRecordPolicy, HasNavigationPolicy;
+    use HasPermissions,HasOwnRecordPolicy , HasNavigationPolicy;
 
     protected static ?string $model = Leave::class;
     protected static ?string $permissionPrefix = 'employees';
@@ -169,9 +171,9 @@ class LeaveResource extends Resource
                                 if ($get('start_date') && $get('end_date')) {
                                      $startDate = $get('start_date');
                                      $endDate = $get('end_date');
-                                     $hariKerjaService = app(HariKerjaService::class);
-                                     $hariKerjaData = $hariKerjaService->hitungHariKerja($state, $startDate, $endDate);
-                                     $jml = $hariKerjaData['jumlah_hari_kerja'] ?? 0;
+                                     $hariKerjaService = app(HariLiburService::class);
+                                     $jml = $hariKerjaService->hitungHariCuti( $startDate, $endDate);
+                                     
                                     $set('leave_duration', $jml);
                                 }
                             }),
@@ -185,11 +187,11 @@ class LeaveResource extends Resource
                                 if ($get('start_date') && $get('end_date')) {
                                      $startDate = $get('start_date');
                                      $endDate = $get('end_date');
-                                     $hariKerjaService = app(HariKerjaService::class);
-                                     $hariKerjaData = $hariKerjaService->hitungHariKerja($state, $startDate, $endDate);
-                                     $jml = $hariKerjaData['jumlah_hari_kerja'] ?? 0;
+                                     $hariKerjaService = app(HariLiburService::class);
+                                     $jml = $hariKerjaService->hitungHariCuti( $startDate, $endDate);
+                                     
                                     $set('leave_duration', $jml);
-                                    return $hariKerjaData['jumlah_hari_kerja'] ?? 0;
+                                    return $jml ?? 0;
                                 }else{
                                     return 0;
                                 }
@@ -523,11 +525,21 @@ class LeaveResource extends Resource
                             && $record->approval_2 == 0             
                             && $record->approval_3 == 0              
                         ),
+                Action::make('viewLogs')
+                    ->label('Logs')
+                    ->icon('heroicon-o-clipboard-document-list')
+                    ->url(fn ($record) =>
+                        listLogActivity::getUrl([
+                            'record' => $record->id
+                        ])
+                    )
+                    ->visible(fn ($record) => in_array(auth()->user()->employee?->job_title, ['Manager', 'CTO', 'CEO', 'VP']))
+                    ->openUrlInNewTab()
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
+                // Tables\Actions\BulkActionGroup::make([
+                //     Tables\Actions\DeleteBulkAction::make(),
+                // ]),
             ]);
     }
 
@@ -544,6 +556,7 @@ class LeaveResource extends Resource
             'index' => Pages\ListLeaves::route('/'),
             'create' => Pages\CreateLeave::route('/create'),
             'edit' => Pages\EditLeave::route('/{record}/edit'),
+            'logs' => Pages\listLogActivity::route('/{record}/logs'),
         ];
     }
 }

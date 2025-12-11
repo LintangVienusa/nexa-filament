@@ -15,9 +15,18 @@ class LogActivity extends Model
     protected $fillable = [
         'email',
         'log_name',
+        'menu',
         'description',
+        'record_id',
+        'subject_type',
         'event',
+        'subject_id',
+        'causer_type',
+        'causer_id',
+        'email',
         'properties',
+        'properties',
+        'batch_uuid',
         'created_at',
         'updated_at',
     ];

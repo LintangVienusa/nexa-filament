@@ -43,11 +43,11 @@ class CheckNavigationAccess
        
         if ($controller && method_exists($controller, 'getResource')) {
             $resourceClass = $controller::getResource();
-            if (method_exists($resourceClass, 'shouldRegisterNavigation')) {
-                $hasAccess = $resourceClass::shouldRegisterNavigation();
-            } else {
+            // if (method_exists($resourceClass, 'shouldRegisterNavigation')) {
+            //     $hasAccess = $resourceClass::shouldRegisterNavigation();
+            // } else {
                 $hasAccess = true;
-            }
+            // }
         } else {
             $hasAccess = true;
         }
@@ -56,6 +56,7 @@ class CheckNavigationAccess
             session()->flash('access_denied', true);
             return redirect('/admin');
         }
+
 
 
         return $next($request);

@@ -13,10 +13,17 @@ return new class extends Migration
     {
         Schema::connection('mysql_inventory')->create('HomeConnect', function (Blueprint $table) {
             $table->id();
-            $table->string('bast_id');
-            $table->foreign('bast_id')->references('bast_id')->on('BastProject')->onDelete('cascade');
-            $table->string('odp_name')->constrained('ODCDetail')->onDelete('cascade');   
-            $table->string('sn_ont')->nullable();
+            $table->string('bast_id','50');
+            $table->string('site','50');
+            $table->foreign(['bast_id', 'site'])
+                    ->references(['bast_id', 'site'])
+                    ->on('BastProject')
+                    ->onDelete('cascade');
+            $table->string('odp_name','50')->nullable()->constrained('ODCDetail')->onDelete('cascade');   
+            $table->string('port_odp','25')->nullable();  
+            $table->enum('status_port', ['idle', 'used'])->default('idle');
+            $table->string('merk_ont','25')->nullable();
+            $table->string('sn_ont','25')->nullable();
             $table->string('province_name')->nullable();
             $table->string('regency_name')->nullable();
             $table->string('village_name')->nullable();    
@@ -36,7 +43,7 @@ return new class extends Migration
             $table->timestamps();
 
             
-            $table->unique(['id', 'bast_id','sn_ont','odp_name']);
+            $table->unique(['id', 'bast_id','site','odp_name','port_odp'],'hc_odp_uniq');
             $table->index(['province_name', 'regency_name', 'village_name']);
             $table->index('created_by');
             $table->index('updated_by');

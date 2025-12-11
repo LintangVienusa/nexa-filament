@@ -13,43 +13,42 @@ class ODPDetail extends Model
     protected $table = 'ODPDetail';
 
     protected $fillable = [
+        'site',
         'bast_id',
         'odc_id',
-        'instalasi',
         'odc_name',
+        'instalasi',
         'odp_terbuka',
         'odp_tertutup',
-        'hasil_ukur_opm',
-        'labeling_odp',
+        'power_optic_odc',
         'latitude',
         'longitude',
         'odp_id',
         'odp_name',
         'notes',
         'progress_percentage',
+        'staus',
+        'aproval_by',
+        'aproval_at',
         'created_by',
         'updated_by',
     ];
 
-    /** 🔗 Relasi ke BastProject */
     public function bastProject()
     {
         return $this->belongsTo(BastProject::class, 'bast_id', 'id');
     }
 
-    /** 🔗 Relasi ke ODCDetail */
     public function odcDetail()
     {
         return $this->belongsTo(ODCDetail::class, 'odc_id', 'id');
     }
 
-    /** 🧮 Accessor tambahan */
     public function getProgressLabelAttribute()
     {
         return $this->progress_percentage . '%';
     }
 
-    /** 🌍 Accessor koordinat */
     public function getCoordinateAttribute()
     {
         if ($this->latitude && $this->longitude) {

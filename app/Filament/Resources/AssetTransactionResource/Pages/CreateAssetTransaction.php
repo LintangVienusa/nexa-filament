@@ -37,20 +37,21 @@ class CreateAssetTransaction extends CreateRecord
 
 
                 
-                // if ($assetTransaction->transaction_type === 'RELEASE') {
-                //         $inventory = InventoryAsset::where('categoryasset_id', $data['category_id'])->first();
-                //                 if ($inventory) {
-                //                     $inventory->inWarehouse -= $data['request_asset_qty'];
-                //                     $inventory->outWarehouse += $data['request_asset_qty'];
-                //                     $inventory->save();
-                //                 }
-                //     }else{
-                //         $inventory = InventoryAsset::where('categoryasset_id', $data['category_id'])->first();
-                //         if ($inventory) {
-                //             $inventory->inWarehouse += $data['request_asset_qty'];
-                //             $inventory->save();
-                //         }
-                //     }
+                if ($assetTransaction->transaction_type === 'RELEASE') {
+                        $inventory = InventoryAsset::where('categoryasset_id', $data['category_id'])->first();
+                                if ($inventory) {
+                                    $inventory->inWarehouse -= $data['request_asset_qty'];
+                                    $inventory->outWarehouse += $data['request_asset_qty'];
+                                    $inventory->save();
+                                }
+                    }else{
+                        $inventory = InventoryAsset::where('categoryasset_id', $data['category_id'])->first();
+                        if ($inventory) {
+                            $inventory->inWarehouse += $data['request_asset_qty'];
+                            $inventory->outWarehouse -= $data['request_asset_qty'];
+                            $inventory->save();
+                        }
+                    }
                  
                 foreach ($data['requested_items'] as $item) {
                     if ($assetTransaction->transaction_type === 'RELEASE') {
@@ -103,7 +104,106 @@ class CreateAssetTransaction extends CreateRecord
                         $asset->status = 1; 
                         $asset->save();
 
-                    } else {
+                    }elseif ($assetTransaction->usage_type === 'RETURN WAREHOUSE') {
+
+                        $asset = Assets::find($item['asset_id']);
+                        if (!$asset) {
+                            \Log::warning('Asset not found for RELEASE', ['item' => $item]);
+                            continue;
+                        }
+
+                        $nextMoveId = (AssetMovement::max('id') ?? 0) + 1;
+
+                        \Log::info('Usage type:', ['usage_type' => $data['usage_type'] ?? null]);
+                       
+                        // $movement = AssetMovement::create([
+                        //     'movement_id'         => 'MOV' . str_pad($nextMoveId, 5, '0', STR_PAD_LEFT),
+                        //     'asset_transaction_id'=> $assetTransaction->id,
+                        //     'asset_id'            => $asset->id,
+                        //     'movementType'        => 'IN',
+                        //     'movementDate'        => now()->toDateString(),
+                        //     'deployment_date'     => now()->toDateString(),
+                        //     'PIC'                 => $data['PIC'],
+                        //     'serialNumber'        => $item['serialNumber'] ?? null,
+                        //     'placement_type'      => $data['usage_type'] ?? '',
+                        //     'assigned_to'         => $data['assigned_id'] ?? null,
+                        //     'recipient'           => $data['recipient_by'] ?? null,
+                        //     'sender'              =>  null,
+                        //     'location'            => $this->getDeploymentLocation($data),
+                        //     'province_code'       => $data['province_code'] ?? null,
+                        //     'regency_code'        => $data['regency_code'] ?? null,
+                        //     'village_code'        => $data['village_code'] ?? null,
+                        //     'recipient'           => $data['recipient_by'] ?? null,
+                        //     'created_by'          => auth()->user()->name,
+                        //     'status'              => 0,
+                        // ]);
+
+                        // AssetTransactionItem::create([
+                        //     'asset_transaction_id' => $assetTransaction->id,
+                        //     'asset_id'             => $asset->id,
+                        //     'item_code'            => $asset->item_code,
+                        //     'merk'                 => $asset->merk,
+                        //     'type'                 => $asset->type,
+                        //     'serial_number'        => $asset->serialNumber,
+                        //     'description'          => $asset->description,
+                        //     'movement_id'          => $movement->id,
+                        // ]);
+
+                        if($data['usage_type'] === "STOCK IN WAREHOUSE"){
+                            $sender = $data['sender_custom'];
+                        }else{
+                            $sender =$data['sender_by'];
+                        }
+
+                        if($data['usage_type'] === "RETURN WAREHOUSE"){
+                            $return = now()->toDateString();
+                            $returned_by = $sender;
+                            $received_by = $data['recipient_by'];
+                        }
+
+                        $nextMoveId = (AssetMovement::max('id') ?? 0) + 1;
+                        $movement = AssetMovement::create([
+                            'movement_id'         => 'MOV' . str_pad($nextMoveId, 5, '0', STR_PAD_LEFT),
+                            'asset_transaction_id'=> $assetTransaction->id,
+                            'asset_id'            => $asset->id,
+                            'movementType'        => 'IN',
+                            'movementDate'        => now()->toDateString(),
+                            'PIC'                 => $data['PIC'],
+                            'notes'               => $data['notes'] ?? null,
+                            'placement_type'      => 'STOCK IN WAREHOUSE',
+                            'assigned_to'         => $data['assigned_id'] ?? null,
+                            'recipient'           => $data['recipient_by'] ?? null,
+                            'sender'              => $sender ?? null,
+                            'returned_by'         => $returned_by ?? null,
+                            'received_by'         => $received_by ?? null,
+                            'return_date'         => $return ?? null,
+                            'location'            => $this->getDeploymentLocation($data),
+                            'province_code'         => $data['province_code'] ?? null,
+                            'regency_code'           => $data['regency_code'] ?? null,
+                            'village_code'           => $data['village_code'] ?? null,
+                            'created_by'          => auth()->user()->name,
+                            'status'              => 0,
+                        ]);
+
+                        AssetTransactionItem::create([
+                            'asset_transaction_id' => $assetTransaction->id,
+                            'asset_id'             => $asset->id,
+                            'item_code'            => $asset->item_code,
+                            'merk'                 => $asset->merk,
+                            'type'                 => $asset->type,
+                            'serial_number'        => $asset->serialNumber,
+                            'description'          => $asset->description,
+                            'movement_id'          => $movement->id,
+                        ]);
+
+
+                        $asset->status = 0; 
+                        $asset->save();
+
+                        
+
+                    }
+                     else {
 
                         $category = \App\Models\CategoryAsset::find($data['category_id']);
                         $nextId = (Assets::max('id') ?? 0) + 1;

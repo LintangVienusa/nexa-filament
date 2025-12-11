@@ -117,19 +117,21 @@ class InvoiceItem extends Model
         static::created(function ($record) {
             $user = auth()->user();
 
-            $activity = activity('InvoiceItems-action')
+            $activity = activity('Invoice-action')
                 ->causedBy($user)
                 ->withProperties([
                     'ip' =>  request()->ip(),
-                    'menu' => 'Invoice Items',
+                    'menu' => 'Invoice',
                     'email' => $user?->email,
                     'record_id' => $record->id,
+                    'po_number' => $record->po_number,
                     'name' => $record->name ?? null,
                 ])
-                ->log('Membuat record InvoiceItem baru');
+                ->log('Membuat record Invoice baru');
                 Activity::latest()->first()->update([
                     'email' => auth()->user()?->email,
-                    'menu' => 'Invoice Item',
+                    'menu' => 'Invoice',
+                    'record_id' => $record->po_number,
                 ]);
         });
     }

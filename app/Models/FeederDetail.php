@@ -17,15 +17,17 @@ class FeederDetail extends Model
 
     // kolom yang bisa diisi mass-assignment
     protected $fillable = [
+        'site',
         'id',
         'bast_id',
         'feeder_name',
-        'foto_utara',
-        'foto_barat',
-        'foto_selatan',
-        'foto_timur',
+        'pulling_cable',
+        'instalasi',
         'notes',
         'progress_percentage',
+        'staus',
+        'aproval_by',
+        'aproval_at',
         'created_by',
         'updated_by',
         'created_at',

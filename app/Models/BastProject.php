@@ -15,13 +15,13 @@ class BastProject extends Model
     protected $table = 'BastProject'; 
 
     protected $fillable = [
+        'site',
         'bast_id',
         'province_name',
         'regency_name',
         'village_name',
         'station_name',
         'project_name',
-        'site',
         'PIC',
         'email',
         'technici',
@@ -38,6 +38,7 @@ class BastProject extends Model
         'info_homeconnect',
         'list_pole',
         'list_feeder_odc_odp',
+        'list_homeconnect',
         'created_by',
         'updated_by',
     ];
@@ -51,6 +52,16 @@ class BastProject extends Model
     public function poles()
     {
         return $this->hasMany(PoleDetail::class, 'bast_id', 'bast_id'); 
+    }
+
+    public function ODCDetail()
+    {
+        return $this->hasMany(ODCDetail::class, 'bast_id', 'bast_id');
+    }
+
+    public function ODPDetail()
+    {
+        return $this->hasMany(ODPDetail::class, 'bast_id', 'bast_id');
     }
 
 }

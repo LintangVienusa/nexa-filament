@@ -53,6 +53,16 @@ class CreateSalarySlip extends CreateRecord
             $this->halt(); // stop proses create
         }
 
+         if (empty($data['components'])) {
+                Notification::make()
+                    ->title('Components kosong')
+                    ->body('Minimal tambahkan 1 komponen gaji.')
+                    ->danger()
+                    ->send();
+
+                $this->halt(); // stop submit
+            }
+
         return $data;
     }
 

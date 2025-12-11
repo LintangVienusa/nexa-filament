@@ -14,13 +14,16 @@ return new class extends Migration
         Schema::connection('mysql_inventory')->create('ODPDetail', function (Blueprint $table) {
             $table->id();
             $table->string('bast_id');
-            $table->foreign('bast_id')->references('bast_id')->on('BastProject')->onDelete('cascade');
-            $table->string('instalasi')->default(false);
-            $table->string('odc_name')->constrained('ODCDetail')->onDelete('cascade');  
-            $table->string('odp_terbuka')->default(false);
-            $table->string('odp_tertutup')->default(false);
-            $table->string('hasil_ukur_opm')->nullable();
-            $table->string('labeling_odp')->default(false);      
+            $table->string('site');
+            $table->foreign(['bast_id', 'site'])
+                    ->references(['bast_id', 'site'])
+                    ->on('BastProject')
+                    ->onDelete('cascade');
+            $table->string('odc_name')->constrained('ODCDetail')->onDelete('cascade'); 
+            $table->string('instalasi')->nullable(); 
+            $table->string('odp_terbuka')->nullable();
+            $table->string('odp_tertutup')->nullable();
+            $table->string('power_optic_odc')->nullable();
             $table->decimal('latitude', 10, 8)->nullable();
             $table->decimal('longitude', 11, 8)->nullable();
             $table->string('odp_id')->nullable();  

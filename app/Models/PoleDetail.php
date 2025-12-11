@@ -14,6 +14,7 @@ class PoleDetail extends Model
     protected $table = 'PoleDetail'; 
 
     protected $fillable = [
+        'site',
         'bast_id',
         'digging',
         'instalasi',
@@ -26,6 +27,9 @@ class PoleDetail extends Model
         'pole_sn',
         'notes',
         'progress_percentage',
+        'staus',
+        'aproval_by',
+        'aproval_at',
         'created_by',
         'updated_by',
     ];
