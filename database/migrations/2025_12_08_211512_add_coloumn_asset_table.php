@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::connection('mysql_inventory')->table('AssetTransactions', function (Blueprint $table) {
             $table->text('file_asset')->nullable()->after('status');
+            $table->enum('input_mode',['MANUAL', 'IMPORT'])->default('MANUAL')->after('file_asset');
         });
     }
 
@@ -21,6 +22,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::connection('mysql_inventory')->table('AssetTransactions', fn (Blueprint $table) => $table->dropColumns(['file_asset']));
+        Schema::connection('mysql_inventory')->table('AssetTransactions', fn (Blueprint $table) => $table->dropColumns(['file_asset','input_mode']));
     }
 };

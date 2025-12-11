@@ -16,7 +16,6 @@ class EditRole extends EditRecord
     {
         $permissions = $this->record->permissions->pluck('name')->toArray();
 
-        // mapping ke setiap group
         $resources = \App\Helpers\FilamentHelper::getResources();
 
         foreach ($resources as $key => $label) {
@@ -50,6 +49,11 @@ class EditRole extends EditRecord
         }
 
         $this->record->syncPermissions($this->collectedPermissions);
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
     }
     
 }

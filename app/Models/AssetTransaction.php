@@ -24,6 +24,7 @@ class AssetTransaction extends Model
         'ba_description',
         'status',
         'file_asset',
+        'input_mode',
         'usage_type',
         'assigned_type',
         'assigned_id',
