@@ -22,6 +22,8 @@ use Filament\Tables\Filters\SelectFilter;
 use App\Services\DownloadBAService;
 use Illuminate\Support\Facades\Auth;
 use Filament\Forms\Form as FilamentForm;
+use Filament\Tables\Actions\BulkAction;
+use Filament\Notifications\Notification;
 
 
 class ListHomeConnectDetails extends ListRecords
@@ -203,6 +205,45 @@ class ListHomeConnectDetails extends ListRecords
         ];
     }
 
+    protected function getTableBulkActions(): array
+    {
+        return [
+            BulkAction::make('export_ba_pdf_bulk')
+                ->label('Export BA PDF Bulk')
+                ->icon('heroicon-o-arrow-down-tray')
+                ->color('danger')
+                ->action(function (\Illuminate\Support\Collection $records) {
+
+                    $records = $records->filter(fn($record) => $record->status === 'approved');
+
+                    if ($records->isEmpty()) {
+                        Notification::make()
+                            ->title('Tidak ada record yang approved!')
+                            ->danger()
+                            ->send();
+                        return;
+                    }
+
+                    $zipFileName = 'BA_Pelanggan_' . now()->format('Ymd_His') . '.zip';
+                    $zipPath = storage_path($zipFileName);
+
+                    $zip = new \ZipArchive();
+                    if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
+
+                        foreach ($records as $record) {
+                            $pdf = app(DownloadBAService::class)->downloadBA($record);
+                            $pdfFileName = "BA_Pelanggan_{$record->id_pelanggan}.pdf";
+                            $zip->addFromString($pdfFileName, $pdf->output());
+                        }
+
+                        $zip->close();
+                    }
+
+                    return response()->download($zipPath)->deleteFileAfterSend(true);
+                }),
+        ];
+    }
+
     protected function getTableFilters(): array
     {
         return [
@@ -254,10 +295,5 @@ class ListHomeConnectDetails extends ListRecords
     }
 
 
-    protected function getTableBulkActions(): array
-    {
-        return [
-            // Tables\Actions\DeleteBulkAction::make(),
-        ];
-    }
+    
 }

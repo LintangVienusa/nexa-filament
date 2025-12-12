@@ -21,7 +21,7 @@ use App\Traits\HasNavigationPolicy;
 class UserResource extends Resource
 {
     
-    use HasPermissions, HasNavigationPolicy;
+    use HasPermissions, HasOwnRecordPolicy, HasNavigationPolicy;
     protected static ?string $model = User::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-users';
@@ -37,6 +37,7 @@ class UserResource extends Resource
                 TextInput::make('name')
                     ->label('Username')
                     ->required()
+                    ->disabled()
                     ->maxLength(255),
 
                 TextInput::make('email')
@@ -44,6 +45,7 @@ class UserResource extends Resource
                     ->email()
                     ->required()
                     ->maxLength(255)
+                    ->disabled()
                     ->unique(ignoreRecord: true),
 
                 TextInput::make('password')
@@ -59,7 +61,17 @@ class UserResource extends Resource
                     ->multiple()
                     ->preload()
                     ->searchable()
-                    ->label('Roles'),
+                    ->label('Roles')
+                    ->hidden(function ($record) {
+                                $user = auth()->user()->setConnection('mysql');
+                                $isSuperAdmin = $user->hasRole('superadmin');
+
+                                if (filled($record) && !( $isSuperAdmin)) {
+                                    return true; 
+                                }
+
+                                return false;
+                            }),
             ]);
     }
 

@@ -19,6 +19,8 @@ use App\Exports\BastODCExport;
 use Filament\Tables\Columns\ImageColumn;
 use Illuminate\Support\Facades\Auth;
 use Filament\Forms\Form as FilamentForm;
+use Filament\Tables\Actions\BulkAction;
+use Filament\Notifications\Notification;
 
 class ListOdcDetails extends ListRecords
 {
@@ -134,21 +136,6 @@ class ListOdcDetails extends ListRecords
                         ->openUrlInNewTab()
                         ->color('success'),
                 
-            // Action::make('pending')
-            //     ->label('Pending')
-            //     ->icon('heroicon-o-check-circle')
-            //     ->color('warning')
-            //     ->requiresConfirmation()
-            //     ->visible(fn ($record) => $record->status === 'submit'  && (int) $record->progress_percentage >= 100)
-            //     ->action(function ($record) {
-            //         ODCDetail::where('bast_id', $record->bast_id)->where('odc_name', $record->odc_name)
-            //         ->update([
-            //             'status'       => 'pending',
-            //             'approval_by'  => Auth::user()->email,
-            //             'approval_at'  => now(),
-            //         ]);
-            //     })->after(fn () => $this->dispatch('refresh'))
-            //     ->successNotificationTitle('Data berhasil di-pending'),
             Action::make('approve')
                 ->label('Approved')
                 ->icon('heroicon-o-check-circle')
@@ -223,7 +210,36 @@ class ListOdcDetails extends ListRecords
     protected function getTableBulkActions(): array
     {
         return [
-            // Tables\Actions\DeleteBulkAction::make(),
+            BulkAction::make('export_implementation_bulk')
+            ->label('Print Bulk')
+            ->icon('heroicon-o-document-arrow-down')
+            ->color('primary')
+            ->action(function (\Illuminate\Support\Collection $records) {
+                $records = $records->filter(fn($record) => $record->status === 'approved');
+
+                if ($records->isEmpty()) {
+                    Notification::make()
+                        ->title('Tidak ada record yang approved!')
+                        ->danger()
+                        ->send();
+                    return;
+                }
+
+                $zipFileName = 'Implementation_ODC_' . now()->format('Ymd_His') . '.zip';
+                $zipPath = storage_path($zipFileName);
+
+                $zip = new \ZipArchive();
+                if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
+                    foreach ($records as $record) {
+                        $excelFileName = "Implementation_ODC_{$record->odc_name}.xlsx";
+                        $excelContent = Excel::raw(new BastODCExport($record), \Maatwebsite\Excel\Excel::XLSX);
+                        $zip->addFromString($excelFileName, $excelContent);
+                    }
+                    $zip->close();
+                }
+
+                return response()->download($zipPath)->deleteFileAfterSend(true);
+            }),
         ];
     }
 

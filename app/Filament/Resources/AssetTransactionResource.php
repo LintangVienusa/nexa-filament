@@ -30,6 +30,9 @@ use Filament\Notifications\Notification;
 use App\Traits\HasOwnRecordPolicy;
 use Spatie\Permission\Traits\HasPermissions;
 use App\Traits\HasNavigationPolicy;
+use Filament\Forms\Components\FileUpload;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+
 
 class AssetTransactionResource extends Resource
 {
@@ -44,7 +47,7 @@ class AssetTransactionResource extends Resource
 
     public static function canEdit($record): bool
     {
-        return false; // atau logika sesuai role
+        return false; 
     }
 
     public static function form(Form $form): Form
@@ -151,15 +154,20 @@ class AssetTransactionResource extends Resource
                                             $formattedId = str_pad($nextId, 4, '0', STR_PAD_LEFT);
                                             $set('item_code', $category->category_code . $formattedId);
                                             // $set('item_code', null);s
+                                            $set('info_sn',  $category->info_sn);
 
                                         } else {
                                             $set('item_code', null);
+                                            $set('info_sn', yes);
                                         }
                                     } else {
                                         $set('asset_qty_now', 0);
                                         $set('item_code', null);
+                                        $set('info_sn', yes);
                                     }
                                 }),
+                             Hidden::make('info_sn')
+                                ->dehydrated(true),
 
                             TextInput::make('asset_qty_now')
                                 ->label('Jumlah Stock')
@@ -212,8 +220,19 @@ class AssetTransactionResource extends Resource
                             Textarea::make('ba_description')
                                 ->label('Deskripsi')
                                 ->columnSpanFull(),
+                            Select::make('input_mode')
+                                ->label('Metode Input Barang')
+                                ->options([
+                                    'IMPORT' => 'Import dari File',
+                                    'MANUAL' => 'Input Manual Satuan',
+                                ])
+                                ->reactive()
+                                ->required()
+                                ->default('MANUAL'),
                         ])
                          ->columns(2),
+
+                    
 
                     Section::make('Usage & Assignment')
                         ->schema([
@@ -278,6 +297,8 @@ class AssetTransactionResource extends Resource
                         ])
                         ->visible(fn (callable $get) => $get('transaction_type') === 'RELEASE')
                         ->columns(2),
+                    
+                    
 
                     Section::make('Penerimaan Barang')
                         ->schema([
@@ -287,7 +308,7 @@ class AssetTransactionResource extends Resource
                                     'RETURN WAREHOUSE' => 'Pengembalian ke Gudang',
                                     'STOCK IN WAREHOUSE' => 'Masuk ke Gudang',
                                 ])
-                                ->reactive()->dehydrated(true),
+                                ->reactive()->dehydrated(true)->required(),
 
                             Select::make('recipient_by')
                                 ->label('Penerima')
@@ -348,6 +369,23 @@ class AssetTransactionResource extends Resource
                         ])
                         ->columns(2)
                         ->visible(fn (callable $get) => $get('transaction_type') === 'RECEIVE'),
+
+                    Section::make('Detail item')
+                        ->schema([
+                            FileUpload::make('file_asset')
+                                ->label('Upload Excel')
+                                ->acceptedFileTypes([
+                                    'application/vnd.ms-excel',
+                                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                                    'application/octet-stream',
+                                ])
+                                ->directory('list_asset')
+                                ->required(fn (callable $get) => $get('input_mode') === 'IMPORT')
+                                ->visible(fn (callable $get) => $get('input_mode') === 'IMPORT')
+                                ->reactive()
+                                
+                        ])
+                        ->visible(fn (callable $get) => $get('input_mode') === 'IMPORT'),
 
                     Section::make('Detail item')
                         ->schema([
@@ -415,77 +453,63 @@ class AssetTransactionResource extends Resource
                                 ->columns(2)
                                 ->disableItemCreation()
                                 ->disableItemDeletion()
-                                ->visible(fn (callable $get) => $get('transaction_type') === 'RELEASE' )
+                                ->visible(fn (callable $get) => $get('transaction_type') === 'RELEASE' && $get('info_sn') ==='yes' && $get('input_mode') ==='MANUAL' )
                                 ->maxItems(fn (callable $get) => $get('../../request_asset_qty') ?? null)
                                 ->required(),
                         
                                 Repeater::make('requested_items')
-                                ->label('Detail item')
-                                ->schema([
-                                    Select::make('asset_id')
-                                        ->label('Serial Number')
-                                        ->options(function (callable $get) {
-                                            $categoryId = $get('../../category_id');
-                                            if (!$categoryId) return [];
-                                            return Assets::where('category_id', $categoryId)
-                                                ->where('status', 1)
-                                                ->pluck('serialNumber', 'id');
-                                        })
-                                        ->reactive()
-                                        ->searchable()
-                                        ->afterStateUpdated(function ($state, callable $get, callable $set, $livewire) {
-
-                                            $items = collect($get('../../requested_items'))->pluck('asset_id')->filter();
-
-                                                if ($items->duplicates()->isNotEmpty()) {
-                                                    $set('asset_id', null);
-                                                    Notification::make()
-                                                        ->title('Serial Number sudah digunakan di item lain!')
-                                                        ->danger()
-                                                        ->duration(3000)
-                                                        ->send();
-
-                                                    return;
+                                    ->label('Detail item')
+                                    ->schema([
+                                        Select::make('asset_id')
+                                            ->label('Serial Number')
+                                            ->options(function (callable $get) {
+                                                $categoryId = $get('../../category_id');
+                                                if (!$categoryId) return [];
+                                                return Assets::where('category_id', $categoryId)
+                                                    ->where('status', 1)
+                                                    ->pluck('serialNumber', 'id');
+                                            })
+                                            ->reactive()
+                                            ->searchable()
+                                            ->afterStateUpdated(function ($state, callable $get, callable $set) {
+                                                $asset = Assets::find($state);
+                                                if ($asset) {
+                                                    $set('item_code', $asset->item_code);
+                                                    $set('merk', $asset->merk);
+                                                    $set('type', $asset->type);
+                                                    $set('serialNumber', $asset->serialNumber);
+                                                    $set('description', $asset->description);
                                                 }
-                                            $asset = Assets::find($state);
-                                            if ($asset) {
-                                                $set('item_code', $asset->item_code);
-                                                $set('merk', $asset->merk);
-                                                $set('type', $asset->type);
-                                                $set('serialNumber', $asset->serialNumber);
-                                                $set('description', $asset->description);
-                                                $set('status', 0);
-                                            }
-                                        })
-                                        ->required(),
+                                            })
+                                            ->required(),
 
-                                    TextInput::make('item_code')
-                                                ->label('Code Item')
+                                        TextInput::make('item_code')
+                                                    ->label('Code Item')
+                                                    ->disabled()
+                                                    ->dehydrated(false),
+                                        TextInput::make('merk')
+                                                    ->label('Merk')
+                                                    ->disabled()
+                                                    ->dehydrated(false) ,
+                                        TextInput::make('type')
+                                                    ->label('Tipe Item')
+                                                    ->disabled()
+                                                    ->dehydrated(false),
+                                        TextInput::make('serialNumber')
+                                                    ->label('Serial Number')
+                                                    ->disabled()
+                                                    ->dehydrated(false),
+                                        Textarea::make('description')
+                                                ->label('Deskripsi')
                                                 ->disabled()
                                                 ->dehydrated(false),
-                                    TextInput::make('merk')
-                                                ->label('Merk')
-                                                ->disabled()
-                                                ->dehydrated(false) ,
-                                    TextInput::make('type')
-                                                ->label('Tipe Item')
-                                                ->disabled()
-                                                ->dehydrated(false),
-                                    TextInput::make('serialNumber')
-                                                ->label('Serial Number')
-                                                ->disabled()
-                                                ->dehydrated(false),
-                                    Textarea::make('description')
-                                            ->label('Deskripsi')
-                                            ->disabled()
-                                            ->dehydrated(false),
-                                ])
-                                ->columns(2)
-                                ->disableItemCreation()
-                                ->disableItemDeletion()
-                                ->visible(fn (callable $get) => $get('usage_type') === 'RETURN WAREHOUSE')
-                                ->maxItems(fn (callable $get) => $get('../../request_asset_qty') ?? null)
-                                ->required(),
+                                    ])
+                                    ->columns(2)
+                                    ->disableItemCreation()
+                                    ->disableItemDeletion()
+                                    ->visible(fn (callable $get) => $get('usage_type') === 'RETURN WAREHOUSE')
+                                    ->maxItems(fn (callable $get) => $get('../../request_asset_qty') ?? null)
+                                    ->required(),
                         
                         
 
@@ -581,7 +605,7 @@ class AssetTransactionResource extends Resource
 
                                 ->maxItems(fn (callable $get) => $get('../../request_asset_qty') ?? null)
                                 ->visible(fn (callable $get) => $get('transaction_type') === 'RECEIVE' && $get('usage_type') != 'RETURN WAREHOUSE'),
-                        ]),
+                        ])->visible(fn (callable $get) => $get('input_mode') === 'MANUAL' ),
                 ]);
     }
 
@@ -615,7 +639,21 @@ class AssetTransactionResource extends Resource
                 Tables\Columns\TextColumn::make('ba_number')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('status')
-                    ->numeric()
+                    ->badge()
+                    ->formatStateUsing(fn ($state) => match ($state) {
+                        0 => 'Submit',
+                        1 => 'Pending',
+                        2 => 'Approve',
+                        3 => 'Reject',
+                        default => $state,
+                    })
+                    ->color(fn ($state): string => match ($state) {
+                        0 => 'warning',
+                        1 => 'warning',
+                        2 => 'success',
+                        3 => 'danger',
+                        default => 'primary',
+                    })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_by')
                     ->searchable(),
@@ -634,11 +672,72 @@ class AssetTransactionResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('transaction_type')
+                    ->label('Transaction Type')
+                    ->options([
+                        'RELEASE' => 'RELEASE',
+                        'RECEIVE' => 'RECEIVE',
+                    ]),
+                Tables\Filters\SelectFilter::make('status')
+                ->label('Status')
+                ->options([
+                    '0' => 'Submit',
+                    '2' => 'Approved',
+                    '3' => 'Rejected',
+                ]),
+                Tables\Filters\Filter::make('created_at')
+                ->form([
+                    Forms\Components\DatePicker::make('from'),
+                    Forms\Components\DatePicker::make('until'),
+                ])
+                ->query(function ($query, array $data) {
+                    return $query
+                        ->when($data['from'] ?? null, fn ($q, $date) => $q->whereDate('created_at', '>=', $date))
+                        ->when($data['until'] ?? null, fn ($q, $date) => $q->whereDate('created_at', '<=', $date));
+                }),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('approved')
+                    ->label('Approve')
+                    ->color('success')
+                    ->icon('heroicon-o-check')
+                    ->requiresConfirmation()
+                    ->visible(fn ($record) => $record->status == '0')
+                    ->action(function ($record) {
+                        AssetTransaction::where('transaction_code', $record->transaction_code)
+                        ->update([
+                            'status' => '2',
+                            'approved_by' => Auth::user()->email ?? 'system',
+                            'approved_at' => now(),
+                        ]);
+
+                        Notification::make()->title('Approved')->success()->send();
+
+                            return $record->fresh();
+                    }),
+                    Tables\Actions\Action::make('rejected')
+                    ->label('Reject')
+                    ->color('danger')
+                    ->icon('heroicon-o-x-circle')
+                    ->requiresConfirmation()
+                    ->visible(fn ($record) => $record->status == '0')
+                    ->action(function ($record) {
+                        AssetTransaction::where('transaction_code', $record->transaction_code)
+                        ->update([
+                            'status' => '3',
+                            'approved_by' => Auth::user()->email ?? 'system',
+                            'approved_at' => now(),
+                        ]);
+
+                        Notification::make()->title('Rejected')->success()->send();
+
+                            return $record->fresh();
+                    }),
+                
             ])
+
+            
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     // Tables\Actions\DeleteBulkAction::make(),

@@ -153,7 +153,7 @@ class AssetResource extends Resource
                 Tables\Columns\TextColumn::make('created_by'),
                 Tables\Columns\TextColumn::make('created_at')->dateTime()->label('Created At'),
                 Tables\Columns\TextColumn::make('updated_by')->label('Updated by'),
-                Tables\Columns\TextColumn::make('updated_by')->dateTime()->label('Updated At'),
+                Tables\Columns\TextColumn::make('updated_at')->dateTime()->label('Updated At'),
             
             ])
             ->filters([

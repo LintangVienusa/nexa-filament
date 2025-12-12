@@ -28,7 +28,7 @@ use Filament\Tables\Filters\SelectFilter;
 
 class EmployeeResource extends Resource
 {
-    
+
     use HasPermissions, HasOwnRecordPolicy, HasNavigationPolicy;
 
     protected static ?string $model = Employee::class;
@@ -49,15 +49,6 @@ class EmployeeResource extends Resource
             ->schema([
                 Section::make('Informasi Personal')
                     ->schema([
-
-                        // FileUpload::make('file_photo')
-                        //     ->label('Photo')
-                        //     ->image()
-                        //     ->directory('employee-photos')
-                        //     ->acceptedFileTypes(['image/jpeg']) 
-                        //     ->visibility('public')
-                        //     ->required()
-                        //     ->maxSize(2024),
                         FileUpload::make('file_photo')
                             ->label('Photo')
                             ->directory('employee')
@@ -69,28 +60,27 @@ class EmployeeResource extends Resource
                             ->numeric()
                             ->required()
                             ->unique(ignoreRecord: true)
-                            ->disabled(fn($record) => filled($record)) 
                             ->maxLength(20),
 
                         TextInput::make('first_name')
                             ->label('Nama Depan')
                             ->required()
                             ->extraInputAttributes(['style' => 'text-transform: uppercase;'])
-                            ->dehydrateStateUsing(fn ($state) => strtoupper($state))
+                            ->dehydrateStateUsing(fn($state) => strtoupper($state))
                             ->reactive()
                             ->maxLength(50),
 
                         TextInput::make('middle_name')
                             ->label('Nama Tengah')
                             ->extraInputAttributes(['style' => 'text-transform: uppercase;'])
-                            ->dehydrateStateUsing(fn ($state) => strtoupper($state))
+                            ->dehydrateStateUsing(fn($state) => strtoupper($state))
                             ->reactive()
                             ->maxLength(50),
 
                         TextInput::make('last_name')
                             ->label('Nama Belakang')
                             ->extraInputAttributes(['style' => 'text-transform: uppercase;'])
-                            ->dehydrateStateUsing(fn ($state) => strtoupper($state))
+                            ->dehydrateStateUsing(fn($state) => strtoupper($state))
                             ->required()
                             ->reactive()
                             ->maxLength(50),
@@ -117,22 +107,21 @@ class EmployeeResource extends Resource
                             ->label('Tipe')
                             ->options(function () {
                                 $options = [
-                                    'organik'   => 'organik',
-                                    'mitra'     => 'mitra'
+                                    'organik' => 'organik',
+                                    'mitra' => 'mitra'
                                 ];
                                 return $options;
                             })
-
                             ->required(),
 
                         Select::make('job_title')
                             ->label('Jabatan')
                             ->options(function () {
                                 $options = [
-                                    'Staff'   => 'Staff',
-                                    'SPV'     => 'SPV',
+                                    'Staff' => 'Staff',
+                                    'SPV' => 'SPV',
                                     'Manager' => 'Manager',
-                                    'VP'      => 'VP',
+                                    'VP' => 'VP',
                                 ];
 
                                 if (auth()->user()->setConnection('mysql')->hasRole('superadmin')) {
@@ -142,52 +131,51 @@ class EmployeeResource extends Resource
 
                                 return $options;
                             })
-
                             ->required(),
 
                         Select::make('divisi_name')
-                                ->label('Department')
-                                ->options(\App\Models\Organization::query()
-                                    ->select('id', 'divisi_name')
-                                    ->distinct('divisi_name')
-                                    ->pluck('divisi_name', 'divisi_name'))
-                                ->reactive()
-                                ->required()
-                                ->afterStateHydrated(function ($set, $record) {
-                                    if ($record && $record->org_id) {
-                                        $organization = Organization::find($record->org_id);
-                                        if ($organization) {
-                                            $set('divisi_name', $organization->divisi_name);
-                                        }
+                            ->label('Department')
+                            ->options(Organization::query()
+                                ->select('id', 'divisi_name')
+                                ->distinct('divisi_name')
+                                ->pluck('divisi_name', 'divisi_name'))
+                            ->reactive()
+                            ->required()
+                            ->afterStateHydrated(function ($set, $record) {
+                                if ($record && $record->org_id) {
+                                    $organization = Organization::find($record->org_id);
+                                    if ($organization) {
+                                        $set('divisi_name', $organization->divisi_name);
                                     }
-                                })
-                                ->afterStateUpdated(function ($state, callable $set) {
-                                    $set('unit_id', null);
-                                }),
+                                }
+                            })
+                            ->afterStateUpdated(function ($state, callable $set) {
+                                $set('unit_id', null);
+                            }),
 
                         Select::make('unit_id')
-                                ->label('Unit')
-                                ->options(function (callable $get) {
-                                    $departmentName = $get('divisi_name');
-                                    if (!$departmentName) return [];
-                                    return \App\Models\Organization::where('divisi_name', $departmentName)
-                                        ->pluck('unit_name', 'id');
-                                })
-                                ->required()
-                                ->afterStateHydrated(function ($set, $record) {
-                                    if ($record && $record->org_id) {
-                                        $organization = Organization::find($record->org_id);
-                                        if ($organization) {
-                                            $set('unit_id', $organization->id);
-                                        }
+                            ->label('Unit')
+                            ->options(function (callable $get) {
+                                $departmentName = $get('divisi_name');
+                                if (!$departmentName) return [];
+                                return Organization::where('divisi_name', $departmentName)
+                                    ->pluck('unit_name', 'id');
+                            })
+                            ->required()
+                            ->afterStateHydrated(function ($set, $record) {
+                                if ($record && $record->org_id) {
+                                    $organization = Organization::find($record->org_id);
+                                    if ($organization) {
+                                        $set('unit_id', $organization->id);
                                     }
-                                }) 
-                                ->afterStateUpdated(function ($state, callable $set) {
-                                    
-                                    $set('org_id', $state);
-                                    $set('org_id_display', $state);
-                                })
-                                ->reactive(),
+                                }
+                            })
+                            ->afterStateUpdated(function ($state, callable $set) {
+
+                                $set('org_id', $state);
+                                $set('org_id_display', $state);
+                            })
+                            ->reactive(),
 
                         Hidden::make('org_id')
                             ->reactive(),
@@ -197,31 +185,35 @@ class EmployeeResource extends Resource
                             ->prefix('Rp')
                             ->reactive()
                             ->default(0)
-                            ->formatStateUsing(fn($state) => number_format((int) $state, 0, ',', '.'))
+                            ->formatStateUsing(fn($state) => number_format((int)$state, 0, ',', '.'))
                             ->afterStateUpdated(function ($state, callable $set) {
                                 $number = preg_replace('/[^0-9]/', '', $state);
-                                $set('basic_salary', $number === '' ? 0 : number_format((int) $number, 0, ',', '.'));
+                                $set('basic_salary', $number === '' ? 0 : number_format((int)$number, 0, ',', '.'));
                             })
-                             ->hidden(function ($record) {
-                                $user = auth()->user();
-                                $organizationName = $user->employee?->organization?->unit_name;
-                                if (filled($record) && $organizationName !== 'HR') {
-                                        return true;  
-                                    }
+                            ->hidden(function ($record) {
+                                $user = auth()->user()->setConnection('mysql');
+                                $isHR = $user->employee?->organization?->unit_name === 'HR';
+                                $isSuperAdmin = $user->hasRole('superadmin');
 
-                                    return false;     
+                                if (filled($record) && !($isHR || $isSuperAdmin)) {
+                                    return true; 
+                                }
+
+                                return false;
                             })
-                            ->dehydrateStateUsing(fn($state) => (string) preg_replace('/[^0-9]/', '', $state))
+                            ->dehydrateStateUsing(fn($state) => (string)preg_replace('/[^0-9]/', '', $state))
                             ->required(),
                     ])->columns(2)->disabled(function ($record) {
-                                $user = auth()->user();
-                                $organizationName = $user->employee?->organization?->unit_name;
-                                if (filled($record) && $organizationName !== 'HR') {
-                                        return true;  
-                                    }
+                        $user = auth()->user()->setConnection('mysql');
+                        $isHR = $user->employee?->organization?->unit_name === 'HR';
+                        $isSuperAdmin = $user->hasRole('superadmin');
 
-                                    return false;     
-                            }) ,
+                        if (filled($record) && !($isHR || $isSuperAdmin)) {
+                            return true; 
+                        }
+
+                        return false;
+                    }),
 
                 Section::make('Kontak dan Informasi Detail')
                     ->schema([
@@ -245,10 +237,10 @@ class EmployeeResource extends Resource
                             ->maxLength(16)
                             ->reactive()
                             ->afterStateUpdated(function ($state, callable $set) {
-                                    if (strlen($state) > 16) {
-                                        $set('ktp_no', substr($state, 0, 16));
-                                    }
-                                })             
+                                if (strlen($state) > 16) {
+                                    $set('ktp_no', substr($state, 0, 16));
+                                }
+                            })
                             ->required()
                             ->helperText('Masukkan 16 digit KTP')
                             ->rule('digits:16'),
@@ -303,7 +295,7 @@ class EmployeeResource extends Resource
                             ->label('Jumlah Anak')
                             ->numeric()
                             ->default(0)
-                            ->visible(fn (callable $get) => $get('marital_status') == 1)
+                            ->visible(fn(callable $get) => $get('marital_status') == 1)
                     ])->columns(2),
 
                 Section::make('Info Rekening')
@@ -350,14 +342,14 @@ class EmployeeResource extends Resource
                             $direction
                         );
                     }),
-                
+
                 TextColumn::make('employee_type')->label('Tipe')->searchable()->sortable(),
                 TextColumn::make('organization.divisi_name')->label('Divisi')->searchable()->sortable(),
                 TextColumn::make('organization.unit_name')->label('Unit')->searchable()->sortable(),
                 TextColumn::make('job_title')->label('Jabatan')->searchable()->sortable(),
             ])
             ->filters([
-                 SelectFilter::make('divisi_name')
+                SelectFilter::make('divisi_name')
                     ->label('Divisi')
                     ->options(
                         Organization::query()
@@ -405,13 +397,13 @@ class EmployeeResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make()
-                    ->visible(fn () => auth()->user()?->hasAnyRole(['superadmin', 'admin', 'manager'])),
+                    ->visible(fn() => auth()->user()?->hasAnyRole(['superadmin', 'admin', 'manager'])),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make()
-                    ->visible(fn () => auth()->user()?->hasAnyRole(['superadmin', 'admin', 'manager']))
-                    ->authorize(fn () => auth()->user()?->hasAnyRole(['superadmin', 'admin', 'manager'])),
+                        ->visible(fn() => auth()->user()?->hasAnyRole(['superadmin', 'admin', 'manager']))
+                        ->authorize(fn() => auth()->user()?->hasAnyRole(['superadmin', 'admin', 'manager'])),
                 ]),
             ]);
     }

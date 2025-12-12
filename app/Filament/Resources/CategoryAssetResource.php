@@ -18,6 +18,7 @@ use Filament\Forms\Components\Textarea;
 use App\Traits\HasOwnRecordPolicy;
 use Spatie\Permission\Traits\HasPermissions;
 use App\Traits\HasNavigationPolicy;
+use Filament\Forms\Components\Select;
 
 class CategoryAssetResource extends Resource
 {
@@ -62,6 +63,14 @@ class CategoryAssetResource extends Resource
                         Textarea::make('description')
                             ->label('Description')
                             ->columnSpanFull(),
+                        Select::make('info_sn')
+                            ->label('Info SN')
+                            ->options([
+                                'yes' => 'Yes',
+                                'no' => 'No',
+                            ])
+                            ->default('yes')
+                            ->required(),
                     ]),
             ]);
     }
@@ -79,6 +88,8 @@ class CategoryAssetResource extends Resource
                 Tables\Columns\TextColumn::make('category_name')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('description')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('info_sn')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('created_by')
                     ->searchable(),

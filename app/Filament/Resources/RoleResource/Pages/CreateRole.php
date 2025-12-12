@@ -10,32 +10,35 @@ use Spatie\Permission\Models\Permission;
 class CreateRole extends CreateRecord
 {
     protected static string $resource = RoleResource::class;
+    protected array $collectedPermissions = [];
+
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $permissions = [];
+        $this->collectedPermissions = [];
 
         foreach ($data as $key => $value) {
-            if (Str::startsWith($key, 'permissions_') && is_array($value)) {
-                $permissions = array_merge($permissions, $value);
-                unset($data[$key]);
+            if (str_starts_with($key, 'permissions_') && is_array($value)) {
+                $this->collectedPermissions = array_merge($this->collectedPermissions, $value);
             }
         }
 
-        $this->permissions = $permissions;
-        return $data;
+        return [
+            'name' => $data['name'],
+        ];
     }
 
     protected function afterCreate(): void
     {
-        if (!empty($this->permissions)) {
-            foreach ($this->permissions as $permissionName) {
-                Permission::firstOrCreate([
-                    'name' => $permissionName,
-                    'guard_name' => 'web', // sesuaikan kalau kamu pakai guard lain
-                ]);
-            }
-
-            $this->record->syncPermissions($this->permissions);
+        foreach ($this->collectedPermissions as $perm) {
+            Permission::findOrCreate($perm, 'web');
         }
+
+        $this->record->syncPermissions($this->collectedPermissions);
     }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index'); 
+    }
+    
 }

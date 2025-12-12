@@ -84,6 +84,7 @@ class InventoryAssetResource extends Resource
                     ->formatStateUsing(fn ($state) => $state ?? '0'),
                 Tables\Columns\TextColumn::make('inWarehouse')
                     ->numeric()
+                    ->alignRight()
                     ->sortable()
                     ->formatStateUsing(fn ($state) => $state ?? '0')
                     ->extraAttributes(['class' => 'font-bold text-right'])
@@ -98,6 +99,7 @@ class InventoryAssetResource extends Resource
                         ]),
                 Tables\Columns\TextColumn::make('outWarehouse')
                     ->numeric()
+                    ->alignRight()
                     ->sortable()
                     ->formatStateUsing(fn ($state) => $state ?? '0')
                     ->extraAttributes(['class' => 'font-bold text-right'])
@@ -112,6 +114,7 @@ class InventoryAssetResource extends Resource
                         ]),
                 Tables\Columns\TextColumn::make('total')
                     ->numeric()
+                    ->alignRight()
                     ->sortable()
                     ->formatStateUsing(fn ($state) => $state ?? '0')
                     ->extraAttributes(['class' => 'font-bold text-right'])
