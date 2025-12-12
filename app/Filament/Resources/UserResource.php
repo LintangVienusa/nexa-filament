@@ -64,7 +64,7 @@ class UserResource extends Resource
                     ->label('Roles')
                     ->hidden(function ($record) {
                                 $user = auth()->user()->setConnection('mysql');
-                                $isSuperAdmin = $user->hasRole('superadmin');
+                                $isSuperAdmin = $user->setConnection('mysql')->hasRole('superadmin');
 
                                 if (filled($record) && !( $isSuperAdmin)) {
                                     return true; 
