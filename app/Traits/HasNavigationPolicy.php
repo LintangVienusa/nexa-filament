@@ -47,6 +47,7 @@ trait HasNavigationPolicy
                     \App\Filament\Resources\PayrollResource::class,
                     \App\Filament\Resources\LeaveResource::class,
                     \App\Filament\Resources\ProfileResource::class,
+                    \App\Filament\Resources\UserResource::class,
                 ];
 
                 return in_array($resourceClass, $allowedResources);
@@ -70,6 +71,7 @@ trait HasNavigationPolicy
                 \App\Filament\Resources\InventoryAssetResource::class,
                     \App\Filament\Resources\ProfileResource::class,
                     \App\Filament\Resources\LeaveResource::class,
+                    \App\Filament\Resources\UserResource::class,
             ];
 
             return in_array($resourceClass, $allowedResources);
@@ -87,6 +89,7 @@ trait HasNavigationPolicy
                     \App\Filament\Resources\PayrollResource::class,
                     \App\Filament\Resources\LeaveResource::class,
                     \App\Filament\Resources\ProfileResource::class,
+                    \App\Filament\Resources\UserResource::class,
                 ];
 
                 return in_array($resourceClass, $allowedResources);
@@ -103,6 +106,7 @@ trait HasNavigationPolicy
                     \App\Filament\Resources\PayrollResource::class,
                     \App\Filament\Resources\LeaveResource::class,
                     \App\Filament\Resources\ProfileResource::class,
+                    \App\Filament\Resources\UserResource::class,
                 ];
 
                 return in_array($resourceClass, $allowedResources);
