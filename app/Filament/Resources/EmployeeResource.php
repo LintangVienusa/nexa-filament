@@ -193,7 +193,7 @@ class EmployeeResource extends Resource
                             ->hidden(function ($record) {
                                 $user = auth()->user()->setConnection('mysql');
                                 $isHR = $user->employee?->organization?->unit_name === 'HR';
-                                $isSuperAdmin = $user->hasRole('superadmin');
+                                $isSuperAdmin = $user->setConnection('mysql')->hasAnyRole('superadmin');
 
                                 if (filled($record) && !($isHR || $isSuperAdmin)) {
                                     return true; 
@@ -206,7 +206,7 @@ class EmployeeResource extends Resource
                     ])->columns(2)->disabled(function ($record) {
                         $user = auth()->user()->setConnection('mysql');
                         $isHR = $user->employee?->organization?->unit_name === 'HR';
-                        $isSuperAdmin = $user->hasRole('superadmin');
+                        $isSuperAdmin = $user->setConnection('mysql')->hasAnyRole('superadmin');
 
                         if (filled($record) && !($isHR || $isSuperAdmin)) {
                             return true; 
