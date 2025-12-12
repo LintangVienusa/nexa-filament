@@ -21,6 +21,8 @@ use Illuminate\Support\Facades\DB;
 use Filament\Tables\Columns\ProgressColumn;
 use Illuminate\Support\Facades\Auth;
 use Filament\Forms\Form as FilamentForm;
+use Filament\Tables\Actions\BulkAction;
+use Filament\Notifications\Notification;
 
 
 class ListPoleDetails extends ListRecords
@@ -225,7 +227,38 @@ class ListPoleDetails extends ListRecords
     protected function getTableBulkActions(): array
     {
         return [
-            // Tables\Actions\DeleteBulkAction::make(),
+            BulkAction::make('export_implementation_pole_bulk')
+            ->label('Print Bulk Pole')
+            ->icon('heroicon-o-document-arrow-down')
+            ->color('primary')
+            ->action(function (\Illuminate\Support\Collection $records) {
+                // filter record yang approved
+                $records = $records->filter(fn($record) => $record->status === 'approved');
+
+                if ($records->isEmpty()) {
+                    Notification::make()
+                        ->title('Tidak ada record yang approved!')
+                        ->danger()
+                        ->send();
+                    return;
+                }
+
+                // Buat ZIP untuk beberapa Excel
+                $zipFileName = 'Implementation_Pole_' . now()->format('Ymd_His') . '.zip';
+                $zipPath = storage_path($zipFileName);
+
+                $zip = new \ZipArchive();
+                if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
+                    foreach ($records as $record) {
+                        $excelFileName = "Implementation_Pole_{$record->pole_sn}.xlsx";
+                        $excelContent = Excel::raw(new BastPoleExport($record), \Maatwebsite\Excel\Excel::XLSX);
+                        $zip->addFromString($excelFileName, $excelContent);
+                    }
+                    $zip->close();
+                }
+
+                return response()->download($zipPath)->deleteFileAfterSend(true);
+            }),
         ];
     }
 }

@@ -15,6 +15,7 @@ class CategoryAsset extends Model
         'category_code',
         'category_name',
         'description',
+        'info_sn',
         'created_at',
         'updated_at',
     ];
