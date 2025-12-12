@@ -191,10 +191,12 @@ class EmployeeResource extends Resource
                                 $set('basic_salary', $number === '' ? 0 : number_format((int)$number, 0, ',', '.'));
                             })
                             ->hidden(function ($record) {
-                                $user = auth()->user();
-                                $organizationName = $user->employee?->organization?->unit_name;
-                                if (filled($record) && $organizationName !== 'HR') {
-                                    return true;
+                                $user = auth()->user()->setConnection('mysql');
+                                $isHR = $user->employee?->organization?->unit_name === 'HR';
+                                $isSuperAdmin = $user->hasRole('superadmin');
+
+                                if (filled($record) && !($isHR || $isSuperAdmin)) {
+                                    return true; 
                                 }
 
                                 return false;
@@ -202,10 +204,12 @@ class EmployeeResource extends Resource
                             ->dehydrateStateUsing(fn($state) => (string)preg_replace('/[^0-9]/', '', $state))
                             ->required(),
                     ])->columns(2)->disabled(function ($record) {
-                        $user = auth()->user();
-                        $organizationName = $user->employee?->organization?->unit_name;
-                        if (filled($record) && $organizationName !== 'HR') {
-                            return true;
+                        $user = auth()->user()->setConnection('mysql');
+                        $isHR = $user->employee?->organization?->unit_name === 'HR';
+                        $isSuperAdmin = $user->hasRole('superadmin');
+
+                        if (filled($record) && !($isHR || $isSuperAdmin)) {
+                            return true; 
                         }
 
                         return false;
