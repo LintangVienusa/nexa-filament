@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Http;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use App\Models\Leave;
+use App\Models\Holiday;
 
 class HariKerjaService
 {
@@ -15,17 +16,22 @@ class HariKerjaService
      */
     protected function getLiburTahun($year): array
     {
-        $response = Http::withOptions([
-                        'curl' => [
-                            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-                        ],
-                    ])->get('https://api-harilibur.vercel.app/api?year={$year}');
-        // $response = Http::get("https://api-harilibur.vercel.app/api?year={$year}");
-        if ($response->ok()) {
-            $data = $response->json();
-            return collect($data)->pluck('date')->toArray();
-        }
-        return [];
+        // $response = Http::withOptions([
+        //                 'curl' => [
+        //                     CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        //                 ],
+        //             ])->get('https://api-harilibur.vercel.app/api?year={$year}');
+        // // $response = Http::get("https://api-harilibur.vercel.app/api?year={$year}");
+        // if ($response->ok()) {
+        //     $data = $response->json();
+        //     return collect($data)->pluck('date')->toArray();
+        // }
+        // return [];
+
+         return Holiday::where('year', $year)
+                ->pluck('holiday_date')
+                ->map(fn ($date) => Carbon::parse($date)->toDateString())
+                ->toArray();
     }
 
     /**
