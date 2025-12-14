@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Employee;
 
 class HomeConnectReport extends Model
 {
@@ -42,4 +43,9 @@ class HomeConnectReport extends Model
         'created_by',
         'updated_by',
     ];
+
+    public function employee()
+    {
+        return $this->belongsTo(Employee::class, 'updated_by', 'email');
+    }
 }
