@@ -45,9 +45,21 @@ class RoleResource extends Resource
                         ])
                         ->columns(2)
                         ->bulkToggleable()
+                        ->afterStateHydrated(function (CheckboxList $component, $state, $record) use ($key) {
+                            if (! $record) return;
+
+                            $permissions = $record->permissions
+                                ->pluck('name')
+                                ->filter(fn ($name) => str_starts_with($name, "{$key}."))
+                                ->values()
+                                ->toArray();
+
+                            $component->state($permissions);
+                        })
                         ->label('Permissions'),
                 ])
                 ->collapsible()
+                
                 ->collapsed();
         }
 
