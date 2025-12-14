@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\User;
 use App\Models\BastProject;
 use App\Models\CableDetail;
 use App\Models\PoleDetail;
@@ -15,9 +16,47 @@ use App\Models\HomeConnect;
 use App\Models\MappingHomepass;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class BastProjectController extends Controller
 {
+    public function dailyprog(Request $request)
+    {
+        date_default_timezone_set('Asia/Jakarta');
+
+        
+        $user = User::where('email', $request->email)->first();
+        if (! $user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthorized',
+            ], 401);
+        }
+        $employee = $user->employee()->with('organization')->first();
+
+        
+        $email = $request->email;
+
+        $odclist = ODCDetail::where('updated_by', $email)->whereDate('updated_at', Carbon::today())->get(['bast_id',DB::raw("'ODC' as keterangan"),'odc_name','progress_percentage','status','latitude','longitude']);
+        $odplist = ODPDetail::where('updated_by', $email)->whereDate('updated_at', Carbon::today())->get(['bast_id',DB::raw("'ODP' as keterangan"),'odc_name','odp_name','progress_percentage','status','latitude','longitude']);
+        $polelist = PoleDetail::where('updated_by', $email)->whereDate('updated_at', Carbon::today())->get(['bast_id',DB::raw("'Pole' as keterangan"),'pole_sn','progress_percentage','status','latitude','longitude']);
+        $feederlist = FeederDetail::where('updated_by', $email)->whereDate('updated_at', Carbon::today())->get(['bast_id',DB::raw("'Feeder' as keterangan"),'feeder_name','progress_percentage','status']);
+        $hclist = HomeConnect::where('updated_by', $email)->whereDate('updated_at', Carbon::today())->get(['bast_id',DB::raw("'Home Connect' as keterangan"),'id_pelanggan','name_pelanggan','odp_name','port_odp','progress_percentage','status','latitude','longitude']);
+       
+        $homepass = collect()
+            ->merge($odclist)
+            ->merge($odplist)
+            ->merge($polelist)
+            ->merge($feederlist)
+            ->merge($hclist);
+        return response()->json([
+            'status' => 'success',
+            'division'     => optional(optional($employee)->organization)->divisi_name ?? null,
+            'data' => $homepass,
+        ]);
+
+    }
+
 
     public function index(Request $request)
     {
