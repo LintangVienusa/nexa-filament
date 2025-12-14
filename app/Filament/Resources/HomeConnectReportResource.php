@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\HomeConnectReportResource\Pages;
 use App\Filament\Resources\HomeConnectReportResource\RelationManagers;
 use App\Models\HomeConnectReport;
+use App\Models\Employee;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Actions\Action;
@@ -16,6 +17,11 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\HomeConnectReportExport;
+use Filament\Tables\Filters\Filter;
+use Filament\Forms\Components\DatePicker;
+
 
 class HomeConnectReportResource extends Resource
 {
@@ -33,6 +39,8 @@ class HomeConnectReportResource extends Resource
                             ->default(fn() => 'BA-' . now()->format('YmdH') . '-' . rand(1000, 9999))
                             // ->readonly()
                             ->dehydrateStateUsing(fn($state) => $state),
+                Forms\Components\TextInput::make('updated_at')->label('Tanggal IKR'),
+                Forms\Components\TextInput::make('updated_at')->label('Tanggal IKR'),
                 Forms\Components\TextInput::make('id_pelanggan'),
                 Forms\Components\TextInput::make('name_pelanggan'),
 
@@ -70,15 +78,40 @@ class HomeConnectReportResource extends Resource
         return $table
             ->columns([
                 //
-                Tables\Columns\TextColumn::make('updated_at'),
+                Tables\Columns\TextColumn::make('updated_at')->label('Tanggal IKR'),
+                Tables\Columns\TextColumn::make('employee.first_name')
+                    ->label('Nama Petugas')
+                    ->getStateUsing(fn ($record) => $record->employee?->full_name ?? '-')
+                    ->searchable(query: function (Builder $query, string $search) {
+                        $query->whereHas('employee', function ($q) use ($search) {
+                            $q->whereRaw(
+                                "CONCAT(first_name, ' ', middle_name, ' ', last_name) LIKE ?",
+                                ["%{$search}%"]
+                            );
+                        });
+                    })
+                    ->sortable(function (Builder $query) {
+                        $direction = request()->input('tableSortDirection', 'asc');
+
+                        return $query->orderBy(
+                            Employee::selectRaw(
+                                "CONCAT(first_name, ' ', middle_name, ' ', last_name)"
+                            )
+                            ->whereColumn('employees.email', 'home_connect_reports.updated_by')
+                            ->limit(1),
+                            $direction
+                        );
+                    }),
                 Tables\Columns\TextColumn::make('id_pelanggan')
                 ->formatStateUsing(fn ($state) => strtoupper($state))
                 ->searchable(),
                 Tables\Columns\TextColumn::make('name_pelanggan')
                 ->formatStateUsing(fn ($state) => strtoupper($state))
                 ->searchable(),
+                Tables\Columns\TextColumn::make('sn_ont')->label('SN ONT'),
                 Tables\Columns\TextColumn::make('site'),
                 Tables\Columns\TextColumn::make('odp_name'),
+                Tables\Columns\TextColumn::make('port_odp'),
                 // Tables\Columns\ImageColumn::make('foto_label_odp')
                 // ->getStateUsing(fn ($record) => $record->foto_label_odp),
                 ImageColumn::make('foto_label_odp')
@@ -115,12 +148,41 @@ class HomeConnectReportResource extends Resource
                 
             ])
             ->filters([
+                Filter::make('updated_at')
+                    ->form([
+                       DatePicker::make('start_date')
+                            ->label('Tanggal Mulai IKR')
+                            ->placeholder('YYYY-MM-DD'),
+                        DatePicker::make('end_date')
+                            ->label('Tanggal Akhir IKR')
+                            ->placeholder('YYYY-MM-DD'),
+                    ])
+                    ->query(function ($query, array $data) {
+                        if (!empty($data['start_date'])) {
+                            $query->whereDate('updated_at', '>=', $data['start_date']);
+                        }
+                        if (!empty($data['end_date'])) {
+                            $query->whereDate('updated_at', '<=', $data['end_date']);
+                        }
+                    })
+                    ->label('Filter Tanggal IKR'),
                 // SelectFilter::make('status_port')
                 //     ->label('Status Port')
                 //     ->options([
                 //         'idle' => 'Idle',
                 //         'used' => 'Used',
                 //     ]),
+            ])
+            ->headerActions([
+                Tables\Actions\Action::make('export_all')
+                    ->label('Export All')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->action(fn () =>
+                        Excel::download(
+                            new HomeConnectReportExport,
+                            'HomeConnectReport.xlsx'
+                        )
+                    ),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
