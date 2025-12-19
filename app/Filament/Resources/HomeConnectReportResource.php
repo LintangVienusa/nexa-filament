@@ -21,6 +21,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\HomeConnectReportExport;
 use Filament\Tables\Filters\Filter;
 use Filament\Forms\Components\DatePicker;
+use Illuminate\Support\Facades\DB;
 
 
 class HomeConnectReportResource extends Resource
@@ -83,9 +84,12 @@ class HomeConnectReportResource extends Resource
                     ->label('Nama Petugas')
                     ->getStateUsing(fn ($record) => $record->employee?->full_name ?? '-')
                     ->searchable(query: function (Builder $query, string $search) {
-                        $query->whereHas('employee', function ($q) use ($search) {
-                            $q->whereRaw(
-                                "CONCAT(first_name, ' ', middle_name, ' ', last_name) LIKE ?",
+                        $query->whereExists(function ($q) use ($search) {
+                            $q->select(DB::raw(1))
+                            ->from(DB::connection('mysql_employees')->getDatabaseName() . '.Employees')
+                            ->whereColumn('Employees.email', 'HomeConnect.updated_by')
+                            ->whereRaw(
+                                "CONCAT(first_name,' ',middle_name,' ',last_name) LIKE ?",
                                 ["%{$search}%"]
                             );
                         });
