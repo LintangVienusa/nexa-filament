@@ -9,13 +9,9 @@ class FeederDetail extends Model
 {
     use HasFactory;
 
-    // koneksi ke database mysql_inventory
     protected $connection = 'mysql_inventory';
-
-    // nama tabel
     protected $table = 'FeederDetail';
 
-    // kolom yang bisa diisi mass-assignment
     protected $fillable = [
         'site',
         'id',
@@ -34,13 +30,11 @@ class FeederDetail extends Model
         'updated_at',
     ];
 
-    // relasi ke BastProject
     public function bastProject()
     {
         return $this->belongsTo(BastProject::class, 'bast_id', 'bast_id');
     }
 
-    // accessor contoh (jika ingin tampilkan progress dalam format persen)
     public function getProgressLabelAttribute()
     {
         return $this->progress_percentage . '%';
