@@ -28,6 +28,7 @@ use Illuminate\Support\Facades\Storage;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver;
 use Filament\Actions\Action as HeaderAction;
+use Livewire\Attributes\On;
 
 class ListHomeConnectDetails extends ListRecords
 {
@@ -125,6 +126,7 @@ class ListHomeConnectDetails extends ListRecords
 
     }
 
+    #[On('rotate-photo')]
     protected function rotateImage(?string $path): void
     {
         if (!$path) return;
@@ -144,71 +146,84 @@ class ListHomeConnectDetails extends ListRecords
     protected function getTableActions(): array
     {
         return [
-             Action::make('rotate_foto_label_id_plg')
-                ->label('Rotate ID Pelanggan')
-                ->icon('heroicon-o-arrow-path')
-                ->requiresConfirmation()
-                ->action(function ($record) {
-                    $this->rotateImage($record->foto_label_id_plg);
-                })
-                ->after(function () {
-                    Notification::make()
-                        ->title('Foto berhasil di-rotate')
-                        ->success()
-                        ->send();
-                    $this->dispatch('refresh');
-                })
-                ->visible(fn ($record) => filled($record->foto_label_id_plg)),
+            Action::make('view')
+                ->label('View')
+                ->icon('heroicon-o-eye')
+                ->color('info')
+                ->modalHeading('Detail Home Connect')
+                ->modalWidth('3xl')
+                ->modalSubmitAction(false)
+                ->modalCancelActionLabel('Tutup')
+                ->modalContent(fn ($record) =>
+                    view('filament.homeconnect.view-detail', [
+                        'record' => $record,
+                    ])
+                ),
+            //  Action::make('rotate_foto_label_id_plg')
+            //     ->label('Rotate ID Pelanggan')
+            //     ->icon('heroicon-o-arrow-path')
+            //     ->requiresConfirmation()
+            //     ->action(function ($record) {
+            //         $this->rotateImage($record->foto_label_id_plg);
+            //     })
+            //     ->after(function () {
+            //         Notification::make()
+            //             ->title('Foto berhasil di-rotate')
+            //             ->success()
+            //             ->send();
+            //         $this->dispatch('refresh');
+            //     })
+            //     ->visible(fn ($record) => filled($record->foto_label_id_plg)),
 
-            Action::make('rotate_foto_qr')
-                ->label('Rotate QR')
-                ->icon('heroicon-o-arrow-path')
-                ->requiresConfirmation()
-                ->action(function ($record) {
-                    $this->rotateImage($record->foto_qr);
-                })
-                ->after(function () {
-                    Notification::make()
-                        ->title('Foto berhasil di-rotate')
-                        ->success()
-                        ->send();
+            // Action::make('rotate_foto_qr')
+            //     ->label('Rotate QR')
+            //     ->icon('heroicon-o-arrow-path')
+            //     ->requiresConfirmation()
+            //     ->action(function ($record) {
+            //         $this->rotateImage($record->foto_qr);
+            //     })
+            //     ->after(function () {
+            //         Notification::make()
+            //             ->title('Foto berhasil di-rotate')
+            //             ->success()
+            //             ->send();
 
-                    $this->dispatch('refresh');
-                })
-                ->visible(fn ($record) => filled($record->foto_qr)),
+            //         $this->dispatch('refresh');
+            //     })
+            //     ->visible(fn ($record) => filled($record->foto_qr)),
 
-            Action::make('rotate_foto_label_odp')
-                ->label('Rotate ODP')
-                ->icon('heroicon-o-arrow-path')
-                ->requiresConfirmation()
-                ->action(function ($record) {
-                    $this->rotateImage($record->foto_label_odp);
-                })
-                ->after(function () {
-                    Notification::make()
-                        ->title('Foto berhasil di-rotate')
-                        ->success()
-                        ->send();
+            // Action::make('rotate_foto_label_odp')
+            //     ->label('Rotate ODP')
+            //     ->icon('heroicon-o-arrow-path')
+            //     ->requiresConfirmation()
+            //     ->action(function ($record) {
+            //         $this->rotateImage($record->foto_label_odp);
+            //     })
+            //     ->after(function () {
+            //         Notification::make()
+            //             ->title('Foto berhasil di-rotate')
+            //             ->success()
+            //             ->send();
 
-                    $this->dispatch('refresh');
-                })
-                ->visible(fn ($record) => filled($record->foto_label_odp)),
+            //         $this->dispatch('refresh');
+            //     })
+            //     ->visible(fn ($record) => filled($record->foto_label_odp)),
 
-            Action::make('rotate_foto_sn_ont')
-                ->label('Rotate SN ONT')
-                ->icon('heroicon-o-arrow-path')
-                ->requiresConfirmation()
-                ->action(function ($record) {
-                    $this->rotateImage($record->foto_sn_ont);
-                })->after(function () {
-                    Notification::make()
-                        ->title('Foto berhasil di-rotate')
-                        ->success()
-                        ->send();
+            // Action::make('rotate_foto_sn_ont')
+            //     ->label('Rotate SN ONT')
+            //     ->icon('heroicon-o-arrow-path')
+            //     ->requiresConfirmation()
+            //     ->action(function ($record) {
+            //         $this->rotateImage($record->foto_sn_ont);
+            //     })->after(function () {
+            //         Notification::make()
+            //             ->title('Foto berhasil di-rotate')
+            //             ->success()
+            //             ->send();
 
-                    $this->dispatch('refresh');
-                })
-                ->visible(fn ($record) => filled($record->foto_sn_ont)),
+            //         $this->dispatch('refresh');
+            //     })
+            //     ->visible(fn ($record) => filled($record->foto_sn_ont)),
             Action::make('maps')
                 ->label('Lihat Maps')
                 ->icon('heroicon-o-map')

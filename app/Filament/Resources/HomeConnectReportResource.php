@@ -101,7 +101,7 @@ class HomeConnectReportResource extends Resource
                             Employee::selectRaw(
                                 "CONCAT(first_name, ' ', middle_name, ' ', last_name)"
                             )
-                            ->whereColumn('employees.email', 'home_connect_reports.updated_by')
+                            ->whereColumn('Employees.email', 'home_connect_reports.updated_by')
                             ->limit(1),
                             $direction
                         );

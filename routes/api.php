@@ -4,9 +4,12 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AttendanceController;
 use App\Http\Controllers\Api\TimesheetController;
 use App\Http\Controllers\Api\BastProjectController;
+
+use App\Http\Controllers\RotatePhotoController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/rotate-photo', [RotatePhotoController::class, 'rotate']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -49,4 +52,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/bast/updatecable', [BastProjectController::class, 'updatecable']); 
     Route::post('/bast/detailcable', [BastProjectController::class, 'detailcable']); 
     Route::post('/bast/dailyprog', [BastProjectController::class, 'dailyprog']); 
+
+    
 });

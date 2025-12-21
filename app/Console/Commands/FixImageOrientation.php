@@ -6,7 +6,9 @@ use App\Models\ODCDetail;
 use App\Models\ODPDetail;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
-use Intervention\Image\Facades\Image;
+// use Intervention\Image\Facades\Image;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver;
 use App\Models\HomeConnectReport;
 use App\Models\PoleDetail;
 use App\Models\FeederDetail;
@@ -41,10 +43,13 @@ class FixImageOrientation extends Command
                     $report->foto_label_odp,
                     $report->foto_sn_ont,
                     $report->foto_label_id_plg,
-                    $report->foto_qr,
+                    $report->foto_label_id_plg,
                 ];
+                // $imageColumns =$report->foto_qr;
 
                 $this->get_filepath_and_rotate_image($imageColumns);
+                
+                $this->info($report->foto_label_id_plg .'✅ update foto');
             }
         });
 
@@ -126,7 +131,7 @@ class FixImageOrientation extends Command
      * @param array $imageColumns
      * @return void
      */
-    public function get_filepath_and_rotate_image(array $imageColumns): void
+    public function get_filepath_and_rotate_image( $imageColumns): void
     {
         foreach ($imageColumns as $path) {
             if (!$path) {
@@ -140,12 +145,15 @@ class FixImageOrientation extends Command
             try {
                 $fullPath = Storage::disk('public')->path($path);
 
-                $image = Image::make($fullPath);
+                $manager = new ImageManager(new Driver());
 
-                if (function_exists('exif_read_data')) {
-                    $image->orientate();
-                    $image->save(); // overwrite old file
-                }
+                    $image = $manager->read($fullPath);
+
+                    if (function_exists('exif_read_data')) {
+                        $image->orientate();
+                        
+                        $image->save(); // overwrite old file
+                    }
 
             } catch (Throwable $e) {
                 logger()->error('Gagal memperbaiki orientasi gambar', [
