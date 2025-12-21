@@ -370,22 +370,33 @@ class BastProjectController extends Controller
                         return response()->json(['error' => 'Failed to create image from data'], 400);
                     }
 
-                    $width = imagesx($tempImage);
+                     $width = imagesx($tempImage);
                     $height = imagesy($tempImage);
+                    if ($width > $height) {
+                        // Rotate 90 derajat searah jarum jam
+                        $tempImage = imagerotate($tempImage, -90, 0);
 
-                    $maxWidth = 800;
-                    $maxHeight = 800;
-                    $ratio = min($maxWidth / $width, $maxHeight / $height, 1);
-                    $newWidth = (int)($width * $ratio);
-                    $newHeight = (int)($height * $ratio);
+                        // Update ulang ukuran setelah rotate
+                        $width  = imagesx($tempImage);
+                        $height = imagesy($tempImage);
+                    }
 
-                    $compressedImage = imagecreatetruecolor($newWidth, $newHeight);
-                    imagecopyresampled($compressedImage, $tempImage, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+                    // $width = imagesx($tempImage);
+                    // $height = imagesy($tempImage);
 
-                    imagejpeg($compressedImage, $folder . '/' . $fileName, 75);
+                    // $maxWidth = 800;
+                    // $maxHeight = 800;
+                    // $ratio = min($maxWidth / $width, $maxHeight / $height, 1);
+                    // $newWidth = (int)($width * $ratio);
+                    // $newHeight = (int)($height * $ratio);
+
+                    // $compressedImage = imagecreatetruecolor($newWidth, $newHeight);
+                    // imagecopyresampled($compressedImage, $tempImage, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+
+                    imagejpeg($tempImage, $folder . '/' . $fileName, 75);
 
                     imagedestroy($tempImage);
-                    imagedestroy($compressedImage);
+                    // imagedestroy($compressedImage);s
 
                     $p = $p+1;
                     
@@ -955,22 +966,34 @@ class BastProjectController extends Controller
                         return response()->json(['error' => 'Failed to create image from data'], 400);
                     }
 
-                    $width = imagesx($tempImage);
+                     $width = imagesx($tempImage);
                     $height = imagesy($tempImage);
+                    if ($width > $height) {
+                        // Rotate 90 derajat searah jarum jam
+                        $tempImage = imagerotate($tempImage, -90, 0);
 
-                    $maxWidth = 800;
-                    $maxHeight = 800;
-                    $ratio = min($maxWidth / $width, $maxHeight / $height, 1);
-                    $newWidth = (int)($width * $ratio);
-                    $newHeight = (int)($height * $ratio);
+                        // Update ulang ukuran setelah rotate
+                        $width  = imagesx($tempImage);
+                        $height = imagesy($tempImage);
+                    }
 
-                    $compressedImage = imagecreatetruecolor($newWidth, $newHeight);
-                    imagecopyresampled($compressedImage, $tempImage, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
 
-                    imagejpeg($compressedImage, $folder . '/' . $fileName, 75);
+                    // $width = imagesx($tempImage);
+                    // $height = imagesy($tempImage);
+
+                    // $maxWidth = 800;
+                    // $maxHeight = 800;
+                    // $ratio = min($maxWidth / $width, $maxHeight / $height, 1);
+                    // $newWidth = (int)($width * $ratio);
+                    // $newHeight = (int)($height * $ratio);
+
+                    // $compressedImage = imagecreatetruecolor($newWidth, $newHeight);
+                    // imagecopyresampled($compressedImage, $tempImage, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+
+                    imagejpeg($tempImage, $folder . '/' . $fileName, 75);
 
                     imagedestroy($tempImage);
-                    imagedestroy($compressedImage);
+                    // imagedestroy($compressedImage);
 
 
                     $po = $po+1;
@@ -1363,22 +1386,33 @@ class BastProjectController extends Controller
                         return response()->json(['error' => 'Failed to create image from data'], 400);
                     }
 
-                    $width = imagesx($tempImage);
+                     $width = imagesx($tempImage);
                     $height = imagesy($tempImage);
+                    if ($width > $height) {
+                        // Rotate 90 derajat searah jarum jam
+                        $tempImage = imagerotate($tempImage, -90, 0);
 
-                    $maxWidth = 800;
-                    $maxHeight = 800;
-                    $ratio = min($maxWidth / $width, $maxHeight / $height, 1);
-                    $newWidth = (int)($width * $ratio);
-                    $newHeight = (int)($height * $ratio);
+                        // Update ulang ukuran setelah rotate
+                        $width  = imagesx($tempImage);
+                        $height = imagesy($tempImage);
+                    }
 
-                    $compressedImage = imagecreatetruecolor($newWidth, $newHeight);
-                    imagecopyresampled($compressedImage, $tempImage, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+                    // $width = imagesx($tempImage);
+                    // $height = imagesy($tempImage);
 
-                    imagejpeg($compressedImage, $folder . '/' . $fileName, 75);
+                    // $maxWidth = 800;
+                    // $maxHeight = 800;
+                    // $ratio = min($maxWidth / $width, $maxHeight / $height, 1);
+                    // $newWidth = (int)($width * $ratio);
+                    // $newHeight = (int)($height * $ratio);
+
+                    // $compressedImage = imagecreatetruecolor($newWidth, $newHeight);
+                    // imagecopyresampled($compressedImage, $tempImage, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+
+                    imagejpeg($tempImage, $folder . '/' . $fileName, 75);
 
                     imagedestroy($tempImage);
-                    imagedestroy($compressedImage);
+                    // imagedestroy($compressedImage);
 
                     
                     $po = $po+1;
@@ -1658,20 +1692,32 @@ class BastProjectController extends Controller
 
                     $width = imagesx($tempImage);
                     $height = imagesy($tempImage);
+                    if ($width > $height) {
+                        // Rotate 90 derajat searah jarum jam
+                        $tempImage = imagerotate($tempImage, -90, 0);
 
-                    $maxWidth = 800;
-                    $maxHeight = 800;
-                    $ratio = min($maxWidth / $width, $maxHeight / $height, 1);
-                    $newWidth = (int)($width * $ratio);
-                    $newHeight = (int)($height * $ratio);
+                        // Update ulang ukuran setelah rotate
+                        $width  = imagesx($tempImage);
+                        $height = imagesy($tempImage);
+                    }
+                    
+                    
+                    // $width = imagesx($tempImage);
+                    // $height = imagesy($tempImage);
 
-                    $compressedImage = imagecreatetruecolor($newWidth, $newHeight);
-                    imagecopyresampled($compressedImage, $tempImage, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+                    // $maxWidth = 800;
+                    // $maxHeight = 800;
+                    // $ratio = min($maxWidth / $width, $maxHeight / $height, 1);
+                    // $newWidth = (int)($width * $ratio);
+                    // $newHeight = (int)($height * $ratio);
 
-                    imagejpeg($compressedImage, $folder . '/' . $fileName, 75);
+                    // $compressedImage = imagecreatetruecolor($newWidth, $newHeight);
+                    // imagecopyresampled($compressedImage, $tempImage, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+
+                    imagejpeg($tempImage, $folder . '/' . $fileName, 75);
 
                     imagedestroy($tempImage);
-                    imagedestroy($compressedImage);
+                    // imagedestroy($compressedImage);
 
 
                     
@@ -2126,7 +2172,7 @@ class BastProjectController extends Controller
             'id_pelanggan' => 'required|string',
             'name_pelanggan' => 'required|string',
             'odp_name' => 'required|string',
-            'port_odp' => 'nullable|string',
+            'port_odp' => 'required|string',
             'merk_ont' => 'required|string',
             'sn_ont' => 'required|string',
             'latitude' => 'nullable|numeric|between:-90,90',
@@ -2232,20 +2278,29 @@ class BastProjectController extends Controller
 
                     $width = imagesx($tempImage);
                     $height = imagesy($tempImage);
+                    if ($width > $height) {
+                        // Rotate 90 derajat searah jarum jam
+                        $tempImage = imagerotate($tempImage, -90, 0);
 
-                    $maxWidth = 800;
-                    $maxHeight = 800;
-                    $ratio = min($maxWidth / $width, $maxHeight / $height, 1);
-                    $newWidth = (int)($width * $ratio);
-                    $newHeight = (int)($height * $ratio);
+                        // Update ulang ukuran setelah rotate
+                        $width  = imagesx($tempImage);
+                        $height = imagesy($tempImage);
+                    }
+                    
 
-                    $compressedImage = imagecreatetruecolor($newWidth, $newHeight);
-                    imagecopyresampled($compressedImage, $tempImage, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+                    // $maxWidth = 800;
+                    // $maxHeight = 1000;
+                    // $ratio = min($maxWidth / $width, $maxHeight / $height, 1);
+                    // $newWidth = (int)($width * $ratio);
+                    // $newHeight = (int)($height * $ratio);
 
-                    imagejpeg($compressedImage, $folder . '/' . $fileName, 75);
+                    // $compressedImage = imagecreatetruecolor($newWidth, $newHeight);
+                    // imagecopyresampled($compressedImage, $tempImage, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+
+                    imagejpeg($tempImage, $folder . '/' . $fileName, 75);
 
                     imagedestroy($tempImage);
-                    imagedestroy($compressedImage);
+                    // imagedestroy($compressedImage);
 
 
                     
