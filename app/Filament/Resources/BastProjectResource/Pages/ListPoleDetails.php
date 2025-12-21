@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Auth;
 use Filament\Forms\Form as FilamentForm;
 use Filament\Tables\Actions\BulkAction;
 use Filament\Notifications\Notification;
+use Filament\Actions\Action as HeaderAction;
 
 
 class ListPoleDetails extends ListRecords
@@ -48,6 +49,17 @@ class ListPoleDetails extends ListRecords
             ->when($this->site, fn ($query) =>
                 $query->where('site', $this->site)
             );
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            HeaderAction::make('refresh_page')
+                ->label('Refresh Page')
+                ->icon('heroicon-o-arrow-path')
+                ->color('gray')
+                ->url(url()->previous()),
+        ];
     }
 
     protected function getTableColumns(): array
@@ -131,6 +143,19 @@ class ListPoleDetails extends ListRecords
     protected function getTableActions(): array
     {
         return [
+            Action::make('view')
+                ->label('View')
+                ->icon('heroicon-o-eye')
+                ->color('info')
+                ->modalHeading('Detail Home Pass Pole')
+                ->modalWidth('3xl')
+                ->modalSubmitAction(false)
+                ->modalCancelActionLabel('Tutup')
+                ->modalContent(fn ($record) =>
+                    view('filament.homepass.view-detail-pole', [
+                        'record' => $record,
+                    ])
+                ),
             Action::make('maps')
                         ->label('Lihat Maps')
                         ->icon('heroicon-o-map')

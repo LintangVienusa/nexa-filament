@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Auth;
 use Filament\Forms\Form as FilamentForm;
 use Filament\Tables\Actions\BulkAction;
 use Filament\Notifications\Notification;
+use Filament\Actions\Action as HeaderAction;
 
 class ListFeederDetails extends ListRecords
 {
@@ -47,6 +48,18 @@ class ListFeederDetails extends ListRecords
                     )
                     ->select('FeederDetail.*', 'BastProject.site');
     }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            HeaderAction::make('refresh_page')
+                ->label('Refresh Page')
+                ->icon('heroicon-o-arrow-path')
+                ->color('gray')
+                ->url(url()->previous()),
+        ];
+    }
+
 
     protected function getTableColumns(): array
     {
@@ -110,6 +123,19 @@ class ListFeederDetails extends ListRecords
     protected function getTableActions(): array
     {
         return [
+            Action::make('view')
+                ->label('View')
+                ->icon('heroicon-o-eye')
+                ->color('info')
+                ->modalHeading('Detail Home Connect')
+                ->modalWidth('3xl')
+                ->modalSubmitAction(false)
+                ->modalCancelActionLabel('Tutup')
+                ->modalContent(fn ($record) =>
+                    view('filament.homepass.view-detail-feeder', [
+                        'record' => $record,
+                    ])
+                ),
             // Action::make('pending')
             //     ->label('Pending')
             //     ->icon('heroicon-o-check-circle')

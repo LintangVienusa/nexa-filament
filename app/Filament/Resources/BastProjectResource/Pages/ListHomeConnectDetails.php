@@ -24,7 +24,11 @@ use Illuminate\Support\Facades\Auth;
 use Filament\Forms\Form as FilamentForm;
 use Filament\Tables\Actions\BulkAction;
 use Filament\Notifications\Notification;
-
+use Illuminate\Support\Facades\Storage;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver;
+use Filament\Actions\Action as HeaderAction;
+use Livewire\Attributes\On;
 
 class ListHomeConnectDetails extends ListRecords
 {
@@ -117,13 +121,109 @@ class ListHomeConnectDetails extends ListRecords
                     default => 'primary',
                 })
                 ->sortable(),
+            
         ];
 
     }
 
+    #[On('rotate-photo')]
+    protected function rotateImage(?string $path): void
+    {
+        if (!$path) return;
+
+        $fullPath = Storage::disk('public')->path($path);
+
+        if (!file_exists($fullPath)) return;
+
+        $manager = new ImageManager(new Driver());
+
+        $image = $manager->read($fullPath);
+        $image->rotate(-90);
+        $image->save($fullPath);
+    }
+
+
     protected function getTableActions(): array
     {
         return [
+            Action::make('view')
+                ->label('View')
+                ->icon('heroicon-o-eye')
+                ->color('info')
+                ->modalHeading('Detail Home Connect')
+                ->modalWidth('3xl')
+                ->modalSubmitAction(false)
+                ->modalCancelActionLabel('Tutup')
+                ->modalContent(fn ($record) =>
+                    view('filament.homeconnect.view-detail', [
+                        'record' => $record,
+                    ])
+                ),
+            //  Action::make('rotate_foto_label_id_plg')
+            //     ->label('Rotate ID Pelanggan')
+            //     ->icon('heroicon-o-arrow-path')
+            //     ->requiresConfirmation()
+            //     ->action(function ($record) {
+            //         $this->rotateImage($record->foto_label_id_plg);
+            //     })
+            //     ->after(function () {
+            //         Notification::make()
+            //             ->title('Foto berhasil di-rotate')
+            //             ->success()
+            //             ->send();
+            //         $this->dispatch('refresh');
+            //     })
+            //     ->visible(fn ($record) => filled($record->foto_label_id_plg)),
+
+            // Action::make('rotate_foto_qr')
+            //     ->label('Rotate QR')
+            //     ->icon('heroicon-o-arrow-path')
+            //     ->requiresConfirmation()
+            //     ->action(function ($record) {
+            //         $this->rotateImage($record->foto_qr);
+            //     })
+            //     ->after(function () {
+            //         Notification::make()
+            //             ->title('Foto berhasil di-rotate')
+            //             ->success()
+            //             ->send();
+
+            //         $this->dispatch('refresh');
+            //     })
+            //     ->visible(fn ($record) => filled($record->foto_qr)),
+
+            // Action::make('rotate_foto_label_odp')
+            //     ->label('Rotate ODP')
+            //     ->icon('heroicon-o-arrow-path')
+            //     ->requiresConfirmation()
+            //     ->action(function ($record) {
+            //         $this->rotateImage($record->foto_label_odp);
+            //     })
+            //     ->after(function () {
+            //         Notification::make()
+            //             ->title('Foto berhasil di-rotate')
+            //             ->success()
+            //             ->send();
+
+            //         $this->dispatch('refresh');
+            //     })
+            //     ->visible(fn ($record) => filled($record->foto_label_odp)),
+
+            // Action::make('rotate_foto_sn_ont')
+            //     ->label('Rotate SN ONT')
+            //     ->icon('heroicon-o-arrow-path')
+            //     ->requiresConfirmation()
+            //     ->action(function ($record) {
+            //         $this->rotateImage($record->foto_sn_ont);
+            //     })->after(function () {
+            //         Notification::make()
+            //             ->title('Foto berhasil di-rotate')
+            //             ->success()
+            //             ->send();
+
+            //         $this->dispatch('refresh');
+            //     })
+            //     ->visible(fn ($record) => filled($record->foto_sn_ont)),
             Action::make('maps')
                 ->label('Lihat Maps')
                 ->icon('heroicon-o-map')
@@ -202,6 +302,17 @@ class ListHomeConnectDetails extends ListRecords
                         ]
                     );
                 })->visible(fn($record) => $record->status === 'approved'),
+        ];
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            HeaderAction::make('refresh_page')
+                ->label('Refresh Page')
+                ->icon('heroicon-o-arrow-path')
+                ->color('gray')
+                ->url(url()->previous()),
         ];
     }
 
