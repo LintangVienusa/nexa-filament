@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Auth;
 use Filament\Forms\Form as FilamentForm;
 use Filament\Tables\Actions\BulkAction;
 use Filament\Notifications\Notification;
+use Filament\Actions\Action as HeaderAction;
 
 class ListOdcDetails extends ListRecords
 {
@@ -45,6 +46,17 @@ class ListOdcDetails extends ListRecords
                         $query->where('BastProject.site', $this->site)
                     )
                     ->select('ODCDetail.*', 'BastProject.site');
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            HeaderAction::make('refresh_page')
+                ->label('Refresh Page')
+                ->icon('heroicon-o-arrow-path')
+                ->color('gray')
+                ->url(url()->previous()),
+        ];
     }
 
     protected function getTableColumns(): array
@@ -129,6 +141,19 @@ class ListOdcDetails extends ListRecords
     protected function getTableActions(): array
     {
         return [
+            Action::make('view')
+                ->label('View')
+                ->icon('heroicon-o-eye')
+                ->color('info')
+                ->modalHeading('Detail Home Pass ODC')
+                ->modalWidth('3xl')
+                ->modalSubmitAction(false)
+                ->modalCancelActionLabel('Tutup')
+                ->modalContent(fn ($record) =>
+                    view('filament.homepass.view-detail-odc', [
+                        'record' => $record,
+                    ])
+                ),
             Action::make('maps')
                         ->label('Lihat Maps')
                         ->icon('heroicon-o-map')
