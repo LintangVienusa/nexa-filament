@@ -365,7 +365,7 @@ class ListHomeConnectDetails extends ListRecords
                 ->label('ODP Name')
                 ->options(
                     HomeConnect::query()
-                        ->when($this->site, fn($q) => $q->where('site', $this->site))
+                        ->when($this->bast_id, fn($q) => $q->where('bast_id', $this->bast_id))
                         ->whereNotNull('odp_name')
                         ->distinct()
                         ->orderBy('odp_name')
@@ -379,7 +379,7 @@ class ListHomeConnectDetails extends ListRecords
                 ->label('Status Port')
                 ->options(
                     HomeConnect::query()
-                        ->when($this->site, fn($q) => $q->where('site', $this->site))
+                        ->when($this->bast_id, fn($q) => $q->where('bast_id', $this->bast_id))
                         ->whereNotNull('status_port')
                         ->distinct()
                         ->orderBy('status_port')
@@ -394,7 +394,7 @@ class ListHomeConnectDetails extends ListRecords
                 ->label('Merk ONT')
                 ->options(
                     HomeConnect::query()
-                        ->when($this->site, fn($q) => $q->where('site', $this->site))
+                        ->when($this->bast_id, fn($q) => $q->where('bast_id', $this->bast_id))
                         ->whereNotNull('merk_ont')
                         ->distinct()
                         ->orderBy('merk_ont')
