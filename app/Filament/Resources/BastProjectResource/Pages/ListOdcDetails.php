@@ -45,7 +45,7 @@ class ListOdcDetails extends ListRecords
                 ->when($this->site, fn($query) => 
                         $query->where('BastProject.site', $this->site)
                     )
-                    ->select('ODCDetail.*', 'BastProject.site');
+                    ->select('ODCDetail.*', 'BastProject.site')->orderByDesc('updated_at');
     }
 
     protected function getHeaderActions(): array
@@ -55,7 +55,10 @@ class ListOdcDetails extends ListRecords
                 ->label('Refresh Page')
                 ->icon('heroicon-o-arrow-path')
                 ->color('gray')
-                ->url(url()->previous()),
+                // ->url(url()->previous()),
+                ->extraAttributes([
+                    'onclick' => 'window.location.reload();',
+                ]),
         ];
     }
 

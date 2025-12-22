@@ -40,19 +40,19 @@ class ListHomeConnectDetails extends ListRecords
 
     protected static ?string $navigationLabel = 'Home Connect Details';
     protected static ?string $navigationIcon = 'heroicon-o-collection';
-    public ?string $site = null;
+    public ?string $bast_id = null;
 
-    public function mount(?string $site = null): void
+    public function mount(?string $bast_id = null): void
     {
-        $this->site = $site;
+        $this->bast_id = $bast_id;
     }
 
     protected function getTableQuery(): Builder
     {
         return HomeConnect::query()
             ->Join('BastProject', 'HomeConnect.bast_id', '=', 'BastProject.bast_id')
-            ->where('HomeConnect.site', $this->site)
-            ->select('HomeConnect.*', 'BastProject.site');
+            ->where('HomeConnect.bast_id', $this->bast_id)
+            ->select('HomeConnect.*', 'BastProject.bast_id')->orderByDesc('updated_at');
     }
 
     protected function getTableColumns(): array
@@ -312,7 +312,10 @@ class ListHomeConnectDetails extends ListRecords
                 ->label('Refresh Page')
                 ->icon('heroicon-o-arrow-path')
                 ->color('gray')
-                ->url(url()->previous()),
+                // ->url(url()->previous()),
+                ->extraAttributes([
+                    'onclick' => 'window.location.reload();',
+                ]),
         ];
     }
 

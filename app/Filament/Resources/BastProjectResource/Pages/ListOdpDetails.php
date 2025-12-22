@@ -33,21 +33,21 @@ class ListOdpDetails extends ListRecords
     protected static ?string $navigationLabel = 'ODP Details';
     protected static ?string $navigationIcon = 'heroicon-o-collection';
     protected static ?string $slug = 'list-odp-details';
-    public ?string $site = null;
+    public ?string $bast_id = null;
 
-    public function mount(?string $site = null): void
+    public function mount(?string $bast_id = null): void
     {
-        $this->site = $site;
+        $this->bast_id = $bast_id;
     }
 
     protected function getTableQuery(): Builder
     {
         return ODPDetail::query()
                 ->Join('BastProject', 'ODPDetail.bast_id', '=', 'BastProject.bast_id')
-                ->when($this->site, fn($query) =>
-                        $query->where('BastProject.site', $this->site)
+                ->when($this->bast_id, fn($query) =>
+                        $query->where('BastProject.bast_id', $this->bast_id)
                     )
-                    ->select('ODPDetail.*', 'BastProject.site');
+                    ->select('ODPDetail.*', 'BastProject.bast_id')->orderByDesc('updated_at');
     }
 
     protected function getHeaderActions(): array
@@ -57,7 +57,10 @@ class ListOdpDetails extends ListRecords
                 ->label('Refresh Page')
                 ->icon('heroicon-o-arrow-path')
                 ->color('gray')
-                ->url(url()->previous()),
+                // ->url(url()->previous()),
+                ->extraAttributes([
+                    'onclick' => 'window.location.reload();',
+                ]),
         ];
     }
 

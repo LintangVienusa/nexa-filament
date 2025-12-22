@@ -211,7 +211,7 @@ class HomeConnectReportResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->where('status_port', 'used');
+            ->where('status_port', 'used')->orderByDesc('updated_at');
     }
 
     public static function getRelations(): array
