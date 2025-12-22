@@ -33,20 +33,20 @@ class ListFeederDetails extends ListRecords
     protected static ?string $navigationLabel = 'Feeder Details';
     protected static ?string $navigationIcon = 'heroicon-o-collection';
     protected static ?string $slug = 'list-feeder-details';
-    public ?string $site = null;
-    public function mount(?string $site = null): void
+    public ?string $bast_id = null;
+    public function mount(?string $bast_id = null): void
     {
-        $this->site = $site;
+        $this->bast_id = $bast_id;
     }
 
     protected function getTableQuery(): Builder
     {
         return FeederDetail::query()
                 ->Join('BastProject', 'FeederDetail.bast_id', '=', 'BastProject.bast_id')
-                ->when($this->site, fn($query) =>
-                        $query->where('FeederDetail.site', $this->site)
+                ->when($this->bast_id, fn($query) =>
+                        $query->where('FeederDetail.bast_id', $this->bast_id)
                     )
-                    ->select('FeederDetail.*', 'BastProject.site');
+                    ->select('FeederDetail.*', 'BastProject.bast_id')->orderByDesc('updated_at');
     }
 
     protected function getHeaderActions(): array
@@ -56,7 +56,10 @@ class ListFeederDetails extends ListRecords
                 ->label('Refresh Page')
                 ->icon('heroicon-o-arrow-path')
                 ->color('gray')
-                ->url(url()->previous()),
+                // ->url(url()->previous()),
+                ->extraAttributes([
+                    'onclick' => 'window.location.reload();',
+                ]),
         ];
     }
 

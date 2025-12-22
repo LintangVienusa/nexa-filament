@@ -32,20 +32,20 @@ class ListOdcDetails extends ListRecords
     protected static ?string $navigationLabel = 'ODC Details';
     protected static ?string $navigationIcon = 'heroicon-o-collection';
     protected static ?string $slug = 'list-odc-details';
-     public ?string $site = null;
-     public function mount(?string $site = null): void
+     public ?string $bast_id = null;
+     public function mount(?string $bast_id = null): void
     {
-        $this->site = $site;
+        $this->bast_id = $bast_id;
     }
 
     protected function getTableQuery(): Builder
     {
         return ODCDetail::query()
                 ->Join('BastProject', 'ODCDetail.bast_id', '=', 'BastProject.bast_id')
-                ->when($this->site, fn($query) => 
-                        $query->where('BastProject.site', $this->site)
+                ->when($this->bast_id, fn($query) => 
+                        $query->where('BastProject.bast_id', $this->bast_id)
                     )
-                    ->select('ODCDetail.*', 'BastProject.site');
+                    ->select('ODCDetail.*', 'BastProject.bast_id')->orderByDesc('updated_at');
     }
 
     protected function getHeaderActions(): array
@@ -55,7 +55,10 @@ class ListOdcDetails extends ListRecords
                 ->label('Refresh Page')
                 ->icon('heroicon-o-arrow-path')
                 ->color('gray')
-                ->url(url()->previous()),
+                // ->url(url()->previous()),
+                ->extraAttributes([
+                    'onclick' => 'window.location.reload();',
+                ]),
         ];
     }
 

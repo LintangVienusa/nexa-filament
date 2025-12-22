@@ -48,96 +48,100 @@ class BastProjectResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('province_name')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('regency_name')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('village_name')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('station_name')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('project_name')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('bast_id')
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('site')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('PIC')
                     ->label('PIC')
                     ->searchable(),
                 ColumnGroup::make('Homepass', [
                     TextColumn::make('pole_count')
                         ->label('Tiang')
-                        ->sortable()
                         ->getStateUsing(function ($record) {
-                            $total = PoleDetail::where('site', $record->site)->count();
+                            $total = PoleDetail::where('bast_id', $record->bast_id)->count();
 
-                            $completed = PoleDetail::where('site', $record->site)
+                            $completed = PoleDetail::where('bast_id', $record->bast_id)
                                 ->where('progress_percentage', 100)
                                 ->count();
 
                             return "{$completed} | {$total}";
                         })->alignRight()
-                        ->url(fn($record) => url('/admin/bast-projects/list-pole-details/' . $record->site))
+                        ->url(fn($record) => url('/admin/bast-projects/list-pole-details/' . $record->bast_id))
                         ->openUrlInNewTab(true),
                     TextColumn::make('odc_count')
                         ->label('ODC')
-                        ->sortable()
                         ->getStateUsing(function ($record) {
-                            $total = ODCDetail::where('site', $record->site)->count();
+                            $total = ODCDetail::where('bast_id', $record->bast_id)->count();
 
-                            $completed = ODCDetail::where('site', $record->site)
+                            $completed = ODCDetail::where('bast_id', $record->bast_id)
                                 ->where('progress_percentage', 100)
                                 ->count();
 
                             return "{$completed} | {$total}";
                         })
                         ->alignRight()
-                        ->url(fn($record) => url('/admin/bast-projects/list-odc-details/' . $record->site))
+                        ->url(fn($record) => url('/admin/bast-projects/list-odc-details/' . $record->bast_id))
                         ->openUrlInNewTab(true),
                     TextColumn::make('odp_count')
                         ->label('ODP')
-                        ->sortable()
                         ->getStateUsing(function ($record) {
-                            $total = ODPDetail::where('site', $record->site)->count();
+                            $total = ODPDetail::where('bast_id', $record->bast_id)->count();
 
-                            $completed = ODPDetail::where('site', $record->site)
+                            $completed = ODPDetail::where('bast_id', $record->bast_id)
                                 ->where('progress_percentage', 100)
                                 ->count();
 
                             return "{$completed} | {$total}";
                         })
                         ->alignRight()
-                        ->url(fn($record) => url('/admin/bast-projects/list-odp-details/' . $record->site))
+                        ->url(fn($record) => url('/admin/bast-projects/list-odp-details/' . $record->bast_id))
                         ->openUrlInNewTab(true),
                     TextColumn::make('feeder')
                         ->label('Feeder')
-                        ->sortable()
                         ->getStateUsing(function ($record) {
-                            $total = FeederDetail::where('site', $record->site)->count();
+                            $total = FeederDetail::where('bast_id', $record->bast_id)->count();
 
-                            $completed = FeederDetail::where('site', $record->site)
+                            $completed = FeederDetail::where('bast_id', $record->bast_id)
                                 ->where('progress_percentage', 100)
                                 ->count();
 
                             return "{$completed} | {$total}";
                         })
                         ->alignRight()
-                        ->url(fn($record) => url('/admin/bast-projects/list-feeder-details/' . $record->site))
+                        ->url(fn($record) => url('/admin/bast-projects/list-feeder-details/' . $record->bast_id))
                         ->openUrlInNewTab(true),
                 ])->label('HOMEPASS')->alignCenter(),
                 ColumnGroup::make('Homeconnect', [
                     TextColumn::make('homeconnect')
                         ->label('port')
-                        ->sortable()
                         ->getStateUsing(function ($record) {
-                            $total = HomeConnect::where('site', $record->site)->count();
+                            $total = HomeConnect::where('bast_id', $record->bast_id)->count();
 
-                            $completed = HomeConnect::where('site', $record->site)
+                            $completed = HomeConnect::where('bast_id', $record->bast_id)
                                 ->where('progress_percentage', 100)
                                 ->count();
 
                             return "{$completed} | {$total}";
                         })
                         ->alignRight()
-                        ->url(fn($record) => url('/admin/bast-projects/list-home-connect-details/' . $record->site))
+                        ->url(fn($record) => url('/admin/bast-projects/list-home-connect-details/' . $record->bast_id))
                         ->openUrlInNewTab(true)
                 ])->label('HOMECONNECT')->alignCenter(),
                 TextColumn::make('bast_date')
@@ -399,11 +403,11 @@ class BastProjectResource extends Resource
             'index' => Pages\ListBastProjects::route('/'),
             'create' => Pages\CreateBastProject::route('/create'),
             'edit' => Pages\EditBastProject::route('/{record}/edit'),
-            'list-pole-details' => Pages\ListPoleDetails::route('/list-pole-details/{site}'),
-            'list-odc-details' => Pages\ListOdcDetails::route('/list-odc-details/{site}'),
-            'list-odp-details' => Pages\ListOdpDetails::route('/list-odp-details/{site}'),
-            'list-feeder-details' => Pages\ListFeederDetails::route('/list-feeder-details/{site}'),
-            'list-home-connect-details' => Pages\ListHomeConnectDetails::route('/list-home-connect-details/{site}'),
+            'list-pole-details' => Pages\ListPoleDetails::route('/list-pole-details/{bast_id}'),
+            'list-odc-details' => Pages\ListOdcDetails::route('/list-odc-details/{bast_id}'),
+            'list-odp-details' => Pages\ListOdpDetails::route('/list-odp-details/{bast_id}'),
+            'list-feeder-details' => Pages\ListFeederDetails::route('/list-feeder-details/{bast_id}'),
+            'list-home-connect-details' => Pages\ListHomeConnectDetails::route('/list-home-connect-details/{bast_id}'),
         ];
     }
 }
