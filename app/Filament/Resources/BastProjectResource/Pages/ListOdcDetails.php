@@ -48,7 +48,7 @@ class ListOdcDetails extends ListRecords
                 ->when($this->bast_id, fn($query) => 
                         $query->where('BastProject.bast_id', $this->bast_id)
                     )
-                    ->select('ODCDetail.*', 'BastProject.bast_id')->orderByDesc('updated_at');
+                    ->select('ODCDetail.*', 'BastProject.bast_id');
     }
 
     protected function getHeaderActions(): array
