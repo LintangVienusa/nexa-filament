@@ -5,6 +5,7 @@ namespace App\Filament\Resources\BastProjectResource\Pages;
 use App\Filament\Resources\BastProjectResource;
 use App\Models\BastProject;
 use App\Models\HomeConnect;
+use App\Models\Employee;
 use Filament\Forms\Components\Textarea;
 use Filament\Pages\Page;
 use Filament\Tables;
@@ -28,6 +29,7 @@ use Illuminate\Support\Facades\Storage;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver;
 use Filament\Actions\Action as HeaderAction;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
 
 class ListHomeConnectDetails extends ListRecords
@@ -40,30 +42,40 @@ class ListHomeConnectDetails extends ListRecords
 
     protected static ?string $navigationLabel = 'Home Connect Details';
     protected static ?string $navigationIcon = 'heroicon-o-collection';
-    public ?string $site = null;
+    public ?string $bast_id = null;
 
-    public function mount(?string $site = null): void
+    public function mount(?string $bast_id = null): void
     {
-        $this->site = $site;
+        $this->bast_id = $bast_id;
     }
 
     protected function getTableQuery(): Builder
     {
         return HomeConnect::query()
             ->Join('BastProject', 'HomeConnect.bast_id', '=', 'BastProject.bast_id')
-            ->where('HomeConnect.site', $this->site)
-            ->select('HomeConnect.*', 'BastProject.site');
+            ->where('HomeConnect.bast_id', $this->bast_id)
+            ->select('HomeConnect.*', 'BastProject.bast_id');
+    }
+
+    protected function getDefaultTableSortColumn(): ?string
+    {
+        return 'HomeConnect.updated_at';
+    }
+
+    protected function getDefaultTableSortDirection(): ?string
+    {
+        return 'desc';
     }
 
     protected function getTableColumns(): array
     {
         return [
-            TextColumn::make('site')->label('Site')->searchable(['BastProject.site']),
-            TextColumn::make('odp_name')->label('ODP')->searchable(['HomeConnect.odp_name']),
-            TextColumn::make('port_odp')->label('Port ODP')->searchable(['HomeConnect.port_odp']),
-            TextColumn::make('status_port')->label('Status')->searchable(['HomeConnect.status_port']),
-            TextColumn::make('merk_ont')->label('Merk ONT')->searchable(['HomeConnect.merk_ont']),
-            TextColumn::make('sn_ont')->label('SN ONT')->searchable(['HomeConnect.sn_ont']),
+            TextColumn::make('site')->label('Site')->searchable(['BastProject.site'])->sortable(),
+            TextColumn::make('odp_name')->label('ODP')->searchable(['HomeConnect.odp_name'])->sortable(),
+            TextColumn::make('port_odp')->label('Port ODP')->searchable(['HomeConnect.port_odp'])->sortable(),
+            TextColumn::make('status_port')->label('Status')->searchable(['HomeConnect.status_port'])->sortable(),
+            TextColumn::make('merk_ont')->label('Merk ONT')->searchable(['HomeConnect.merk_ont'])->sortable(),
+            TextColumn::make('sn_ont')->label('SN ONT')->searchable(['HomeConnect.sn_ont'])->sortable(),
             TextColumn::make('notes')->searchable(['HomeConnect.notes']),
 
             ImageColumn::make('foto_label_id_plg')
@@ -121,6 +133,33 @@ class ListHomeConnectDetails extends ListRecords
                     default => 'primary',
                 })
                 ->sortable(),
+            TextColumn::make('employee.first_name')
+                    ->label('Nama Petugas')
+                    ->getStateUsing(fn ($record) => $record->employee?->full_name ?? '-')
+                    ->searchable(query: function (Builder $query, string $search) {
+                        $query->whereExists(function ($q) use ($search) {
+                            $q->select(DB::raw(1))
+                            ->from(DB::connection('mysql_employees')->getDatabaseName() . '.Employees')
+                            ->whereColumn('Employees.email', 'HomeConnect.updated_by')
+                            ->whereRaw(
+                                "CONCAT(first_name,' ',middle_name,' ',last_name) LIKE ?",
+                                ["%{$search}%"]
+                            );
+                        });
+                    })
+                    ->sortable(function (Builder $query) {
+                        $direction = request()->input('tableSortDirection', 'asc');
+
+                        return $query->orderBy(
+                            Employee::selectRaw(
+                                "CONCAT(first_name, ' ', middle_name, ' ', last_name)"
+                            )
+                            ->whereColumn('Employees.email', 'HomeConnect.updated_by')
+                            ->limit(1),
+                            $direction
+                        );
+                    }),
+                TextColumn::make('updated_at')->sortable(),
             
         ];
 
@@ -312,9 +351,14 @@ class ListHomeConnectDetails extends ListRecords
                 ->label('Refresh Page')
                 ->icon('heroicon-o-arrow-path')
                 ->color('gray')
-                ->url(url()->previous()),
+                // ->url(url()->previous()),
+                ->extraAttributes([
+                    'onclick' => 'window.location.reload();',
+                ]),
         ];
     }
+
+    
 
     protected function getTableBulkActions(): array
     {
@@ -362,7 +406,7 @@ class ListHomeConnectDetails extends ListRecords
                 ->label('ODP Name')
                 ->options(
                     HomeConnect::query()
-                        ->when($this->site, fn($q) => $q->where('site', $this->site))
+                        ->when($this->bast_id, fn($q) => $q->where('bast_id', $this->bast_id))
                         ->whereNotNull('odp_name')
                         ->distinct()
                         ->orderBy('odp_name')
@@ -376,7 +420,7 @@ class ListHomeConnectDetails extends ListRecords
                 ->label('Status Port')
                 ->options(
                     HomeConnect::query()
-                        ->when($this->site, fn($q) => $q->where('site', $this->site))
+                        ->when($this->bast_id, fn($q) => $q->where('bast_id', $this->bast_id))
                         ->whereNotNull('status_port')
                         ->distinct()
                         ->orderBy('status_port')
@@ -391,7 +435,7 @@ class ListHomeConnectDetails extends ListRecords
                 ->label('Merk ONT')
                 ->options(
                     HomeConnect::query()
-                        ->when($this->site, fn($q) => $q->where('site', $this->site))
+                        ->when($this->bast_id, fn($q) => $q->where('bast_id', $this->bast_id))
                         ->whereNotNull('merk_ont')
                         ->distinct()
                         ->orderBy('merk_ont')
@@ -401,6 +445,20 @@ class ListHomeConnectDetails extends ListRecords
                         ->toArray()
                 )
                 ->searchable(),
+            SelectFilter::make('status')
+                ->label('Status')
+                ->options([
+                    'submit'   => 'Submit',
+                    'approved' => 'Approved',
+                    'rejected' => 'Rejected',
+                ])
+                ->query(function (Builder $query, array $data) {
+                    if (! $data['value']) {
+                        return;
+                    }
+
+                    $query->where('HomeConnect.status', $data['value']);
+                }),
 
         ];
     }

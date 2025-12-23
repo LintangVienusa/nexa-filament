@@ -5,6 +5,7 @@ namespace App\Filament\Resources\BastProjectResource\Pages;
 use App\Filament\Resources\BastProjectResource;
 use App\Models\BastProject;
 use App\Models\ODCDetail;
+use App\Models\Employee;
 use Filament\Pages\Page;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -22,6 +23,8 @@ use Filament\Forms\Form as FilamentForm;
 use Filament\Tables\Actions\BulkAction;
 use Filament\Notifications\Notification;
 use Filament\Actions\Action as HeaderAction;
+use Illuminate\Support\Facades\DB;
+use Filament\Tables\Filters\SelectFilter;
 
 class ListOdcDetails extends ListRecords
 {
@@ -32,20 +35,20 @@ class ListOdcDetails extends ListRecords
     protected static ?string $navigationLabel = 'ODC Details';
     protected static ?string $navigationIcon = 'heroicon-o-collection';
     protected static ?string $slug = 'list-odc-details';
-     public ?string $site = null;
-     public function mount(?string $site = null): void
+     public ?string $bast_id = null;
+     public function mount(?string $bast_id = null): void
     {
-        $this->site = $site;
+        $this->bast_id = $bast_id;
     }
 
     protected function getTableQuery(): Builder
     {
         return ODCDetail::query()
                 ->Join('BastProject', 'ODCDetail.bast_id', '=', 'BastProject.bast_id')
-                ->when($this->site, fn($query) => 
-                        $query->where('BastProject.site', $this->site)
+                ->when($this->bast_id, fn($query) => 
+                        $query->where('BastProject.bast_id', $this->bast_id)
                     )
-                    ->select('ODCDetail.*', 'BastProject.site');
+                    ->select('ODCDetail.*', 'BastProject.bast_id');
     }
 
     protected function getHeaderActions(): array
@@ -55,16 +58,29 @@ class ListOdcDetails extends ListRecords
                 ->label('Refresh Page')
                 ->icon('heroicon-o-arrow-path')
                 ->color('gray')
-                ->url(url()->previous()),
+                // ->url(url()->previous()),
+                ->extraAttributes([
+                    'onclick' => 'window.location.reload();',
+                ]),
         ];
+    }
+
+    protected function getDefaultTableSortColumn(): ?string
+    {
+        return 'ODCDetail.updated_at';
+    }
+
+    protected function getDefaultTableSortDirection(): ?string
+    {
+        return 'desc';
     }
 
     protected function getTableColumns(): array
     {
         return [
-            TextColumn::make('bast_id')->label('BAST ID')->searchable(['BastProject.bast_id']),
-            TextColumn::make('site')->label('Site')->searchable(['BastProject.Site']),
-            TextColumn::make('odc_name')->searchable(['ODCDetail.odc_name']),
+            TextColumn::make('bast_id')->label('BAST ID')->searchable(['BastProject.bast_id'])->sortable(),
+            TextColumn::make('site')->label('Site')->searchable(['BastProject.Site'])->sortable(),
+            TextColumn::make('odc_name')->searchable(['ODCDetail.odc_name'])->sortable(),
             TextColumn::make('notes')->searchable(['ODCDetail.notes']),
             ImageColumn::make('instalasi')
                 ->label('Instalasi ODC')
@@ -135,6 +151,33 @@ class ListOdcDetails extends ListRecords
                         default => 'primary',
                     })
                     ->sortable(),
+            TextColumn::make('employee.first_name')
+                    ->label('Nama Petugas')
+                    ->getStateUsing(fn ($record) => $record->employee?->full_name ?? '-')
+                    ->searchable(query: function (Builder $query, string $search) {
+                        $query->whereExists(function ($q) use ($search) {
+                            $q->select(DB::raw(1))
+                            ->from(DB::connection('mysql_employees')->getDatabaseName() . '.Employees')
+                            ->whereColumn('Employees.email', 'ODCDetail.updated_by')
+                            ->whereRaw(
+                                "CONCAT(first_name,' ',middle_name,' ',last_name) LIKE ?",
+                                ["%{$search}%"]
+                            );
+                        });
+                    })
+                    ->sortable(function (Builder $query) {
+                        $direction = request()->input('tableSortDirection', 'asc');
+
+                        return $query->orderBy(
+                            Employee::selectRaw(
+                                "CONCAT(first_name, ' ', middle_name, ' ', last_name)"
+                            )
+                            ->whereColumn('Employees.email', 'ODCDetail.updated_by')
+                            ->limit(1),
+                            $direction
+                        );
+                    }),
+                TextColumn::make('updated_at')->sortable(),
         ];
     }
 
@@ -229,6 +272,26 @@ class ListOdcDetails extends ListRecords
                     ->icon('heroicon-o-document-arrow-down')
                     ->action(fn ($record) => Excel::download(new BastODCExport($record), "Implementation_ODC_{$record->odc_name}.xlsx"))
                     ->visible(fn ($record) => $record->status === 'approved'),
+        ];
+    }
+
+    protected function getTableFilters(): array
+    {
+        return [
+            SelectFilter::make('status')
+                ->label('Status')
+                ->options([
+                    'submit'   => 'Submit',
+                    'approved' => 'Approved',
+                    'rejected' => 'Rejected',
+                ])
+                ->query(function (Builder $query, array $data) {
+                    if (! $data['value']) {
+                        return;
+                    }
+
+                    $query->where('ODCDetail.status', $data['value']);
+                }),
         ];
     }
 

@@ -233,6 +233,31 @@
             </td>
         </tr>
         <tr style="height:30px; font-weight:bold">
+            <td>FOTO Labeling Tiang
+                    <div x-data>
+                        <button type="button" 
+                            @click.prevent="
+                                fetch('/api/rotate-photo', { 
+                                    method: 'POST', 
+                                    headers: {'Content-Type':'application/json'}, 
+                                    body: JSON.stringify({ path: '{{ $record->labeling_tiang }}' }) 
+                                })
+                                .then(res => res.json())
+                                .then(res => {
+                                    if(res.success){
+                                        const img = document.getElementById('foto5');
+                                        img.src = img.src.split('?')[0] + '?v=' + new Date().getTime();
+                                    } else {
+                                        alert(res.error || 'Gagal rotate');
+                                    }
+                                })
+                                .catch(err => alert(err))
+                            "
+                        >
+                            🔄 Rotate
+                        </button>
+                    </div>
+                </td>
             <td>FOTO Aksesoris Tiang
                 <div x-data>
                     <button type="button" 
@@ -245,7 +270,7 @@
                             .then(res => res.json())
                             .then(res => {
                                 if(res.success){
-                                    const img = document.getElementById('foto3');
+                                    const img = document.getElementById('foto6');
                                     img.src = img.src.split('?')[0] + '?v=' + new Date().getTime();
                                 } else {
                                     alert(res.error || 'Gagal rotate');
@@ -260,26 +285,46 @@
             </td>
         </tr>
         <tr>
-         <td style="padding:8px; width:50%;">
-                <div style="
-                    width:320px;
-                    height:360px;
-                    margin:auto;
-                    border:1px solid #ccc;
-                    display:flex;
-                    align-items:center;
-                    justify-content:center;
-                    overflow:hidden;
-                ">
-                    @if ($record->aksesoris_tiang)
-                        <img id="foto4" src="{{ asset('storage/'.$record->aksesoris_tiang) }}?v={{ now()->timestamp }}" 
-                        style="width:100%;height:100%;object-fit:contain;">
-                        
-                    @else
-                        <span style="font-size:12px;color:#999">Tidak ada foto</span>
-                    @endif
-                </div>
-            </td>
+            <td style="padding:8px; width:50%;">
+                    <div style="
+                        width:320px;
+                        height:360px;
+                        margin:auto;
+                        border:1px solid #ccc;
+                        display:flex;
+                        align-items:center;
+                        justify-content:center;
+                        overflow:hidden;
+                    ">
+                        @if ($record->labeling_tiang)
+                            <img id="foto5" src="{{ asset('storage/'.$record->labeling_tiang) }}?v={{ now()->timestamp }}" 
+                            style="width:100%;height:100%;object-fit:contain;">
+                            
+                        @else
+                            <span style="font-size:12px;color:#999">Tidak ada foto</span>
+                        @endif
+                    </div>
+                </td>
+            <td style="padding:8px; width:50%;">
+                    <div style="
+                        width:320px;
+                        height:360px;
+                        margin:auto;
+                        border:1px solid #ccc;
+                        display:flex;
+                        align-items:center;
+                        justify-content:center;
+                        overflow:hidden;
+                    ">
+                        @if ($record->aksesoris_tiang)
+                            <img id="foto6" src="{{ asset('storage/'.$record->aksesoris_tiang) }}?v={{ now()->timestamp }}" 
+                            style="width:100%;height:100%;object-fit:contain;">
+                            
+                        @else
+                            <span style="font-size:12px;color:#999">Tidak ada foto</span>
+                        @endif
+                    </div>
+                </td>
         </tr>
     </table>
 </div>

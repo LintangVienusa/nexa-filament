@@ -77,9 +77,10 @@ class HomeConnectReportResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->defaultSort('updated_at', 'desc')
             ->columns([
                 //
-                Tables\Columns\TextColumn::make('updated_at')->label('Tanggal IKR'),
+                Tables\Columns\TextColumn::make('updated_at')->label('Tanggal IKR')->sortable(),
                 Tables\Columns\TextColumn::make('employee.first_name')
                     ->label('Nama Petugas')
                     ->getStateUsing(fn ($record) => $record->employee?->full_name ?? '-')
@@ -108,14 +109,14 @@ class HomeConnectReportResource extends Resource
                     }),
                 Tables\Columns\TextColumn::make('id_pelanggan')
                 ->formatStateUsing(fn ($state) => strtoupper($state))
-                ->searchable(),
+                ->searchable()->sortable(),
                 Tables\Columns\TextColumn::make('name_pelanggan')
                 ->formatStateUsing(fn ($state) => strtoupper($state))
-                ->searchable(),
-                Tables\Columns\TextColumn::make('sn_ont')->label('SN ONT'),
-                Tables\Columns\TextColumn::make('site'),
-                Tables\Columns\TextColumn::make('odp_name'),
-                Tables\Columns\TextColumn::make('port_odp'),
+                ->searchable()->sortable(),
+                Tables\Columns\TextColumn::make('sn_ont')->label('SN ONT')->searchable()->sortable(),
+                Tables\Columns\TextColumn::make('site')->searchable()->sortable(),
+                Tables\Columns\TextColumn::make('odp_name')->searchable()->sortable(),
+                Tables\Columns\TextColumn::make('port_odp')->searchable()->sortable(),
                 // Tables\Columns\ImageColumn::make('foto_label_odp')
                 // ->getStateUsing(fn ($record) => $record->foto_label_odp),
                 ImageColumn::make('foto_label_odp')
@@ -148,7 +149,7 @@ class HomeConnectReportResource extends Resource
                         'danger' => 'used',
                     ]),
                 Tables\Columns\TextColumn::make('progress_percentage')
-                ->suffix('%'),
+                ->suffix('%')->sortable(),
                 
             ])
             ->filters([
