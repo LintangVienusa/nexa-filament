@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Employee;
 
 class FeederDetail extends Model
 {
@@ -38,5 +39,10 @@ class FeederDetail extends Model
     public function getProgressLabelAttribute()
     {
         return $this->progress_percentage . '%';
+    }
+
+    public function employee()
+    {
+        return $this->belongsTo(Employee::class, 'updated_by', 'email');
     }
 }

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Employee;
 
 class PoleDetail extends Model
 {
@@ -37,5 +38,9 @@ class PoleDetail extends Model
     public function bastProject()
     {
         return $this->belongsTo(BastProject::class, 'bast_id');
+    }
+    public function employee()
+    {
+        return $this->belongsTo(Employee::class, 'updated_by', 'email');
     }
 }

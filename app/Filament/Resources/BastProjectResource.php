@@ -46,6 +46,8 @@ class BastProjectResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+        
+            ->defaultSort('updated_at', 'desc')
             ->columns([
                 TextColumn::make('province_name')
                     ->searchable()
@@ -70,7 +72,8 @@ class BastProjectResource extends Resource
                     ->sortable(),
                 TextColumn::make('PIC')
                     ->label('PIC')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable(),
                 ColumnGroup::make('Homepass', [
                     TextColumn::make('pole_count')
                         ->label('Tiang')
