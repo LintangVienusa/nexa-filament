@@ -5,6 +5,7 @@ namespace App\Filament\Resources\BastProjectResource\Pages;
 use App\Filament\Resources\BastProjectResource;
 use App\Models\BastProject;
 use App\Models\ODPDetail;
+use App\Models\Employee;
 use Filament\Pages\Page;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -22,6 +23,8 @@ use Filament\Forms\Form as FilamentForm;
 use Filament\Tables\Actions\BulkAction;
 use Filament\Notifications\Notification;
 use Filament\Actions\Action as HeaderAction;
+use Illuminate\Support\Facades\DB;
+use Filament\Tables\Filters\SelectFilter;
 
 class ListOdpDetails extends ListRecords
 {
@@ -47,7 +50,7 @@ class ListOdpDetails extends ListRecords
                 ->when($this->bast_id, fn($query) =>
                         $query->where('BastProject.bast_id', $this->bast_id)
                     )
-                    ->select('ODPDetail.*', 'BastProject.bast_id')->orderByDesc('updated_at');
+                    ->select('ODPDetail.*', 'BastProject.bast_id');
     }
 
     protected function getHeaderActions(): array
@@ -64,14 +67,24 @@ class ListOdpDetails extends ListRecords
         ];
     }
 
+    protected function getDefaultTableSortColumn(): ?string
+    {
+        return 'ODPDetail.updated_at';
+    }
+
+    protected function getDefaultTableSortDirection(): ?string
+    {
+        return 'desc';
+    }
+
 
     protected function getTableColumns(): array
     {
         return [
-            TextColumn::make('bast_id')->label('BAST ID')->searchable(['BastProject.bast_id']),
-            TextColumn::make('site')->label('Site')->searchable(['BastProject.site']),
-            TextColumn::make('odc_name')->searchable(['ODPDetail.odc_name']),
-            TextColumn::make('odp_name')->searchable(['ODPDetail.odp_name']),
+            TextColumn::make('bast_id')->label('BAST ID')->searchable(['BastProject.bast_id'])->sortable(),
+            TextColumn::make('site')->label('Site')->searchable(['BastProject.site'])->sortable(),
+            TextColumn::make('odc_name')->searchable(['ODPDetail.odc_name'])->sortable(),
+            TextColumn::make('odp_name')->searchable(['ODPDetail.odp_name'])->sortable(),
             TextColumn::make('notes')->searchable(['ODPDetail.notes']),
             ImageColumn::make('instalasi')
                 ->label('Instalasi')
@@ -128,6 +141,33 @@ class ListOdpDetails extends ListRecords
                         default => 'primary',
                     })
                     ->sortable(),
+            TextColumn::make('employee.first_name')
+                    ->label('Nama Petugas')
+                    ->getStateUsing(fn ($record) => $record->employee?->full_name ?? '-')
+                    ->searchable(query: function (Builder $query, string $search) {
+                        $query->whereExists(function ($q) use ($search) {
+                            $q->select(DB::raw(1))
+                            ->from(DB::connection('mysql_employees')->getDatabaseName() . '.Employees')
+                            ->whereColumn('Employees.email', 'ODPDetail.updated_by')
+                            ->whereRaw(
+                                "CONCAT(first_name,' ',middle_name,' ',last_name) LIKE ?",
+                                ["%{$search}%"]
+                            );
+                        });
+                    })
+                    ->sortable(function (Builder $query) {
+                        $direction = request()->input('tableSortDirection', 'asc');
+
+                        return $query->orderBy(
+                            Employee::selectRaw(
+                                "CONCAT(first_name, ' ', middle_name, ' ', last_name)"
+                            )
+                            ->whereColumn('Employees.email', 'ODPDetail.updated_by')
+                            ->limit(1),
+                            $direction
+                        );
+                    }),
+                TextColumn::make('updated_at')->sortable(),
         ];
     }
 
@@ -236,6 +276,26 @@ class ListOdpDetails extends ListRecords
                     ->icon('heroicon-o-document-arrow-down')
                     ->action(fn ($record) => Excel::download(new BastODPExport($record), "Implementation_ODP_{$record->odp_name}.xlsx"))
                     ->visible(fn ($record) => $record->status === 'approved'),
+        ];
+    }
+
+    protected function getTableFilters(): array
+    {
+        return [
+            SelectFilter::make('status')
+                ->label('Status')
+                ->options([
+                    'submit'   => 'Submit',
+                    'approved' => 'Approved',
+                    'rejected' => 'Rejected',
+                ])
+                ->query(function (Builder $query, array $data) {
+                    if (! $data['value']) {
+                        return;
+                    }
+
+                    $query->where('ODPDetail.status', $data['value']);
+                }),
         ];
     }
 

@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Employee;
+
 
 class ODCDetail extends Model
 {
@@ -56,5 +58,9 @@ class ODCDetail extends Model
             return "{$this->latitude}, {$this->longitude}";
         }
         return null;
+    }
+    public function employee()
+    {
+        return $this->belongsTo(Employee::class, 'updated_by', 'email');
     }
 }

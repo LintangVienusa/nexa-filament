@@ -5,6 +5,7 @@ namespace App\Filament\Resources\BastProjectResource\Pages;
 use App\Filament\Resources\BastProjectResource;
 use App\Models\BastProject;
 use App\Models\PoleDetail;
+use App\Models\Employee;
 use Filament\Pages\Page;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -24,6 +25,7 @@ use Filament\Forms\Form as FilamentForm;
 use Filament\Tables\Actions\BulkAction;
 use Filament\Notifications\Notification;
 use Filament\Actions\Action as HeaderAction;
+use Filament\Tables\Filters\SelectFilter;
 
 
 class ListPoleDetails extends ListRecords
@@ -48,7 +50,7 @@ class ListPoleDetails extends ListRecords
             ->with('bastProject')
             ->when($this->bast_id, fn ($query) =>
                 $query->where('bast_id', $this->bast_id)
-            )->orderByDesc('updated_at');
+            );
     }
 
     protected function getHeaderActions(): array
@@ -65,12 +67,22 @@ class ListPoleDetails extends ListRecords
         ];
     }
 
+    protected function getDefaultTableSortColumn(): ?string
+    {
+        return 'PoleDetail.updated_at';
+    }
+
+    protected function getDefaultTableSortDirection(): ?string
+    {
+        return 'desc';
+    }
+
     protected function getTableColumns(): array
     {
         return [
-            TextColumn::make('bast_id')->label('BAST ID')->searchable(),
-            TextColumn::make('site')->label('Site')->searchable(),
-            TextColumn::make('pole_sn')->searchable(),
+            TextColumn::make('bast_id')->label('BAST ID')->searchable()->sortable(),
+            TextColumn::make('site')->label('Site')->searchable()->sortable(),
+            TextColumn::make('pole_sn')->searchable()->sortable(),
             TextColumn::make('notes')->searchable(),
             ImageColumn::make('digging')
                 ->label('digging')
@@ -140,6 +152,33 @@ class ListPoleDetails extends ListRecords
                         default => 'primary',
                     })
                     ->sortable(),
+            TextColumn::make('employee.first_name')
+                    ->label('Nama Petugas')
+                    ->getStateUsing(fn ($record) => $record->employee?->full_name ?? '-')
+                    ->searchable(query: function (Builder $query, string $search) {
+                        $query->whereExists(function ($q) use ($search) {
+                            $q->select(DB::raw(1))
+                            ->from(DB::connection('mysql_employees')->getDatabaseName() . '.Employees')
+                            ->whereColumn('Employees.email', 'PoleDetail.updated_by')
+                            ->whereRaw(
+                                "CONCAT(first_name,' ',middle_name,' ',last_name) LIKE ?",
+                                ["%{$search}%"]
+                            );
+                        });
+                    })
+                    ->sortable(function (Builder $query) {
+                        $direction = request()->input('tableSortDirection', 'asc');
+
+                        return $query->orderBy(
+                            Employee::selectRaw(
+                                "CONCAT(first_name, ' ', middle_name, ' ', last_name)"
+                            )
+                            ->whereColumn('Employees.email', 'PoleDetail.updated_by')
+                            ->limit(1),
+                            $direction
+                        );
+                    }),
+                TextColumn::make('updated_at')->sortable(),
         ];
     }
 
@@ -249,6 +288,26 @@ class ListPoleDetails extends ListRecords
                     ->icon('heroicon-o-document-arrow-down')
                     ->action(fn ($record) => Excel::download(new BastPoleExport($record), "Implementation_Pole_{$record->pole_sn}.xlsx"))
                     ->visible(fn ($record) => $record->status === 'approved'),
+        ];
+    }
+
+    protected function getTableFilters(): array
+    {
+        return [
+            SelectFilter::make('status')
+                ->label('Status')
+                ->options([
+                    'submit'   => 'Submit',
+                    'approved' => 'Approved',
+                    'rejected' => 'Rejected',
+                ])
+                ->query(function (Builder $query, array $data) {
+                    if (! $data['value']) {
+                        return;
+                    }
+
+                    $query->where('FeederDetail.status', $data['value']);
+                }),
         ];
     }
 
