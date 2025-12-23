@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Employee;
 
 class HomeConnect extends Model
 {
@@ -61,5 +62,9 @@ class HomeConnect extends Model
         if ($regency) $query->where('regency_name', $regency);
         if ($village) $query->where('village_name', $village);
         return $query;
+    }
+    public function employee()
+    {
+        return $this->belongsTo(Employee::class, 'updated_by', 'email');
     }
 }

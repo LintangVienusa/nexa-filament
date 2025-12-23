@@ -5,6 +5,7 @@ namespace App\Filament\Resources\BastProjectResource\Pages;
 use App\Filament\Resources\BastProjectResource;
 use App\Models\BastProject;
 use App\Models\FeederDetail;
+use App\Models\Employee;
 use Filament\Pages\Page;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -22,6 +23,8 @@ use Filament\Forms\Form as FilamentForm;
 use Filament\Tables\Actions\BulkAction;
 use Filament\Notifications\Notification;
 use Filament\Actions\Action as HeaderAction;
+use Illuminate\Support\Facades\DB;
+use Filament\Tables\Filters\SelectFilter;
 
 class ListFeederDetails extends ListRecords
 {
@@ -33,20 +36,20 @@ class ListFeederDetails extends ListRecords
     protected static ?string $navigationLabel = 'Feeder Details';
     protected static ?string $navigationIcon = 'heroicon-o-collection';
     protected static ?string $slug = 'list-feeder-details';
-    public ?string $site = null;
-    public function mount(?string $site = null): void
+    public ?string $bast_id = null;
+    public function mount(?string $bast_id = null): void
     {
-        $this->site = $site;
+        $this->bast_id = $bast_id;
     }
 
     protected function getTableQuery(): Builder
     {
         return FeederDetail::query()
                 ->Join('BastProject', 'FeederDetail.bast_id', '=', 'BastProject.bast_id')
-                ->when($this->site, fn($query) =>
-                        $query->where('FeederDetail.site', $this->site)
+                ->when($this->bast_id, fn($query) =>
+                        $query->where('FeederDetail.bast_id', $this->bast_id)
                     )
-                    ->select('FeederDetail.*', 'BastProject.site');
+                    ->select('FeederDetail.*', 'BastProject.bast_id');
     }
 
     protected function getHeaderActions(): array
@@ -56,17 +59,29 @@ class ListFeederDetails extends ListRecords
                 ->label('Refresh Page')
                 ->icon('heroicon-o-arrow-path')
                 ->color('gray')
-                ->url(url()->previous()),
+                // ->url(url()->previous()),
+                ->extraAttributes([
+                    'onclick' => 'window.location.reload();',
+                ]),
         ];
     }
 
+    protected function getDefaultTableSortColumn(): ?string
+    {
+        return 'FeederDetail.updated_at';
+    }
+
+    protected function getDefaultTableSortDirection(): ?string
+    {
+        return 'desc';
+    }
 
     protected function getTableColumns(): array
     {
         return [
-            TextColumn::make('bast_id')->label('BAST ID')->searchable(['BastProject.bast_id']),
-            TextColumn::make('site')->label('Site')->searchable(['BastProject.site']),
-            TextColumn::make('feeder_name')->searchable(['FeederDetail.feeder_name']),
+            TextColumn::make('bast_id')->label('BAST ID')->searchable(['BastProject.bast_id'])->sortable(),
+            TextColumn::make('site')->label('Site')->searchable(['BastProject.site'])->sortable(),
+            TextColumn::make('feeder_name')->searchable(['FeederDetail.feeder_name'])->sortable(),
             TextColumn::make('notes')->searchable(['FeederDetail.notes']),
             ImageColumn::make('pulling_cable')
                 ->label('Pulling Cable A')
@@ -117,6 +132,33 @@ class ListFeederDetails extends ListRecords
                         default => 'primary',
                     })
                     ->sortable(),
+                TextColumn::make('employee.first_name')
+                    ->label('Nama Petugas')
+                    ->getStateUsing(fn ($record) => $record->employee?->full_name ?? '-')
+                    ->searchable(query: function (Builder $query, string $search) {
+                        $query->whereExists(function ($q) use ($search) {
+                            $q->select(DB::raw(1))
+                            ->from(DB::connection('mysql_employees')->getDatabaseName() . '.Employees')
+                            ->whereColumn('Employees.email', 'FeederDetail.updated_by')
+                            ->whereRaw(
+                                "CONCAT(first_name,' ',middle_name,' ',last_name) LIKE ?",
+                                ["%{$search}%"]
+                            );
+                        });
+                    })
+                    ->sortable(function (Builder $query) {
+                        $direction = request()->input('tableSortDirection', 'asc');
+
+                        return $query->orderBy(
+                            Employee::selectRaw(
+                                "CONCAT(first_name, ' ', middle_name, ' ', last_name)"
+                            )
+                            ->whereColumn('Employees.email', 'FeederDetail.updated_by')
+                            ->limit(1),
+                            $direction
+                        );
+                    }),
+                TextColumn::make('updated_at')->sortable(),
         ];
     }
 
@@ -220,6 +262,26 @@ class ListFeederDetails extends ListRecords
                     ->icon('heroicon-o-document-arrow-down')
                     ->action(fn ($record) => Excel::download(new BastFeederExport($record), "Implementation_Feeder_{$record->feeder_name}.xlsx"))
                     ->visible(fn ($record) => $record->status === 'approved'),
+        ];
+    }
+
+    protected function getTableFilters(): array
+    {
+        return [
+            SelectFilter::make('status')
+                ->label('Status')
+                ->options([
+                    'submit'   => 'Submit',
+                    'approved' => 'Approved',
+                    'rejected' => 'Rejected',
+                ])
+                ->query(function (Builder $query, array $data) {
+                    if (! $data['value']) {
+                        return;
+                    }
+
+                    $query->where('FeederDetail.status', $data['value']);
+                }),
         ];
     }
 

@@ -245,7 +245,7 @@
                             .then(res => res.json())
                             .then(res => {
                                 if(res.success){
-                                    const img = document.getElementById('foto3');
+                                    const img = document.getElementById('foto5');
                                     img.src = img.src.split('?')[0] + '?v=' + new Date().getTime();
                                 } else {
                                     alert(res.error || 'Gagal rotate');
@@ -270,7 +270,7 @@
                             .then(res => res.json())
                             .then(res => {
                                 if(res.success){
-                                    const img = document.getElementById('foto3');
+                                    const img = document.getElementById('foto6');
                                     img.src = img.src.split('?')[0] + '?v=' + new Date().getTime();
                                 } else {
                                     alert(res.error || 'Gagal rotate');
@@ -297,7 +297,7 @@
                     overflow:hidden;
                 ">
                     @if ($record->flexing_conduit)
-                        <img id="foto4" src="{{ asset('storage/'.$record->flexing_conduit) }}?v={{ now()->timestamp }}" 
+                        <img id="foto5" src="{{ asset('storage/'.$record->flexing_conduit) }}?v={{ now()->timestamp }}" 
                         style="width:100%;height:100%;object-fit:contain;">
                         
                     @else
@@ -317,7 +317,7 @@
                     overflow:hidden;
                 ">
                     @if ($record->closure)
-                        <img id="foto4" src="{{ asset('storage/'.$record->closure) }}?v={{ now()->timestamp }}" 
+                        <img id="foto6" src="{{ asset('storage/'.$record->closure) }}?v={{ now()->timestamp }}" 
                         style="width:100%;height:100%;object-fit:contain;">
                         
                     @else
