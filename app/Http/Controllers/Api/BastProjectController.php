@@ -244,6 +244,7 @@ class BastProjectController extends Controller
             $poles = PoleDetail::on('mysql_inventory')
             ->join('BastProject', 'PoleDetail.bast_id', '=', 'BastProject.bast_id')
             ->where('PoleDetail.pole_sn', $pole_sn)
+            ->where('BastProject.station_name', $station_name)
             ->select('PoleDetail.bast_id','PoleDetail.pole_sn')
             ->distinct()
             ->paginate($perPage);
