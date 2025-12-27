@@ -143,11 +143,30 @@ class BastProjectController extends Controller
             ], 401);
         }
 
-        $query = BastProject::select('station_name', DB::raw('COUNT(bast_id) as total_bast'))
-                ->where('status', '!=', 'completed')
-                ->groupBy('station_name')
-                ->orderBy('station_name', 'asc')
-                ->get();
+        $validated = $request->validate([
+            'station_name' => 'nullable|string',
+            
+        ]);
+
+        
+        $station_name = $request['station_name'] ?? null;
+
+        if($station_name !=''){
+            
+                $query = BastProject::select('station_name', DB::raw('COUNT(bast_id) as total_bast'))
+                        ->where('station_name', 'regexp', '^'.$station_name)
+                        ->where('status', '!=', 'completed')
+                        ->groupBy('station_name')
+                        ->orderBy('station_name', 'asc')
+                        ->get();
+            
+        }else{
+            $query = BastProject::select('station_name', DB::raw('COUNT(bast_id) as total_bast'))
+                    ->where('status', '!=', 'completed')
+                    ->groupBy('station_name')
+                    ->orderBy('station_name', 'asc')
+                    ->get();
+        }
 
         
         // $basts = $query->orderBy('created_at', 'desc')->get();
@@ -243,7 +262,7 @@ class BastProjectController extends Controller
         if($pole_sn != ''){
             $poles = PoleDetail::on('mysql_inventory')
             ->join('BastProject', 'PoleDetail.bast_id', '=', 'BastProject.bast_id')
-            ->where('PoleDetail.pole_sn', $pole_sn)
+            ->where('PoleDetail.pole_sn', 'REGEXP', '^'.$pole_sn)
             ->where('BastProject.station_name', $station_name)
             ->select('PoleDetail.bast_id','PoleDetail.pole_sn')
             ->distinct()
@@ -252,7 +271,7 @@ class BastProjectController extends Controller
         }else{
             $poles = PoleDetail::on('mysql_inventory')
             ->join('BastProject', 'PoleDetail.bast_id', '=', 'BastProject.bast_id')
-            ->where('BastProject.station_name', $station_name)
+            ->where('BastProject.station_name', 'REGEXP', '^'.$station_name)
             ->select('PoleDetail.bast_id','PoleDetail.pole_sn')
             ->distinct()
             ->paginate($perPage);
@@ -841,7 +860,9 @@ class BastProjectController extends Controller
             //     ], 404);
             // }
 
-            $query = ODPDetail::where('odc_name', $odc_name)->pluck('odp_name')
+            $query = ODPDetail::where('bast_id',$bastId)
+                ->where('odc_name','REGEXP', '^'.$odc_name)
+                ->groupby('odp_name')->pluck('odp_name')
                 ->toArray();
 
                 if (!$query) {
@@ -851,7 +872,10 @@ class BastProjectController extends Controller
                     ], 404);
                 }
         }else{
-             $query = ODPDetail::where('odp_name', $odp_name)->pluck('odp_name')
+             $query = ODPDetail::where('odc_name','REGEXP', '^'.$odc_name)
+                ->where('odp_name', 'REGEXP', '^'.$odp_name)
+                ->groupby('odp_name')
+                ->pluck('odp_name')
                 ->toArray();
 
                 if (!$query) {
@@ -1150,7 +1174,7 @@ class BastProjectController extends Controller
         $odc_name = $validated['odc_name'];
         
         if($odc_name == ''){
-            $bastList = BastProject::on('mysql_inventory')->where('station_name', $station_name)->get(['bast_id', 'site']);;
+            $bastList = BastProject::on('mysql_inventory')->where('station_name', 'REGEXP', '^'.$station_name)->get(['bast_id', 'site']);;
 
             // if (!$bast) {
             //     return response()->json([
@@ -1167,17 +1191,42 @@ class BastProjectController extends Controller
             }
 
             // $query = ODCDetail::where('bast_id', $bastId);
-            $odcQuery = ODCDetail::query();
+            $sub = ODCDetail::selectRaw('odc_name, MAX(progress_percentage) as max_progress')
+                ->groupBy('odc_name');
 
-            foreach ($bastList as $bast) {
-                $odcQuery->orWhere(function($q) use ($bast) {
-                    $q->where('bast_id', $bast->bast_id)
-                    ->where('site', $bast->site);
+            // 2️⃣ join subquery
+            $odcQuery = ODCDetail::joinSub($sub, 't', function ($join) {
+                    $join->on('t.odc_name', '=', 'ODCDetail.odc_name');
+                })
+                ->select('ODCDetail.*', 't.max_progress');
+
+            if (!empty($bastList)) {
+                $odcQuery->where(function($outer) use ($bastList) {
+                    foreach ($bastList as $bast) {
+                        $outer->orWhere(function($q) use ($bast) {
+                            $q->where('ODCDetail.bast_id', $bast->bast_id)
+                            ->where('ODCDetail.site', 'REGEXP', '^'.$bast->site);
+                        });
+                    }
                 });
             }
 
         }else{
-            $odcQuery = ODCDetail::where('odc_name', $odc_name);
+            $sub = ODCDetail::selectRaw('odc_name, MAX(progress_percentage) as max_progress')
+                ->groupBy( 'odc_name');
+            // $odcQuery = ODCDetail::where('odc_name', 'REGEXP', '^'.$odc_name);
+            
+            $odcQuery = ODCDetail::on('mysql_inventory')
+                    ->join('BastProject', 'ODCDetail.bast_id', '=', 'BastProject.bast_id')
+                    ->joinSub($sub, 't', function ($join) {
+                        $join->on('t.odc_name', '=', 'ODCDetail.odc_name');
+                    })
+                    ->when($station_name, fn($query) => 
+                        $query->where('BastProject.station_name', $station_name)
+                    )
+                    ->where('ODCDetail.odc_name', 'REGEXP', '^'.$odc_name)
+                    ->whereColumn('ODCDetail.progress_percentage', 't.max_progress')
+                    ->select('ODCDetail.*', 'BastProject.bast_id','BastProject.Site', 't.max_progress');
         }
         
 
@@ -1562,6 +1611,7 @@ class BastProjectController extends Controller
 
         $bastId = $validated['bast_id'];
         $odc_name = $validated['odc_name'];
+        $feeder_name = $request['feeder_name'] ?? null;
         
 
         $bast = BastProject::on('mysql_inventory')->where('bast_id', $bastId)->first();
@@ -1574,7 +1624,7 @@ class BastProjectController extends Controller
         }
 
         $MappingHomepass = MappingHomepass::on('mysql_inventory')
-                    ->where('ODC', $odc_name)->first();
+                    ->where('ODC', 'REGEXP', '^'.$odc_name)->first();
 
         if (! $MappingHomepass) {
             return response()->json([
@@ -1583,11 +1633,32 @@ class BastProjectController extends Controller
             ], 404);
         }
 
-        $query = MappingHomepass::where('ODC', $odc_name)
-                ->select('feeder_name')
-                ->groupBy('feeder_name')
-                ->pluck('feeder_name')
-                ->toArray();
+        if($feeder_name == ''){
+            // $query = MappingHomepass::where('ODC','REGEXP', '^'.$odc_name)
+            //     ->select('feeder_name')
+            //     ->groupBy('feeder_name')
+            //     ->pluck('feeder_name')
+            //     ->toArray();
+            $query = MappingHomepass::query()
+                    ->join('FeederDetail', 'MappingHomepass.feeder_name', '=', 'FeederDetail.feeder_name')
+                    ->where('FeederDetail.bast_id', $bastId)
+                    ->where('MappingHomepass.ODC', 'REGEXP', '^'.$odc_name)
+                    ->select('MappingHomepass.feeder_name')
+                    ->groupBy('MappingHomepass.feeder_name')
+                    ->pluck('MappingHomepass.feeder_name')
+                    ->toArray();
+        }else{
+            $query = MappingHomepass::query()
+                    ->join('FeederDetail', 'MappingHomepass.feeder_name', '=', 'FeederDetail.feeder_name')
+                    ->where('FeederDetail.bast_id', $bastId)
+                    ->where('MappingHomepass.ODC', 'REGEXP', '^'.$odc_name)
+                    ->where('MappingHomepass.feeder_name', 'REGEXP', '^'.$feeder_name)
+                    ->select('MappingHomepass.feeder_name')
+                    ->groupBy('MappingHomepass.feeder_name')
+                    ->pluck('MappingHomepass.feeder_name')
+                    ->toArray();
+        }
+        
 
         // $query = ODPDetail::where('bast_id', $bastId)
         //         ->selectRaw("CONCAT(odp_name, ' - ONT') as full_name")
@@ -1616,7 +1687,7 @@ class BastProjectController extends Controller
 
         $validated = $request->validate([
             'bast_id' => 'required|string|exists:mysql_inventory.BastProject,bast_id',
-            'feeder_name' => 'nullable|string',
+            'feeder_name' => 'required|string',
             
         ]);
 
@@ -1774,285 +1845,7 @@ class BastProjectController extends Controller
         
     }
 
-    public function listrbs(Request $request)
-    {
-        date_default_timezone_set('Asia/Jakarta');
-        $user = Auth::user();
-
-        if (! $user) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Unauthorized',
-            ], 401);
-        }
-
-        $validated = $request->validate([
-            'bast_id' => 'required|string|exists:mysql_inventory.BastProject,bast_id',
-        ]);
-
-        $bastId = $validated['bast_id'];
-        
-
-        $bast = BastProject::on('mysql_inventory')->where('bast_id', $bastId)->first();
-
-        if (! $bast) {
-            return response()->json([
-                'status' => 'error',
-                'message' => "BAST dengan ID {$bastId} tidak ditemukan",
-            ], 404);
-        }
-
-        $queryodc = ODCDetail::where('bast_id', $bastId)
-                ->selectRaw("CONCAT('OLT - ', odc_name) as full_name")
-                ->pluck('full_name')
-                ->toArray();
-        $queryodp = ODPDetail::where('bast_id', $bastId)
-                ->selectRaw("CONCAT(odc_name, ' - ', odp_name) as full_name")
-                ->pluck('full_name')
-                ->toArray();
-
-        // $query = ODPDetail::where('bast_id', $bastId)
-        //         ->selectRaw("CONCAT(odp_name, ' - ONT') as full_name")
-        //         ->pluck('full_name')
-        //         ->toArray();
-        $listRbs = array_merge($queryodc, $queryodp);
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'List RBS',
-            'list_rbs' => $listRbs
-        ]);
-        
-    }
-
-    public function updaterbs(Request $request)
-    {
-        date_default_timezone_set('Asia/Jakarta');
-        $user = Auth::user();
-
-        if (! $user) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Unauthorized',
-            ], 401);
-        }
-
-        $validated = $request->validate([
-            'bast_id' => 'required|string|exists:mysql_inventory.BastProject,bast_id',
-            'rbs_name' => 'nullable|string',
-            
-        ]);
-
-        $bastId = $validated['bast_id'];
-        $rbs_name = $validated['rbs_name'] ?? null;
-
-        $bast = BastProject::on('mysql_inventory')->where('bast_id', $bastId)->first();
-
-        if (! $bast) {
-            return response()->json([
-                'status' => 'error',
-                'message' => "BAST dengan ID {$bastId} tidak ditemukan",
-            ], 404);
-        }
-
-        $query = RBSDetail::where('bast_id', $bastId);
-        if ($rbs_name) {
-            $query->where('rbs_name', $rbs_name);
-        }
-        $RBSDetail = $query->first();
-
-         
-
-        if (! $RBSDetail) {
-            $RBSDetail = new RBSDetail();
-            $RBSDetail->bast_id = $bastId;
-            if ($rbs_name) {
-                $RBSDetail->rbs_name = $rbs_name;
-            }
-            $RBSDetail->created_by = $user->email;
-        }
-
     
-        $photoFields = [
-            'hasil_ukur_otdr',
-            'pengambungan_core',
-        ];
-        $po=0;
-        $percentage=0;
-
-        foreach ($photoFields as $field) {
-            $filePhoto = $request->input($field);
-
-            if (!empty($filePhoto)) {
-                $filePhoto = "data:image/png;base64," . $filePhoto;
-                if (preg_match('/^data:image\/(\w+);base64,/', $filePhoto, $type)) {
-                    $filePhoto = substr($filePhoto, strpos($filePhoto, ',') + 1);
-                    $type = strtolower($type[1]);
-                    $decoded = base64_decode($filePhoto);
-
-                    if ($decoded === false) {
-                        return response()->json([
-                            'status' => 'error',
-                            'message' => "Invalid base64 format for {$field}",
-                        ], 400);
-                    }
-
-                    // $fileName = $field . '_' . time() . '.' . $type;
-                    // Storage::disk('public')->put($path, $decoded);
-                    $fileName = $field . '_' . time() . '.' . $type;
-                    $path = 'rbs/' . $fileName;
-                    $folder = public_path('storage/rbs');
-
-                    if (!file_exists($folder)) {
-                        mkdir($folder, 0777, true);
-                    }
-
-                    $tempImage = imagecreatefromstring($decoded);
-                    if ($tempImage === false) {
-                        return response()->json(['error' => 'Failed to create image from data'], 400);
-                    }
-
-                    $width = imagesx($tempImage);
-                    $height = imagesy($tempImage);
-
-                    $maxWidth = 800;
-                    $maxHeight = 800;
-                    $ratio = min($maxWidth / $width, $maxHeight / $height, 1);
-                    $newWidth = (int)($width * $ratio);
-                    $newHeight = (int)($height * $ratio);
-
-                    $compressedImage = imagecreatetruecolor($newWidth, $newHeight);
-                    imagecopyresampled($compressedImage, $tempImage, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
-
-                    imagejpeg($compressedImage, $folder . '/' . $fileName, 75);
-
-                    imagedestroy($tempImage);
-                    imagedestroy($compressedImage);
-
-
-                    
-                    $po=$po+1;
-                    $RBSDetail->$field = $path;
-                } else {
-                    
-                    $po=$po+1;
-                    $RBSDetail->$field = $filePhoto;
-                }
-            }
-        }
-
-        if ($request->filled('latitude')) {
-            $RBSDetail->latitude = $validated['latitude'] ?? 0;
-        }
-        // else{
-        //     $pole->latitude = 0;
-        // }
-
-        if ($request->filled('longitude')) {
-            $po=$po+1;
-            $RBSDetail->longitude = $validated['longitude']  ?? 0;
-        }
-
-        if ($request->filled('notes')) {
-            $RBSDetail->notes = $validated['notes']  ?? '';
-        }
-        // else{
-            
-        //     $pole->longitude = 0;
-        // }
-        $percentage = ($po/3)*100;
-        $RBSDetail->progress_percentage = $percentage;
-
-        $RBSDetail->updated_by = $user->email ?? null;
-        $RBSDetail->save();
-
-        if ($bast) {
-            $bast->info_rbs = 1;
-            $bast->status = 'in progress';
-            $bast->updated_by = $user->email;
-            $bast->save();
-        }
-        
-        $this->updateBastProgress($bastId);
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'RBS data updated successfully',
-            'data' => $RBSDetail,
-        ]);
-        
-    }
-
-    public function detailrbs(Request $request)
-    {
-        date_default_timezone_set('Asia/Jakarta');
-        $user = Auth::user();
-
-        if (! $user) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Unauthorized',
-            ], 401);
-        }
-
-        $validated = $request->validate([
-            'bast_id' => 'required|string|exists:mysql_inventory.BastProject,bast_id',
-            'rbs_name' => 'nullable|string',
-            
-        ]);
-
-        $bastId = $validated['bast_id'];
-        $rbs_name = $validated['rbs_name'] ?? null;
-
-        $bast = BastProject::on('mysql_inventory')->where('bast_id', $bastId)->first();
-
-        if (! $bast) {
-            return response()->json([
-                'status' => 'error',
-                'message' => "BAST dengan ID {$bastId} tidak ditemukan",
-            ], 404);
-        }
-
-        $query = RBSDetail::where('bast_id', $bastId);
-        if ($rbs_name) {
-             $query->where('rbs_name', $rbs_name);
-
-            $record = $query->first();
-
-            $fileKeys = [
-                'hasil_otdr',
-                'penyambungan_core',
-            ];
-
-            $base64Files = [];
-
-            foreach ($fileKeys as $key) {
-                $file = $record->$key ?? null;
-
-                if (!empty($file)) {
-                    $filePath = storage_path('app/public/' . $file);
-                    $base64Files[$key] = file_exists($filePath)
-                        ? base64_encode(file_get_contents($filePath))
-                        : null;
-                } else {
-                    $base64Files[$key] = null;
-                }
-            }
-
-            return response()->json([
-                'status' => 'success',
-                'data' => $base64Files,
-            ]);
-        }else{
-            $poleDetail = $query->first();
-            return response()->json([
-                'status' => 'error',
-                'message' => "BAST dengan ID {$bastId} tidak ditemukan",
-            ], 404);
-        }
-        
-        
-    }
 
     public function listodphc(Request $request)
     {
@@ -2089,7 +1882,8 @@ class BastProjectController extends Controller
             }
         }else{
             $odpNames = ODPDetail::join('BastProject as bp', 'bp.bast_id', '=', 'ODPDetail.bast_id')
-                    ->where('ODPDetail.odp_name', $odp_name)
+                     ->where('bp.station_name', $station_name)
+                    ->where('ODPDetail.odp_name', 'REGEXP', '^'.$odp_name)
                     ->groupBy('ODPDetail.odp_name')
                     ->pluck('ODPDetail.odp_name')
                     ->toArray();
@@ -2100,7 +1894,7 @@ class BastProjectController extends Controller
        if (empty($odpNames)) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'ODP tidak ditemukan',
+                'message' => 'ODP tidak ditemukan ',
             ], 404);
         }
 
