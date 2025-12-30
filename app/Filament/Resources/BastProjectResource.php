@@ -266,7 +266,8 @@ class BastProjectResource extends Resource
             ])
             ->actions([])
             ->bulkActions([
-    Tables\Actions\DeleteBulkAction::make(),]);
+                // Tables\Actions\DeleteBulkAction::make()
+            ]);
     }
 
     public static function form(Form $form): Form
