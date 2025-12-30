@@ -17,6 +17,7 @@ class BastProject extends Model
     protected $fillable = [
         'site',
         'bast_id',
+        'po_number',
         'province_name',
         'regency_name',
         'village_name',

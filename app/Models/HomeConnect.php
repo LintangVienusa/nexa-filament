@@ -16,6 +16,7 @@ class HomeConnect extends Model
     protected $fillable = [
         'site',
         'bast_id',
+        'po_number',
         'id_pelanggan',
         'name_pelanggan',
         'odp_name',
