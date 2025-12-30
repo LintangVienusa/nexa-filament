@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\PurchaseOrderResource\Pages;
 use App\Filament\Resources\PurchaseOrderResource\RelationManagers;
 use App\Models\PurchaseOrder;
+use App\Models\MappingRegion;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Section;
@@ -18,6 +19,9 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Str;
+use Carbon\Carbon;
+use Illuminate\Validation\Rule;
 
 class PurchaseOrderResource extends Resource
 {
@@ -31,11 +35,15 @@ class PurchaseOrderResource extends Resource
             ->schema([
                 Section::make('Purchase Order Info')
                     ->schema([
-                        Forms\Components\TextInput::make('po_number')
-                            ->label('No Purchase Order')
-                            ->required()
-                            ->maxLength(50)
-                            ->disabledOn('edit'),
+                        TextInput::make('po_number') 
+                                ->label('No Purchase Order') 
+                                ->required() 
+                                ->unique(ignoreRecord: true)
+                                ->validationMessages([
+                                    'unique' => 'Nomor PO sudah digunakan, silakan inputkan ulang PO yang belum digunakan.',
+                                ])
+                                ->maxLength(50) 
+                                ->disabledOn('edit'),
 
                         DatePicker::make('order_date')
                             ->default(now())
@@ -60,10 +68,26 @@ class PurchaseOrderResource extends Resource
 
                 Section::make('Project Info')
                     ->schema([
-                        TextInput::make('site_name')
+                        Select::make('site_name')
                             ->label('Nama Site')
+                            ->searchable()
+                            ->options(fn () => MappingRegion::pluck('station_name', 'station_name'))
+                            ->required()
+                            ->dehydrateStateUsing(fn ($state) => $state) 
+                            ->dehydrated(fn ($state) => filled($state)) 
+                            ->afterStateHydrated(function ($component, $state, $record) {
+                                $component->state($record?->site_name); 
+                            }),
+                        Select::make('kecamatan')
+                            ->label('Kecamatan')
+                            ->searchable()
+                            ->options(function (callable $get) {
+                                $station_name = $get('site_name');
+                                if (!$station_name) return [];
+                                return MappingRegion::where('station_name', $station_name)
+                                    ->pluck('village_name', 'village_name');
+                            })
                             ->required(),
-                        TextInput::make('kecamatan'),
                         Select::make('job_type')
                             ->label('Jenis Pekerjaan')
                             ->options([
@@ -75,6 +99,7 @@ class PurchaseOrderResource extends Resource
                             ->required(),
 
                         TextInput::make('total_target')
+                            ->required()
                             ->numeric(),
 
                         DatePicker::make('project_start_date')
@@ -94,19 +119,26 @@ class PurchaseOrderResource extends Resource
                             ->required(),
                         TextInput::make('pic_mobile_no')
                             ->label('No. HP PIC')
-                            ->required(),
+                            ->required()
+                            ->maxLength(15) 
+                            ->rule('regex:/^[0-9]+$/') 
+                            ->placeholder('081234567890')
+                            ->mask('999999999999999'),
                         TextInput::make('pic_email')
                             ->email(),
                     ])
                     ->columns(2),
-
-                Select::make('payment_terms')
-                    ->options([
-                        'dp' => 'DP',
-                        'termin' => 'Termin',
-                        'bulanan' => 'Bulanan',
+                Section::make('Project Info')
+                    ->schema([
+                        Select::make('payment_terms')
+                            ->options([
+                                'dp' => 'DP',
+                                'termin' => 'Termin',
+                                'bulanan' => 'Bulanan',
+                            ])
+                            ->required(),
                     ])
-                    ->required(),
+                    ->columns(2),
             ]);
     }
 

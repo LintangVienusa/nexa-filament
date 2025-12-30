@@ -45,12 +45,26 @@ class ListOdpDetails extends ListRecords
 
     protected function getTableQuery(): Builder
     {
+        // return ODPDetail::query()
+        //         ->Join('BastProject', 'ODPDetail.bast_id', '=', 'BastProject.bast_id')
+        //         ->when($this->bast_id, fn($query) =>
+        //                 $query->where('BastProject.bast_id', $this->bast_id)
+        //             )
+        //             ->select('ODPDetail.*', 'BastProject.bast_id');
+        $sub = ODPDetail::selectRaw('bast_id,odp_name, MAX(progress_percentage) as max_progress')
+            ->groupBy( 'bast_id','odp_name');
+
         return ODPDetail::query()
-                ->Join('BastProject', 'ODPDetail.bast_id', '=', 'BastProject.bast_id')
-                ->when($this->bast_id, fn($query) =>
-                        $query->where('BastProject.bast_id', $this->bast_id)
-                    )
-                    ->select('ODPDetail.*', 'BastProject.bast_id');
+            ->join('BastProject', 'ODPDetail.bast_id', '=', 'BastProject.bast_id')
+            ->joinSub($sub, 't', function ($join) {
+                $join->on('t.bast_id', '=', 'ODPDetail.bast_id')
+                ->on('t.odp_name', '=', 'ODPDetail.odp_name');
+            })
+            ->when($this->bast_id, fn($query) => 
+                $query->where('BastProject.bast_id', $this->bast_id)
+            )
+            ->whereColumn('ODPDetail.progress_percentage', 't.max_progress')
+            ->select('ODPDetail.*', 'BastProject.bast_id','BastProject.Site', 't.max_progress');
     }
 
     protected function getHeaderActions(): array

@@ -8,7 +8,7 @@ use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Models\PoleDetail;
-// use App\Models\CableDetail;s
+use App\Models\PurchaseOrder;
 use App\Models\FeederDetail;
 use App\Models\ODCDetail;
 use App\Models\ODPDetail;
@@ -181,6 +181,22 @@ class CreateBastProject extends CreateRecord
 
          $record = $this->record;
 
+         $purchaseOrder = PurchaseOrder::where('po_number', $record->po_number)->first();
+         $totaltarget = $purchaseOrder?->total_target ?? null; 
+            if($totaltarget == 512){
+                $jpole = 100;
+                $jodp = 64;
+                $jodc = 16;
+            }elseif($totaltarget == 5120){
+                $jpole = 1000;
+                $jodp = 640;
+                $jodc = 160;
+            }else{
+                $jpole = $totaltarget;
+                $jodp = $totaltarget;
+                $jodc = $totaltarget;
+            }
+
 
             if ($record->pass === 'HOMEPASS' && $record->list_pole) {
 
@@ -196,7 +212,8 @@ class CreateBastProject extends CreateRecord
                 $counter = 0;
                 $validPoleList = [];
 
-                for ($i = 1; $i <= $sheetExcel->getHighestRow(); $i++) {
+                // for ($i = 1; $i <= $sheetExcel->getHighestRow(); $i++) {
+                for ($i = 1; $i <= $jpole; $i++) {
                     $cell = $sheetExcel->getCell('A' . $i);
 
                         $poleSn = $cell->getCalculatedValue(); 
@@ -219,7 +236,8 @@ class CreateBastProject extends CreateRecord
                  $path = storage_path('app/public/' . $record->list_feeder_odc_odp);
 
                 if (!file_exists($path)) return;
-
+                $nodc=1;
+                $nodp=1;
                 // $sheet = Excel::toArray([], $path)[0] ?? [];
                 
                 $sheet = Excel::toArray(new FormulaValueBinderService, $path)[0] ?? [];
@@ -246,7 +264,7 @@ class CreateBastProject extends CreateRecord
                     $validPoleList[] = $pole;
 
                     // Update or create Feeder
-                    if ($feeder !== '') {
+                    if ($feeder !== '' ) {
                         FeederDetail::updateOrCreate([
                             'site' => $record->site,
                             'bast_id' => $record->bast_id,
@@ -255,37 +273,57 @@ class CreateBastProject extends CreateRecord
                     }
 
                     // Update or create ODC
-                    if ($odc !== '') {
+                    if ($odc !== '' && $nodc <= $jodc) {
                         ODCDetail::updateOrCreate([
                             'site' => $record->site,
                             'bast_id' => $record->bast_id,
                             'feeder_name' => $feeder,
                             'odc_name' => $odc,
                         ]);
+                        $nodc++;
                     }
 
                     // Update or create ODP
-                    if ($odp !== '') {
+                    if ($odp !== '' && $nodp <= $jodc) {
                         ODPDetail::updateOrCreate([
                             'site' => $record->site,
                             'bast_id' => $record->bast_id,
                             'odc_name' => $odc,
                             'odp_name' => $odp,
                         ]);
+                        
+                        $nodp++;
 
                         // Buat 8 port HomeConnect
                         for ($portIndex = 1; $portIndex <= 8; $portIndex++) {
-                            HomeConnect::updateOrCreate(
-                                [
-                                    'bast_id'  => $record->bast_id,
-                                    'odp_name' => $odp,
-                                    'port_odp' => $portIndex,
-                                ],
-                                [
-                                    'site'        => $record->site,
-                                    'status_port' => 'idle',
-                                ]
-                            );
+                            
+                            $existing = HomeConnect::where('odp_name', $odp)
+                                            ->where('port_odp',$portIndex)
+                                            ->first();
+                            if (!$existing) {
+                                HomeConnect::updateOrCreate(
+                                    [
+                                        'bast_id'  => $record->bast_id,
+                                        'po_number' => $record->po_number,
+                                        'odp_name' => $odp,
+                                        'port_odp' => $portIndex,
+                                    ],
+                                    [
+                                        'site'        => $record->site,
+                                        'status_port' => 'idle',
+                                    ]
+                                );
+                            }else if ($existing->status === 'used') {
+                                // return [
+                                //     'action' => 'skip',
+                                //     'message' => "Data sudah digunakan, tidak boleh update."
+                                // ];
+                            }elseif ($existing->status === 'idle') {
+                                $existing->update([
+                                    'bast_id'   => $bastId,
+                                    'po_number' => $record->po_number,
+                                ]);
+                            }
                         }
                     }
 
@@ -321,9 +359,12 @@ class CreateBastProject extends CreateRecord
                     foreach ($sheet as $index => $row) {
                         if ($index === 0 || empty($row[0])) continue;
 
+                        
+
                         HomeConnect::create([
                             'site' => $record->site,
                             'bast_id'        => $record->bast_id,
+                            'po_number'        => $record->po_number,
                             'id_pelanggan'   => trim($row[0] ?? ''),
                             'name_pelanggan' => trim($row[1] ?? ''),
                             'odp_name'       => trim($row[2] ?? ''),

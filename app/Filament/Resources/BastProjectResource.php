@@ -12,6 +12,7 @@ use App\Models\ODPDetail;
 use App\Models\FeederDetail;
 use App\Models\PoleDetail;
 use App\Models\HomeConnect;
+use App\Models\Purchaseorder;
 use Illuminate\Support\Facades\Auth;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -36,6 +37,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\DateFilter;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Columns\ColumnGroup;
+use Illuminate\Support\Facades\DB;
 
 class BastProjectResource extends Resource
 {
@@ -64,6 +66,9 @@ class BastProjectResource extends Resource
                 TextColumn::make('project_name')
                     ->searchable()
                     ->sortable(),
+                TextColumn::make('po_number')
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('bast_id')
                     ->searchable()
                     ->sortable(),
@@ -78,11 +83,18 @@ class BastProjectResource extends Resource
                     TextColumn::make('pole_count')
                         ->label('Tiang')
                         ->getStateUsing(function ($record) {
-                            $total = PoleDetail::where('bast_id', $record->bast_id)->count();
+                             $total = DB::connection('mysql_inventory')->table(DB::raw("
+                                    ( SELECT bast_id, pole_sn  FROM PoleDetail
+                                    WHERE bast_id = '{$record->bast_id}'
+                                    GROUP BY bast_id, pole_sn ) as a
+                                "))->count();
 
-                            $completed = PoleDetail::where('bast_id', $record->bast_id)
-                                ->where('progress_percentage', 100)
-                                ->count();
+                            $completed = DB::connection('mysql_inventory')->table(DB::raw("
+                                ( SELECT bast_id, pole_sn  FROM PoleDetail
+                                WHERE bast_id = '{$record->bast_id}'
+                                AND progress_percentage = 100
+                                GROUP BY bast_id, pole_sn ) as a
+                            "))->count();
 
                             return "{$completed} | {$total}";
                         })->alignRight()
@@ -91,11 +103,20 @@ class BastProjectResource extends Resource
                     TextColumn::make('odc_count')
                         ->label('ODC')
                         ->getStateUsing(function ($record) {
-                            $total = ODCDetail::where('bast_id', $record->bast_id)->count();
+                           
 
-                            $completed = ODCDetail::where('bast_id', $record->bast_id)
-                                ->where('progress_percentage', 100)
-                                ->count();
+                             $total = DB::connection('mysql_inventory')->table(DB::raw("
+                                    ( SELECT bast_id, odc_name  FROM ODCDetail
+                                    WHERE bast_id = '{$record->bast_id}'
+                                    GROUP BY bast_id, odc_name ) as a
+                                "))->count();
+
+                            $completed = DB::connection('mysql_inventory')->table(DB::raw("
+                                ( SELECT bast_id, odc_name  FROM ODCDetail
+                                WHERE bast_id = '{$record->bast_id}'
+                                AND progress_percentage = 100
+                                GROUP BY bast_id, odc_name ) as a
+                            "))->count();
 
                             return "{$completed} | {$total}";
                         })
@@ -105,11 +126,19 @@ class BastProjectResource extends Resource
                     TextColumn::make('odp_count')
                         ->label('ODP')
                         ->getStateUsing(function ($record) {
-                            $total = ODPDetail::where('bast_id', $record->bast_id)->count();
+                            
+                             $total = DB::connection('mysql_inventory')->table(DB::raw("
+                                    ( SELECT bast_id, odp_name  FROM ODPDetail
+                                    WHERE bast_id = '{$record->bast_id}'
+                                    GROUP BY bast_id, odp_name ) as a
+                                "))->count();
 
-                            $completed = ODPDetail::where('bast_id', $record->bast_id)
-                                ->where('progress_percentage', 100)
-                                ->count();
+                            $completed = DB::connection('mysql_inventory')->table(DB::raw("
+                                ( SELECT bast_id, odp_name  FROM ODPDetail
+                                WHERE bast_id = '{$record->bast_id}'
+                                AND progress_percentage = 100
+                                GROUP BY bast_id, odp_name ) as a
+                            "))->count();
 
                             return "{$completed} | {$total}";
                         })
@@ -119,11 +148,20 @@ class BastProjectResource extends Resource
                     TextColumn::make('feeder')
                         ->label('Feeder')
                         ->getStateUsing(function ($record) {
-                            $total = FeederDetail::where('bast_id', $record->bast_id)->count();
+                            
 
-                            $completed = FeederDetail::where('bast_id', $record->bast_id)
-                                ->where('progress_percentage', 100)
-                                ->count();
+                             $total = DB::connection('mysql_inventory')->table(DB::raw("
+                                    ( SELECT bast_id, feeder_name  FROM FeederDetail
+                                    WHERE bast_id = '{$record->bast_id}'
+                                    GROUP BY bast_id, feeder_name ) as a
+                                "))->count();
+
+                            $completed = DB::connection('mysql_inventory')->table(DB::raw("
+                                ( SELECT bast_id, feeder_name  FROM FeederDetail
+                                WHERE bast_id = '{$record->bast_id}'
+                                AND progress_percentage = 100
+                                GROUP BY bast_id, feeder_name ) as a
+                            "))->count();
 
                             return "{$completed} | {$total}";
                         })
@@ -227,7 +265,8 @@ class BastProjectResource extends Resource
 
             ])
             ->actions([])
-            ->bulkActions([]);
+            ->bulkActions([
+    Tables\Actions\DeleteBulkAction::make(),]);
     }
 
     public static function form(Form $form): Form
@@ -264,7 +303,7 @@ class BastProjectResource extends Resource
                                 return MappingRegion::where('regency_name', $regency)
                                     ->pluck('village_name', 'village_name');
                             })
-                            ->required(),
+                            ->required()->live(),
 
                         Select::make('station_name')
                             ->label('Stasiun')
@@ -275,20 +314,45 @@ class BastProjectResource extends Resource
                                 return MappingRegion::where('village_name', $village_name)
                                     ->pluck('station_name', 'station_name');
                             })
-                            ->required(),
+                            ->required()->live()
+                            ->afterStateUpdated(function ($state, callable $set) {
+                                $set('site', $state);
+                            }),
                     ])->columns(2),
 
                 Section::make('Project Info')
                     ->schema([
 
-                        TextInput::make('site')->maxLength(255),
+                        TextInput::make('site')
+                                ->maxLength(255)
+                                ->reactive()
+                                ->required(),
                         Hidden::make('bast_id')
                             ->label('BAST ID')
                             ->unique(ignoreRecord: true)
                             ->default(fn() => 'BA-' . now()->format('YmdH') . '-' . rand(1000, 9999))
-                            // ->readonly()
                             ->dehydrateStateUsing(fn($state) => $state),
                         DatePicker::make('bast_date')->required()->default(now()),
+                        Select::make('po_number')
+                            ->label('No Purchase Order')
+                            ->searchable()
+                            ->reactive()
+                            ->options(function (callable $get) {
+                                $village_name = $get('village_name');
+
+                                if (!$village_name) return [];
+                                $usedPo = BastProject::whereNotNull('po_number')->where('village_name', $village_name)
+                                            ->pluck('po_number');
+
+                                return Purchaseorder::where('kecamatan', $village_name)->whereNotIn('po_number', $usedPo)
+                                    ->pluck('po_number', 'po_number');
+                            })
+                            ->required()
+                            ->dehydrateStateUsing(fn ($state) => $state) 
+                            ->dehydrated(fn ($state) => filled($state)) 
+                            ->afterStateHydrated(function ($component, $state, $record) {
+                                $component->state($record?->po_number); 
+                            }),
                         Textarea::make('project_name')->required()->maxLength(255),
                         Select::make('PIC')
                             ->label('PIC')
