@@ -266,7 +266,7 @@ class BastProjectResource extends Resource
             ])
             ->actions([])
             ->bulkActions([
-                // Tables\Actions\DeleteBulkAction::make()
+                Tables\Actions\DeleteBulkAction::make()
             ]);
     }
 

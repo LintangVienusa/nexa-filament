@@ -313,16 +313,26 @@ class CreateBastProject extends CreateRecord
                                         'status_port' => 'idle',
                                     ]
                                 );
-                            }else if ($existing->status === 'used') {
+                            }
+                            elseif ($existing->status_port === 'used') {
                                 // return [
                                 //     'action' => 'skip',
                                 //     'message' => "Data sudah digunakan, tidak boleh update."
                                 // ];
-                            }elseif ($existing->status === 'idle') {
-                                $existing->update([
-                                    'bast_id'   => $bastId,
-                                    'po_number' => $record->po_number,
-                                ]);
+                            }else
+                            if ($existing->status_port === 'idle') {
+                                 $existing = HomeConnect::updateOrCreate(
+                                    [
+                                        'odp_name'   => $odp,
+                                        'port_odp'   => $portIndex,
+                                    ],
+                                    [
+                                        'bast_id'     => $record->bast_id,
+                                        'po_number'   => $record->po_number,
+                                        'site'        => $record->site,
+                                        'status_port' => 'idle',
+                                    ]
+                                );
                             }
                         }
                     }
