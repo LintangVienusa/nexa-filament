@@ -46,11 +46,26 @@ class ListPoleDetails extends ListRecords
 
     protected function getTableQuery(): Builder
     {
-        return PoleDetail::on('mysql_inventory')
-            ->with('bastProject')
-            ->when($this->bast_id, fn ($query) =>
-                $query->where('bast_id', $this->bast_id)
-            );
+        // return PoleDetail::on('mysql_inventory')
+        //     ->with('bastProject')
+        //     ->when($this->bast_id, fn ($query) =>
+        //         $query->where('bast_id', $this->bast_id)
+        //     );
+
+        $sub = PoleDetail::selectRaw('bast_id,pole_sn, MAX(progress_percentage) as max_progress')
+            ->groupBy( 'bast_id','pole_sn');
+
+        return PoleDetail::query()
+            ->join('BastProject', 'PoleDetail.bast_id', '=', 'BastProject.bast_id')
+            ->joinSub($sub, 't', function ($join) {
+                $join->on('t.bast_id', '=', 'PoleDetail.bast_id')
+                ->on('t.pole_sn', '=', 'PoleDetail.pole_sn');
+            })
+            ->when($this->bast_id, fn($query) => 
+                $query->where('BastProject.bast_id', $this->bast_id)
+            )
+            ->whereColumn('PoleDetail.progress_percentage', 't.max_progress')
+            ->select('PoleDetail.*', 'BastProject.bast_id','BastProject.Site', 't.max_progress');
     }
 
     protected function getHeaderActions(): array
