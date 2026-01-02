@@ -175,13 +175,13 @@ class CreateBastProject extends CreateRecord
         $purchaseOrder = PurchaseOrder::where('po_number', $record->po_number)->first();
         $totaltarget = $purchaseOrder?->total_target ?? null;
         if ($totaltarget == 512) {
-            $jpole = 100;
-            $jodp = 64;
-            $jodc = 16;
+            $jpole = 101;
+            $jodp = 65;
+            $jodc = 17;
         } elseif ($totaltarget == 5120) {
-            $jpole = 1000;
-            $jodp = 640;
-            $jodc = 160;
+            $jpole = 1001;
+            $jodp = 641;
+            $jodc = 161;
         } else {
             $jpole = $totaltarget;
             $jodp = $totaltarget;
