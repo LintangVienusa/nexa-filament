@@ -11,6 +11,12 @@ use App\Services\HariKerjaService;
 
 class AttendanceStatusWidget extends BaseWidget
 {
+    public  static function canView(): bool
+    {
+        
+        $employee = Auth::user()->employee;
+        return $employee->employee_type !== 'mitra';
+    }
      protected function getStats(): array
     {
         $today = Carbon::now('Asia/Jakarta');
@@ -18,16 +24,16 @@ class AttendanceStatusWidget extends BaseWidget
         $employeeId = $employee?->employee_id;
 
         
-        if ($today->day >= 28) {
-            $startPeriod = $today->copy()->day(28)->startOfDay();
-            $endPeriod = $today->copy()->addMonthNoOverflow()->day(27)->endOfDay();
+        if ($today->day >= 5) {
+            $startPeriod = $today->copy()->day(5)->startOfDay();
+            $endPeriod = $today->copy()->addMonthNoOverflow()->day(4)->endOfDay();
         } else {
-            $startPeriod = $today->copy()->subMonthNoOverflow()->day(28)->startOfDay();
+            $startPeriod = $today->copy()->subMonthNoOverflow()->day(5)->startOfDay();
 
-            if ($today->day < 27) {
+            if ($today->day < 4) {
                 $endPeriod = $today->copy()->endOfDay();
             } else {
-                $endPeriod = $today->copy()->day(27)->endOfDay();
+                $endPeriod = $today->copy()->day(4)->endOfDay();
             }
         }
 

@@ -12,9 +12,14 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Spatie\Permission\Traits\HasPermissions;
+use App\Traits\HasOwnRecordPolicy;
+use App\Traits\HasNavigationPolicy;
 
 class MappingRegionResource extends Resource
 {
+    
+    use HasPermissions, HasOwnRecordPolicy, HasNavigationPolicy;
     protected static ?string $model = MappingRegion::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-map-pin';

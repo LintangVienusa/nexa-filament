@@ -13,11 +13,20 @@ use Filament\Tables\Filters\Filter;
 use Filament\Forms;
 use Illuminate\Support\Facades\DB;
 use Filament\Tables\Filters\SelectFilter;
+use Illuminate\Support\Facades\Auth;
 
 class ReportAttendanceWidget extends BaseWidget
 {
     protected static ?string $heading = 'Report Attendance';
     protected int | string | array $columnSpan = 'full';
+
+    public  static function canView(): bool
+    {
+        
+        $user = Auth::user()->setConnection('mysql');
+        $tipeEmployee = $user->employee?->employee_type;
+        return $tipeEmployee !== 'mitra';
+    }
 
     public ?int $bulan = null;
     public ?int $tahun = null;
@@ -164,10 +173,10 @@ class ReportAttendanceWidget extends BaseWidget
 
     private function getPeriodeLabel(): string
     {
-        $start = Carbon::create($this->tahun, $this->bulan, 28)
+        $start = Carbon::create($this->tahun, $this->bulan, 5)
             ->subMonthNoOverflow()
             ->startOfDay();
-        $end = Carbon::create($this->tahun, $this->bulan, 27)
+        $end = Carbon::create($this->tahun, $this->bulan, 4)
             ->endOfDay();
 
         return "{$start->format('d M Y')} - {$end->format('d M Y')}";
@@ -186,11 +195,11 @@ class ReportAttendanceWidget extends BaseWidget
 
         $start = Carbon::create($tahun, $bulan, 1, 0, 0, 0, 'Asia/Jakarta')
             ->subMonthNoOverflow()
-            ->day(28)
+            ->day(5)
             ->startOfDay()
             ->toDateString();
 
-        $end = Carbon::create($tahun, $bulan, 27, 0, 0, 0, 'Asia/Jakarta')
+        $end = Carbon::create($tahun, $bulan, 4, 0, 0, 0, 'Asia/Jakarta')
             ->endOfDay()
             ->toDateString();
 
