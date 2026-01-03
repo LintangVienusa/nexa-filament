@@ -14,6 +14,7 @@ trait HasNavigationPolicy
         $user = Auth::user()->setConnection('mysql');
         $hasRole = $user->setConnection('mysql')->hasRole('employee');
         $jobTitle = $user->employee?->job_title;
+        $tipeEmployee = $user->employee?->employee_type;
         $unitName = strtoupper($user->employee?->organization?->unit_name ?? '');
         
         // \Log::info('shouldRegisterNavigation called for '.static::class, [
@@ -27,11 +28,40 @@ trait HasNavigationPolicy
         }
 
         if ($user->hasAnyRole(['superadmin','admin'])) {
-            return true;
+            if ($tipeEmployee === 'mitra') {
+                $resourceClass = static::class;
+                $allowedResources = [
+                        \App\Filament\Resources\HomeConnectReportResource::class,
+                    ];
+                    
+                    return in_array($resourceClass, $allowedResources);
+            }else{
+                return true;
+            }
+            
+
         }
 
         if (in_array($jobTitle, ['CEO','CTO'])) {
-            return true;
+           if ($tipeEmployee === 'mitra') {
+                $resourceClass = static::class;
+                $allowedResources = [
+                        \App\Filament\Resources\HomeConnectReportResource::class,
+                    ];
+                    
+                    return in_array($resourceClass, $allowedResources);
+            }else{
+                return true;
+            }
+        }
+
+        if ($tipeEmployee === 'mitra') {
+            $resourceClass = static::class;
+            $allowedResources = [
+                    \App\Filament\Resources\HomeConnectReportResource::class,
+                ];
+                
+                return in_array($resourceClass, $allowedResources);
         }
 
         if (in_array($jobTitle, ['VP','Manager','SPV'])) {
@@ -48,6 +78,7 @@ trait HasNavigationPolicy
                     \App\Filament\Resources\LeaveResource::class,
                     \App\Filament\Resources\ProfileResource::class,
                     \App\Filament\Resources\UserResource::class,
+                    \App\Filament\Resources\MappingRegionResource::class,
                 ];
 
                 return in_array($resourceClass, $allowedResources);
@@ -72,12 +103,22 @@ trait HasNavigationPolicy
                     \App\Filament\Resources\ProfileResource::class,
                     \App\Filament\Resources\LeaveResource::class,
                     \App\Filament\Resources\UserResource::class,
+                    \App\Filament\Resources\MappingRegionResource::class,
             ];
 
             return in_array($resourceClass, $allowedResources);
         }
 
         if ($jobTitle === 'Staff' || $user->hasRole('employee')) {
+            if ($tipeEmployee === 'mitra') {
+                $resourceClass = static::class;
+                $allowedResources = [
+                        \App\Filament\Resources\HomeConnectReportResource::class,
+                    ];
+                    
+                    return in_array($resourceClass, $allowedResources);
+            }
+
             if ($unitName === 'TECHNICIAN') {
                 $resourceClass = static::class;
 
@@ -90,6 +131,7 @@ trait HasNavigationPolicy
                     \App\Filament\Resources\LeaveResource::class,
                     \App\Filament\Resources\ProfileResource::class,
                     \App\Filament\Resources\UserResource::class,
+                    \App\Filament\Resources\MappingRegionResource::class,
                 ];
 
                 return in_array($resourceClass, $allowedResources);
@@ -107,6 +149,7 @@ trait HasNavigationPolicy
                     \App\Filament\Resources\LeaveResource::class,
                     \App\Filament\Resources\ProfileResource::class,
                     \App\Filament\Resources\UserResource::class,
+                    \App\Filament\Resources\MappingRegionResource::class,
                 ];
 
                 return in_array($resourceClass, $allowedResources);

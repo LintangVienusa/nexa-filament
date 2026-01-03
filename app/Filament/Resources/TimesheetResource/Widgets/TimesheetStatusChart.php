@@ -4,11 +4,19 @@ namespace App\Filament\Resources\TimesheetResource\Widgets;
 
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
+use Illuminate\Support\Facades\Auth;
 use App\Models\Timesheet;
 use Carbon\Carbon;
 
 class TimesheetStatusChart extends BaseWidget
 {
+    public  static function canView(): bool
+    {
+        
+        $employee = Auth::user()->employee;
+        return $employee->employee_type !== 'mitra';
+    }
+
     protected function getHeading(): ?string
     {
         $bulan = Carbon::now()->translatedFormat('F Y');

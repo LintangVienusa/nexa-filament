@@ -43,13 +43,14 @@ class ListOdcDetails extends ListRecords
 
     protected function getTableQuery(): Builder
     {
-        $sub = ODCDetail::selectRaw('odc_name, MAX(progress_percentage) as max_progress')
+        $sub = ODCDetail::selectRaw('bast_id,odc_name, MAX(progress_percentage) as max_progress')
             ->groupBy( 'bast_id','odc_name');
 
         return ODCDetail::query()
             ->join('BastProject', 'ODCDetail.bast_id', '=', 'BastProject.bast_id')
             ->joinSub($sub, 't', function ($join) {
-                $join->on('t.odc_name', '=', 'ODCDetail.odc_name');
+                $join->on('t.bast_id', '=', 'ODCDetail.bast_id')
+                ->on('t.odc_name', '=', 'ODCDetail.odc_name');
             })
             ->when($this->bast_id, fn($query) => 
                 $query->where('BastProject.bast_id', $this->bast_id)

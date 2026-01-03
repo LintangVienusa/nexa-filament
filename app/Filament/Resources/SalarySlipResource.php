@@ -391,11 +391,11 @@ class SalarySlipResource extends Resource
 
                             Forms\Components\DatePicker::make('start_date')
                                 ->label('Start Date')
-                                ->default(fn () => now()->subMonthNoOverflow()->day(28)->startOfDay()->toDateString())
+                                ->default(fn () => now()->subMonthNoOverflow()->day(5)->startOfDay()->toDateString())
                                 ->afterStateHydrated(function (callable $set, $record) {
                                     if ($record?->periode) {
                                         $periode = Carbon::createFromFormat('F Y', $record->periode);
-                                        $set('start_date', $periode->copy()->subMonthNoOverflow()->day(28)->toDateString());
+                                        $set('start_date', $periode->copy()->subMonthNoOverflow()->day(5)->toDateString());
                                     }
                                 })
                                 ->disabled()
@@ -404,11 +404,11 @@ class SalarySlipResource extends Resource
 
                             Forms\Components\DatePicker::make('cut_off')
                                 ->label('Cut Off Date')
-                                ->default(fn () => now()->day(27)->endOfDay()->toDateString())
+                                ->default(fn () => now()->day(4)->endOfDay()->toDateString())
                                 ->afterStateHydrated(function (callable $set, $record) {
                                     if ($record?->periode) {
                                         $periode = Carbon::createFromFormat('F Y', $record->periode);
-                                        $set('cut_off', $periode->copy()->day(27)->toDateString());
+                                        $set('cut_off', $periode->copy()->day(4)->toDateString());
                                     }
                                 })
                                 ->disabled()

@@ -7,6 +7,7 @@ use App\Models\Timesheet;
 use Guava\Calendar\Widgets\CalendarWidget;
 use Illuminate\Support\Collection;
 use App\Models\Timesheets;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Builder;
 use Guava\Calendar\ValueObjects\CalendarEvent;
 use Guava\Calendar\ValueObjects\FetchInfo;
@@ -19,6 +20,13 @@ class TimesheetCalenderWidget extends CalendarWidget
     use InteractsWithForms;
     public ?string $search = null;
     // protected static string $view = 'filament.widgets.timesheet-calender-widget';
+    public  static function canView(): bool
+    {
+        
+        $employee = Auth::user()->employee;
+        return $employee->employee_type !== 'mitra';
+    }
+
     public function mount(): void
     {
         $this->form->fill([

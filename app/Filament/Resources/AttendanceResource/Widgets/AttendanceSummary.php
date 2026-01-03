@@ -12,6 +12,7 @@ use App\Services\HariKerjaService;
 
 class AttendanceSummary extends BaseWidget
 {
+    
     protected static bool $isLazy = false;
     protected static ?string $pollingInterval = null;
     
@@ -34,14 +35,14 @@ class AttendanceSummary extends BaseWidget
         $employeeId = $employee?->employee_id;
 
         // $total = Attendance::where('employee_id', $employeeId)->count();
-        // $startPeriod = Carbon::create(2025, 9, 28)->startOfDay();
-        // $endPeriod = Carbon::create(2025, 10, 27)->endOfDay();
-        if ($todayf->day >= 28) {
-            $startPeriod = $todayf->copy()->day(28)->startOfDay();
-            $endPeriod = $todayf->copy()->addMonthNoOverflow()->day(27)->endOfDay();
+        // $startPeriod = Carbon::create(2025, 9, 5)->startOfDay();
+        // $endPeriod = Carbon::create(2025, 10, 4)->endOfDay();
+        if ($todayf->day >= 5) {
+            $startPeriod = $todayf->copy()->day(5)->startOfDay();
+            $endPeriod = $todayf->copy()->addMonthNoOverflow()->day(4)->endOfDay();
         } else {
-            $startPeriod = $todayf->copy()->subMonthNoOverflow()->day(28)->startOfDay();
-            $endPeriod = $todayf->copy()->day(27)->endOfDay();
+            $startPeriod = $todayf->copy()->subMonthNoOverflow()->day(5)->startOfDay();
+            $endPeriod = $todayf->copy()->day(4)->endOfDay();
         }
         $periodName = $startPeriod->format('d M') . ' - ' . $endPeriod->format('d M');
 

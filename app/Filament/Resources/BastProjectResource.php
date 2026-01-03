@@ -38,9 +38,15 @@ use Filament\Tables\Filters\DateFilter;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Columns\ColumnGroup;
 use Illuminate\Support\Facades\DB;
+use App\Traits\HasOwnRecordPolicy;
+use Spatie\Permission\Traits\HasPermissions;
+use App\Traits\HasNavigationPolicy;
+
 
 class BastProjectResource extends Resource
 {
+    
+    use HasPermissions, HasOwnRecordPolicy, HasNavigationPolicy;
     protected static ?string $model = BastProject::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
