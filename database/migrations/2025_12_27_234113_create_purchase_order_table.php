@@ -26,7 +26,7 @@ return new class extends Migration
                 $table->string('vendor');
                 $table->string('pic_name');
                 $table->string('pic_mobile_no');
-                $table->string('pic_email');
+                $table->string('pic_email')->nullable();
                 $table->string('po_status')->default('Draft');
                 $table->string('payment_terms');
                 $table->timestamps();

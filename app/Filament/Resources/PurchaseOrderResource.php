@@ -35,15 +35,15 @@ class PurchaseOrderResource extends Resource
             ->schema([
                 Section::make('Purchase Order Info')
                     ->schema([
-                        TextInput::make('po_number') 
-                                ->label('No Purchase Order') 
-                                ->required() 
-                                ->unique(ignoreRecord: true)
-                                ->validationMessages([
-                                    'unique' => 'Nomor PO sudah digunakan, silakan inputkan ulang PO yang belum digunakan.',
-                                ])
-                                ->maxLength(50) 
-                                ->disabledOn('edit'),
+                        TextInput::make('po_number')
+                            ->label('No Purchase Order')
+                            ->required()
+                            ->unique(ignoreRecord: true)
+                            ->validationMessages([
+                                'unique' => 'Nomor PO sudah digunakan, silakan inputkan ulang PO yang belum digunakan.',
+                            ])
+                            ->maxLength(50)
+                            ->disabledOn('edit'),
 
                         DatePicker::make('order_date')
                             ->default(now())
@@ -71,12 +71,12 @@ class PurchaseOrderResource extends Resource
                         Select::make('site_name')
                             ->label('Nama Site')
                             ->searchable()
-                            ->options(fn () => MappingRegion::pluck('station_name', 'station_name'))
+                            ->options(fn() => MappingRegion::pluck('station_name', 'station_name'))
                             ->required()
-                            ->dehydrateStateUsing(fn ($state) => $state) 
-                            ->dehydrated(fn ($state) => filled($state)) 
+                            ->dehydrateStateUsing(fn($state) => $state)
+                            ->dehydrated(fn($state) => filled($state))
                             ->afterStateHydrated(function ($component, $state, $record) {
-                                $component->state($record?->site_name); 
+                                $component->state($record?->site_name);
                             }),
                         Select::make('kecamatan')
                             ->label('Kecamatan')
@@ -91,10 +91,8 @@ class PurchaseOrderResource extends Resource
                         Select::make('job_type')
                             ->label('Jenis Pekerjaan')
                             ->options([
-                                'infrastruktur' => 'Infrastruktur',
-                                'homepass' => 'Homepass',
-                                'home_connect' => 'Home Connect',
-                                'managed_service' => 'Managed Service',
+                                'homepass' => 'Infrastruktur / Homepass',
+                                'home_connect' => 'Home Connect / Managed Service',
                             ])
                             ->required(),
 
@@ -120,8 +118,8 @@ class PurchaseOrderResource extends Resource
                         TextInput::make('pic_mobile_no')
                             ->label('No. HP PIC')
                             ->required()
-                            ->maxLength(15) 
-                            ->rule('regex:/^[0-9]+$/') 
+                            ->maxLength(15)
+                            ->rule('regex:/^[0-9]+$/')
                             ->placeholder('081234567890')
                             ->mask('999999999999999'),
                         TextInput::make('pic_email')

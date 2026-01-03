@@ -12,7 +12,7 @@ use App\Models\ODPDetail;
 use App\Models\FeederDetail;
 use App\Models\PoleDetail;
 use App\Models\HomeConnect;
-use App\Models\Purchaseorder;
+use App\Models\PurchaseOrder;
 use Illuminate\Support\Facades\Auth;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -48,7 +48,6 @@ class BastProjectResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-        
             ->defaultSort('updated_at', 'desc')
             ->columns([
                 TextColumn::make('province_name')
@@ -83,7 +82,7 @@ class BastProjectResource extends Resource
                     TextColumn::make('pole_count')
                         ->label('Tiang')
                         ->getStateUsing(function ($record) {
-                             $total = DB::connection('mysql_inventory')->table(DB::raw("
+                            $total = DB::connection('mysql_inventory')->table(DB::raw("
                                     ( SELECT bast_id, pole_sn  FROM PoleDetail
                                     WHERE bast_id = '{$record->bast_id}'
                                     GROUP BY bast_id, pole_sn ) as a
@@ -103,9 +102,9 @@ class BastProjectResource extends Resource
                     TextColumn::make('odc_count')
                         ->label('ODC')
                         ->getStateUsing(function ($record) {
-                           
 
-                             $total = DB::connection('mysql_inventory')->table(DB::raw("
+
+                            $total = DB::connection('mysql_inventory')->table(DB::raw("
                                     ( SELECT bast_id, odc_name  FROM ODCDetail
                                     WHERE bast_id = '{$record->bast_id}'
                                     GROUP BY bast_id, odc_name ) as a
@@ -126,8 +125,8 @@ class BastProjectResource extends Resource
                     TextColumn::make('odp_count')
                         ->label('ODP')
                         ->getStateUsing(function ($record) {
-                            
-                             $total = DB::connection('mysql_inventory')->table(DB::raw("
+
+                            $total = DB::connection('mysql_inventory')->table(DB::raw("
                                     ( SELECT bast_id, odp_name  FROM ODPDetail
                                     WHERE bast_id = '{$record->bast_id}'
                                     GROUP BY bast_id, odp_name ) as a
@@ -148,9 +147,9 @@ class BastProjectResource extends Resource
                     TextColumn::make('feeder')
                         ->label('Feeder')
                         ->getStateUsing(function ($record) {
-                            
 
-                             $total = DB::connection('mysql_inventory')->table(DB::raw("
+
+                            $total = DB::connection('mysql_inventory')->table(DB::raw("
                                     ( SELECT bast_id, feeder_name  FROM FeederDetail
                                     WHERE bast_id = '{$record->bast_id}'
                                     GROUP BY bast_id, feeder_name ) as a
@@ -325,9 +324,9 @@ class BastProjectResource extends Resource
                     ->schema([
 
                         TextInput::make('site')
-                                ->maxLength(255)
-                                ->reactive()
-                                ->required(),
+                            ->maxLength(255)
+                            ->reactive()
+                            ->required(),
                         Hidden::make('bast_id')
                             ->label('BAST ID')
                             ->unique(ignoreRecord: true)
@@ -343,16 +342,16 @@ class BastProjectResource extends Resource
 
                                 if (!$village_name) return [];
                                 $usedPo = BastProject::whereNotNull('po_number')->where('village_name', $village_name)
-                                            ->pluck('po_number');
+                                    ->pluck('po_number');
 
-                                return Purchaseorder::where('kecamatan', $village_name)->whereNotIn('po_number', $usedPo)
+                                return PurchaseOrder::where('kecamatan', $village_name)->whereNotIn('po_number', $usedPo)
                                     ->pluck('po_number', 'po_number');
                             })
                             ->required()
-                            ->dehydrateStateUsing(fn ($state) => $state) 
-                            ->dehydrated(fn ($state) => filled($state)) 
+                            ->dehydrateStateUsing(fn($state) => $state)
+                            ->dehydrated(fn($state) => filled($state))
                             ->afterStateHydrated(function ($component, $state, $record) {
-                                $component->state($record?->po_number); 
+                                $component->state($record?->po_number);
                             }),
                         Textarea::make('project_name')->required()->maxLength(255),
                         Select::make('PIC')

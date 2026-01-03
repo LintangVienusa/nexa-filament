@@ -19,11 +19,12 @@ use Illuminate\Validation\ValidationException;
 use App\Services\FormulaValueBinderService;
 use Maatwebsite\Excel\Concerns\WithCustomValueBinder;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use Throwable;
 
 class CreateBastProject extends CreateRecord
 {
-    protected bool $excelValid = true;
     protected static string $resource = BastProjectResource::class;
+    protected bool $excelValid = true;
 
     protected function beforeValidate(): void
     {
@@ -46,9 +47,8 @@ class CreateBastProject extends CreateRecord
                     ]);
                 }
 
-                // $sheet = Excel::toArray([], $path)[0] ?? [];
                 $sheet = Excel::toArray(new FormulaValueBinderService, $path)[0] ?? [];
-                
+
 
                 if (empty($sheet) || empty($sheet[0][0]) || strtoupper(trim($sheet[0][0])) !== 'NO_TIANG') {
                     Notification::make()
@@ -62,7 +62,6 @@ class CreateBastProject extends CreateRecord
                     ]);
                 }
 
-                
 
             }
 
@@ -81,15 +80,12 @@ class CreateBastProject extends CreateRecord
                     ]);
                 }
 
-                // $sheet = Excel::toArray([], $path)[0] ?? [];
-                // $sheet = Excel::toArray(new \App\Imports\SimpleArrayImport, $path)[0] ?? [];
-                
                 $sheet = Excel::toArray(new FormulaValueBinderService, $path)[0] ?? [];
 
                 $header = array_map('strtoupper', array_map('trim', $sheet[0] ?? []));
-                $expectedHeaders = ['TIANG','ODP', 'ODC', 'FEEDER'];
+                $expectedHeaders = ['TIANG', 'ODP', 'ODC', 'FEEDER'];
 
-                if (!in_array('TIANG', $header)  && !in_array('ODP', $header)  && !in_array('ODC', $header)  && !in_array('FEEDER', $header)) {
+                if (!in_array('TIANG', $header) && !in_array('ODP', $header) && !in_array('ODC', $header) && !in_array('FEEDER', $header)) {
                     Notification::make()
                         ->title('Format Excel Tiang/Feeder/ODC/ODP salah')
                         ->body('Pastikan file memiliki kolom ODP, ODC, dan FEEDER.')
@@ -99,11 +95,7 @@ class CreateBastProject extends CreateRecord
                     throw ValidationException::withMessages([
                         'list_feeder_odc_odp' => 'Format Excel Tiang/Feeder/ODC/ODP salah.',
                     ]);
-
-                    
                 }
-
-                 
             }
         }
 
@@ -152,7 +144,7 @@ class CreateBastProject extends CreateRecord
                     ]);
                 }
 
-            } catch (\Throwable $th) {
+            } catch (Throwable $th) {
                 Notification::make()
                     ->title('Gagal membaca file')
                     ->body('Pastikan file Excel tidak rusak.')
@@ -171,228 +163,220 @@ class CreateBastProject extends CreateRecord
         return $this->getResource()::getUrl('index');
     }
 
-    
 
-   protected function afterCreate(): void
+    protected function afterCreate(): void
     {
-         if ($this->excelValid === false) {
+        if ($this->excelValid === false) {
             return;
         }
 
-         $record = $this->record;
+        $record = $this->record;
 
-         $purchaseOrder = PurchaseOrder::where('po_number', $record->po_number)->first();
-         $totaltarget = $purchaseOrder?->total_target ?? null; 
-            if($totaltarget == 512){
-                $jpole = 100;
-                $jodp = 64;
-                $jodc = 16;
-            }elseif($totaltarget == 5120){
-                $jpole = 1000;
-                $jodp = 640;
-                $jodc = 160;
-            }else{
-                $jpole = $totaltarget;
-                $jodp = $totaltarget;
-                $jodc = $totaltarget;
-            }
+        $purchaseOrder = PurchaseOrder::where('po_number', $record->po_number)->first();
+        $totaltarget = $purchaseOrder?->total_target ?? null;
+        if ($totaltarget == 512) {
+            $jpole = 101;
+            $jodp = 64;
+            $jodc = 16;
+        } elseif ($totaltarget == 5120) {
+            $jpole = 1001;
+            $jodp = 640;
+            $jodc = 160;
+        } else {
+            $jpole = $totaltarget;
+            $jodp = $totaltarget;
+            $jodc = $totaltarget;
+        }
 
 
-            if ($record->pass === 'HOMEPASS' && $record->list_pole) {
+        if ($record->pass === 'HOMEPASS' && $record->list_pole) {
 
-                 $path = storage_path('app/public/' . $record->list_pole);
+            $path = storage_path('app/public/' . $record->list_pole);
 
-                if (!file_exists($path)) return;
+            if (!file_exists($path)) return;
 
-                // $sheet = Excel::toArray([], $path)[0] ?? [];
-                $sheet = Excel::toArray(new FormulaValueBinderService, $path)[0] ?? [];
-                $spreadsheet = IOFactory::load($path);
-                $sheetExcel = $spreadsheet->getActiveSheet();
-                $startNumber = 1; 
-                $counter = 0;
-                $validPoleList = [];
+            // $sheet = Excel::toArray([], $path)[0] ?? [];
+            $sheet = Excel::toArray(new FormulaValueBinderService, $path)[0] ?? [];
+            $spreadsheet = IOFactory::load($path);
+            $sheetExcel = $spreadsheet->getActiveSheet();
+            $startNumber = 1;
+            $counter = 0;
+            $validPoleList = [];
 
-                // for ($i = 1; $i <= $sheetExcel->getHighestRow(); $i++) {
-                for ($i = 1; $i <= $jpole; $i++) {
-                    $cell = $sheetExcel->getCell('A' . $i);
+            // for ($i = 1; $i <= $sheetExcel->getHighestRow(); $i++) {
+            for ($i = 1; $i <= $jpole; $i++) {
+                $cell = $sheetExcel->getCell('A' . $i);
 
-                        $poleSn = $cell->getCalculatedValue(); 
-                    // foreach ($sheet as $index => $row) {
-                        if (empty($poleSn) || strtoupper(trim($poleSn)) === 'NO_TIANG') continue;
+                $poleSn = $cell->getCalculatedValue();
+                // foreach ($sheet as $index => $row) {
+                if (empty($poleSn) || strtoupper(trim($poleSn)) === 'NO_TIANG') continue;
 
-                        
 
-                        PoleDetail::create([
-                            'site' => $record->site,
-                            'bast_id' => $record->bast_id,
-                            'pole_sn' => $poleSn,
-                        ]);
-                    }
-
-            }
-
-             if ($record->pass === 'HOMEPASS' && $record->list_feeder_odc_odp) {
-
-                 $path = storage_path('app/public/' . $record->list_feeder_odc_odp);
-
-                if (!file_exists($path)) return;
-                $nodc=1;
-                $nodp=1;
-                // $sheet = Excel::toArray([], $path)[0] ?? [];
-                
-                $sheet = Excel::toArray(new FormulaValueBinderService, $path)[0] ?? [];
-
-                $spreadsheet = IOFactory::load($path);
-                $sheetExcel = $spreadsheet->getActiveSheet();
-
-                $validPoleList = [];
-
-                for ($rowIndex = 2; $rowIndex <= $sheetExcel->getHighestRow(); $rowIndex++) {
-                    $cellp = $sheetExcel->getCell('A' . $rowIndex);
-                    $cellodp = $sheetExcel->getCell('B' . $rowIndex);
-                    $cellodc = $sheetExcel->getCell('C' . $rowIndex);
-                    $cellf = $sheetExcel->getCell('D' . $rowIndex);
-
-                    $pole   = trim($cellp->getCalculatedValue());
-                    $odp    = trim($cellodp->getCalculatedValue());
-                    $odc    = trim($cellodc->getCalculatedValue());
-                    $feeder = trim($cellf->getCalculatedValue());
-
-                    if ($feeder === '' && $odc === '' && $odp === '' && $pole === '') continue;
-                    if (strtoupper($feeder) === 'FEEDER' || strtoupper($odc) === 'ODC' || strtoupper($odp) === 'ODP') continue;
-
-                    $validPoleList[] = $pole;
-
-                    // Update or create Feeder
-                    if ($feeder !== '' ) {
-                        FeederDetail::updateOrCreate([
-                            'site' => $record->site,
-                            'bast_id' => $record->bast_id,
-                            'feeder_name' => $feeder,
-                        ]);
-                    }
-
-                    // Update or create ODC
-                    if ($odc !== '' && $nodc <= $jodc) {
-                        ODCDetail::updateOrCreate([
-                            'site' => $record->site,
-                            'bast_id' => $record->bast_id,
-                            'feeder_name' => $feeder,
-                            'odc_name' => $odc,
-                        ]);
-                        $nodc++;
-                    }
-
-                    // Update or create ODP
-                    if ($odp !== '' && $nodp <= $jodc) {
-                        ODPDetail::updateOrCreate([
-                            'site' => $record->site,
-                            'bast_id' => $record->bast_id,
-                            'odc_name' => $odc,
-                            'odp_name' => $odp,
-                        ]);
-                        
-                        $nodp++;
-
-                        // Buat 8 port HomeConnect
-                        for ($portIndex = 1; $portIndex <= 8; $portIndex++) {
-                            
-                            $existing = HomeConnect::where('odp_name', $odp)
-                                            ->where('port_odp',$portIndex)
-                                            ->first();
-                            if (!$existing) {
-                                HomeConnect::updateOrCreate(
-                                    [
-                                        'bast_id'  => $record->bast_id,
-                                        'po_number' => $record->po_number,
-                                        'odp_name' => $odp,
-                                        'port_odp' => $portIndex,
-                                    ],
-                                    [
-                                        'site'        => $record->site,
-                                        'status_port' => 'idle',
-                                    ]
-                                );
-                            }
-                            elseif ($existing->status_port === 'used') {
-                                // return [
-                                //     'action' => 'skip',
-                                //     'message' => "Data sudah digunakan, tidak boleh update."
-                                // ];
-                            }else
-                            if ($existing->status_port === 'idle') {
-                                 $existing = HomeConnect::updateOrCreate(
-                                    [
-                                        'odp_name'   => $odp,
-                                        'port_odp'   => $portIndex,
-                                    ],
-                                    [
-                                        'bast_id'     => $record->bast_id,
-                                        'po_number'   => $record->po_number,
-                                        'site'        => $record->site,
-                                        'status_port' => 'idle',
-                                    ]
-                                );
-                            }
-                        }
-                    }
-
-                    // MappingHomepass
-                    MappingHomepass::updateOrCreate(
-                        [
-                            'pole' => $pole,
-                            'ODC'  => $odc,
-                            'ODP'  => $odp,
-                        ],
-                        [
-                            'province_name' => $record->province_name,
-                            'regency_name'  => $record->regency_name,
-                            'village_name'  => $record->village_name,
-                            'station_name'  => $record->station_name,
-                            'site'          => $record->site,
-                            'feeder_name'   => $feeder,
-                            'created_at'    => now(),
-                            'updated_at'    => now(),
-                        ]
-                    );
-                }
-
-            }
-
-            if ($record->pass === 'HOMECONNECT' && !empty($record->list_homeconnect)) {
-
-                $path = storage_path('app/public/' . $record->list_homeconnect);
-
-                if (file_exists($path)) {
-                    $sheet = Excel::toArray([], $path)[0] ?? [];
-
-                    foreach ($sheet as $index => $row) {
-                        if ($index === 0 || empty($row[0])) continue;
-
-                        
-
-                        HomeConnect::create([
-                            'site' => $record->site,
-                            'bast_id'        => $record->bast_id,
-                            'po_number'        => $record->po_number,
-                            'id_pelanggan'   => trim($row[0] ?? ''),
-                            'name_pelanggan' => trim($row[1] ?? ''),
-                            'odp_name'       => trim($row[2] ?? ''),
-                            'sn_ont'         => trim($row[3] ?? ''),
-                        ]);
-
-                        
-                    }
-
-                    Notification::make()
-                        ->title('Data berhasil diimport dari Excel')
-                        ->success()
-                        ->send();
-                }
-            }elseif($record->pass === 'HOMECONNECT') {
-                HomeConnect::create([
+                PoleDetail::create([
+                    'site' => $record->site,
                     'bast_id' => $record->bast_id,
+                    'pole_sn' => $poleSn,
                 ]);
             }
+
+        }
+
+        if ($record->pass === 'HOMEPASS' && $record->list_feeder_odc_odp) {
+
+            $path = storage_path('app/public/' . $record->list_feeder_odc_odp);
+
+            if (!file_exists($path)) return;
+            $nodc = 1;
+            $nodp = 1;
+            // $sheet = Excel::toArray([], $path)[0] ?? [];
+
+            $sheet = Excel::toArray(new FormulaValueBinderService, $path)[0] ?? [];
+
+            $spreadsheet = IOFactory::load($path);
+            $sheetExcel = $spreadsheet->getActiveSheet();
+
+            $validPoleList = [];
+
+            for ($rowIndex = 2; $rowIndex <= $sheetExcel->getHighestRow(); $rowIndex++) {
+                $cellp = $sheetExcel->getCell('A' . $rowIndex);
+                $cellodp = $sheetExcel->getCell('B' . $rowIndex);
+                $cellodc = $sheetExcel->getCell('C' . $rowIndex);
+                $cellf = $sheetExcel->getCell('D' . $rowIndex);
+
+                $pole = trim($cellp->getCalculatedValue());
+                $odp = trim($cellodp->getCalculatedValue());
+                $odc = trim($cellodc->getCalculatedValue());
+                $feeder = trim($cellf->getCalculatedValue());
+
+                if ($feeder === '' && $odc === '' && $odp === '' && $pole === '') continue;
+                if (strtoupper($feeder) === 'FEEDER' || strtoupper($odc) === 'ODC' || strtoupper($odp) === 'ODP') continue;
+
+                $validPoleList[] = $pole;
+
+                // Update or create Feeder
+                if ($feeder !== '') {
+                    FeederDetail::updateOrCreate([
+                        'site' => $record->site,
+                        'bast_id' => $record->bast_id,
+                        'feeder_name' => $feeder,
+                    ]);
+                }
+
+                // Update or create ODC
+                if ($odc !== '' && $nodc <= $jodc) {
+                    ODCDetail::updateOrCreate([
+                        'site' => $record->site,
+                        'bast_id' => $record->bast_id,
+                        'feeder_name' => $feeder,
+                        'odc_name' => $odc,
+                    ]);
+                    $nodc++;
+                }
+
+                // Update or create ODP
+                if ($odp !== '' && $nodp <= $jodc) {
+                    ODPDetail::updateOrCreate([
+                        'site' => $record->site,
+                        'bast_id' => $record->bast_id,
+                        'odc_name' => $odc,
+                        'odp_name' => $odp,
+                    ]);
+
+                    $nodp++;
+
+                    // Buat 8 port HomeConnect
+                    for ($portIndex = 1; $portIndex <= 8; $portIndex++) {
+
+                        $existing = HomeConnect::where('odp_name', $odp)
+                            ->where('port_odp', $portIndex)
+                            ->first();
+                        if (!$existing) {
+                            HomeConnect::updateOrCreate(
+                                [
+                                    'bast_id' => $record->bast_id,
+                                    'po_number' => $record->po_number,
+                                    'odp_name' => $odp,
+                                    'port_odp' => $portIndex,
+                                ],
+                                [
+                                    'site' => $record->site,
+                                    'status_port' => 'idle',
+                                ]
+                            );
+                        } elseif ($existing->status_port === 'used') {
+                            // do nothing
+                        } elseif ($existing->status_port === 'idle') {
+                            $existing = HomeConnect::updateOrCreate(
+                                [
+                                    'odp_name' => $odp,
+                                    'port_odp' => $portIndex,
+                                ],
+                                [
+                                    'bast_id' => $record->bast_id,
+                                    'po_number' => $record->po_number,
+                                    'site' => $record->site,
+                                    'status_port' => 'idle',
+                                ]
+                            );
+                        }
+                    }
+                }
+
+                // MappingHomepass
+                MappingHomepass::updateOrCreate(
+                    [
+                        'pole' => $pole,
+                        'ODC' => $odc,
+                        'ODP' => $odp,
+                    ],
+                    [
+                        'province_name' => $record->province_name,
+                        'regency_name' => $record->regency_name,
+                        'village_name' => $record->village_name,
+                        'station_name' => $record->station_name,
+                        'site' => $record->site,
+                        'feeder_name' => $feeder,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]
+                );
+            }
+
+        }
+
+        if ($record->pass === 'HOMECONNECT' && !empty($record->list_homeconnect)) {
+
+            $path = storage_path('app/public/' . $record->list_homeconnect);
+
+            if (file_exists($path)) {
+                $sheet = Excel::toArray([], $path)[0] ?? [];
+
+                foreach ($sheet as $index => $row) {
+                    if ($index === 0 || empty($row[0])) continue;
+
+
+                    HomeConnect::create([
+                        'site' => $record->site,
+                        'bast_id' => $record->bast_id,
+                        'po_number' => $record->po_number,
+                        'id_pelanggan' => trim($row[0] ?? ''),
+                        'name_pelanggan' => trim($row[1] ?? ''),
+                        'odp_name' => trim($row[2] ?? ''),
+                        'sn_ont' => trim($row[3] ?? ''),
+                    ]);
+
+
+                }
+
+                Notification::make()
+                    ->title('Data berhasil diimport dari Excel')
+                    ->success()
+                    ->send();
+            }
+        } elseif ($record->pass === 'HOMECONNECT') {
+            HomeConnect::create([
+                'bast_id' => $record->bast_id,
+            ]);
+        }
     }
 }
