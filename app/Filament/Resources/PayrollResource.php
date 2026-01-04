@@ -202,7 +202,7 @@ class PayrollResource extends Resource
         ->recordUrl(null)
             ->columns([
                 Split::make([
-                    TextColumn::make('employee_id'),
+                    TextColumn::make('employee_id')->searchable(),
                     TextColumn::make('employee.first_name')
                             ->label('Nama')
                             ->getStateUsing(fn($record) => $record->employee?->full_name ?? '-')

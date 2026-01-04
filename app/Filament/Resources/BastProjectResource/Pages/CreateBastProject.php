@@ -176,16 +176,16 @@ class CreateBastProject extends CreateRecord
         $totaltarget = $purchaseOrder?->total_target ?? null;
         if ($totaltarget == 512) {
             $jpole = 101;
-            $jodp = 65;
-            $jodc = 17;
+            $jodp = 64;
+            $jodc = 16;
         } elseif ($totaltarget == 5120) {
             $jpole = 1001;
-            $jodp = 641;
-            $jodc = 161;
+            $jodp = 640;
+            $jodc = 160;
         } else {
             $jpole = $totaltarget+1;
-            $jodp = $totaltarget+1;
-            $jodc = $totaltarget+1;
+            $jodp = $totaltarget;
+            $jodc = $totaltarget;
         }
 
 
