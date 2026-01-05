@@ -78,7 +78,7 @@ trait HasNavigationPolicy
                     \App\Filament\Resources\LeaveResource::class,
                     \App\Filament\Resources\ProfileResource::class,
                     \App\Filament\Resources\UserResource::class,
-                    \App\Filament\Resources\MappingRegionResource::class,
+                    // \App\Filament\Resources\MappingRegionResource::class,
                 ];
 
                 return in_array($resourceClass, $allowedResources);
@@ -103,7 +103,7 @@ trait HasNavigationPolicy
                     \App\Filament\Resources\ProfileResource::class,
                     \App\Filament\Resources\LeaveResource::class,
                     \App\Filament\Resources\UserResource::class,
-                    \App\Filament\Resources\MappingRegionResource::class,
+                    // \App\Filament\Resources\MappingRegionResource::class,
             ];
 
             return in_array($resourceClass, $allowedResources);
@@ -131,7 +131,7 @@ trait HasNavigationPolicy
                     \App\Filament\Resources\LeaveResource::class,
                     \App\Filament\Resources\ProfileResource::class,
                     \App\Filament\Resources\UserResource::class,
-                    \App\Filament\Resources\MappingRegionResource::class,
+                    // \App\Filament\Resources\MappingRegionResource::class,
                 ];
 
                 return in_array($resourceClass, $allowedResources);
@@ -149,7 +149,7 @@ trait HasNavigationPolicy
                     \App\Filament\Resources\LeaveResource::class,
                     \App\Filament\Resources\ProfileResource::class,
                     \App\Filament\Resources\UserResource::class,
-                    \App\Filament\Resources\MappingRegionResource::class,
+                    // \App\Filament\Resources\MappingRegionResource::class,
                 ];
 
                 return in_array($resourceClass, $allowedResources);
