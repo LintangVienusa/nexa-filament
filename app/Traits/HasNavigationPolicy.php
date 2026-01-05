@@ -4,9 +4,30 @@ namespace App\Traits;
 
 use Illuminate\Support\Facades\Auth;
 use Filament\Notifications\Notification;
+use Illuminate\Support\Str;
+use Spatie\Permission\Models\Role;
 
 trait HasNavigationPolicy
 {
+    protected static function hasReadPermission(): bool
+    {
+        $user = Auth::user();
+
+        if (! $user) {
+            return false;
+        }
+
+        $resourceName = class_basename(static::class);
+
+       $permission = Str::of($resourceName)
+            ->replaceLast('Resource', '')
+            ->snake()
+            ->lower()
+            ->append('.read')
+            ->toString();
+
+        return $user->can($permission);
+    }
 
     public static function shouldRegisterNavigation(): bool
     {
@@ -24,6 +45,13 @@ trait HasNavigationPolicy
         //         'roles' => $user->roles->pluck('name')->toArray(),
         //     ]);
         if (!$user) {
+            return false;
+        }
+
+        if (
+            ! static::hasReadPermission() &&
+            ! $user->hasAnyRole(['superadmin', 'admin'])
+        ) {
             return false;
         }
 
@@ -161,21 +189,5 @@ trait HasNavigationPolicy
         return false;
     }
 
-    // public static function canAccess(): bool
-    // {
-    //     $allowed = static::shouldRegisterNavigation();
-
-    //     if (! $allowed) {
-    //         Notification::make()
-    //             ->title('Akses Ditolak')
-    //             ->body('Anda tidak memiliki izin untuk membuka halaman ini.')
-    //             ->danger()
-    //             ->send();
-
-    //          redirect()->route('filament.admin.pages.dashboard')->throwResponse();
-    //         exit;
-    //     }
-
-    //     return true;
-    // }
+    
 }
