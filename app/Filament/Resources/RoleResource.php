@@ -16,6 +16,7 @@ use Spatie\Permission\Models\Role;
 use App\Traits\HasOwnRecordPolicy;
 use Spatie\Permission\Traits\HasPermissions;
 use App\Traits\HasNavigationPolicy;
+use Illuminate\Support\Str;
 
 class RoleResource extends Resource
 {
@@ -68,6 +69,18 @@ class RoleResource extends Resource
                 Forms\Components\TextInput::make('name')
                     ->required()
                     ->maxLength(255)
+                    ->reactive()
+                    ->afterStateHydrated(function ($state, callable $set) {
+                        if ($state !== null) {
+                            $set('name', mb_strtoupper($state));
+                        }
+                    })
+                    ->afterStateUpdated(function ($state, callable $set) {
+                        if ($state !== null) {
+                            $set('name', mb_strtoupper($state));
+                        }
+                    })
+                    ->dehydrateStateUsing(fn ($state) => Str::lower($state))
                     ->label('Role'),
             ], $sections));
     }
@@ -78,7 +91,8 @@ class RoleResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->sortable()
-                    ->searchable(),
+                    ->searchable()
+                    ->formatStateUsing(fn ($state) => strtoupper($state)),
 
                 Tables\Columns\TextColumn::make('permissions_count')
                     ->label('Total Permissions')

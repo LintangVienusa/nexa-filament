@@ -35,6 +35,7 @@ use Spatie\Permission\Traits\HasPermissions;
 use App\Traits\HasNavigationPolicy;
 use Filament\Tables\Filters\SelectFilter;
 
+
 class SalarySlipResource extends Resource
 {
 
@@ -391,11 +392,11 @@ class SalarySlipResource extends Resource
 
                             Forms\Components\DatePicker::make('start_date')
                                 ->label('Start Date')
-                                ->default(fn () => now()->subMonthNoOverflow()->day(28)->startOfDay()->toDateString())
+                                ->default(fn () => now()->subMonthNoOverflow()->day(5)->startOfDay()->toDateString())
                                 ->afterStateHydrated(function (callable $set, $record) {
                                     if ($record?->periode) {
                                         $periode = Carbon::createFromFormat('F Y', $record->periode);
-                                        $set('start_date', $periode->copy()->subMonthNoOverflow()->day(28)->toDateString());
+                                        $set('start_date', $periode->copy()->subMonthNoOverflow()->day(5)->toDateString());
                                     }
                                 })
                                 ->disabled()
@@ -404,11 +405,11 @@ class SalarySlipResource extends Resource
 
                             Forms\Components\DatePicker::make('cut_off')
                                 ->label('Cut Off Date')
-                                ->default(fn () => now()->day(27)->endOfDay()->toDateString())
+                                ->default(fn () => now()->day(4)->endOfDay()->toDateString())
                                 ->afterStateHydrated(function (callable $set, $record) {
                                     if ($record?->periode) {
                                         $periode = Carbon::createFromFormat('F Y', $record->periode);
-                                        $set('cut_off', $periode->copy()->day(27)->toDateString());
+                                        $set('cut_off', $periode->copy()->day(4)->toDateString());
                                     }
                                 })
                                 ->disabled()
@@ -573,10 +574,10 @@ class SalarySlipResource extends Resource
             ->query(
                 SalarySlip::query()
                     ->select('employee_id', 'periode')
-                    ->selectRaw('MAX(id) as id') // ambil salah satu id untuk anchor record
+                    ->selectRaw('MAX(id) as id') 
                     ->groupBy('employee_id', 'periode')
-                    ->orderByRaw('MAX(id) DESC')
             )
+            ->defaultSort('id', 'desc')
             ->columns([
                  
                 Split::make([
@@ -585,10 +586,23 @@ class SalarySlipResource extends Resource
                         ->sortable()
                         ->searchable(),
 
-                    TextColumn::make('full_name')
-                        ->label('Employee Name')
-                        ->sortable()
-                        ->searchable(),
+                    TextColumn::make('employee.first_name')
+                        ->label('Nama')
+                        ->getStateUsing(fn($record) => $record->employee?->full_name ?? '-')
+                        ->searchable(query: function ($query, $search) {
+                            $query->whereHas('employee', function ($q) use ($search) {
+                                $q->whereRaw("CONCAT(first_name, ' ', middle_name,' ', last_name) LIKE ?", ["%{$search}%"]);
+                            });
+                        })
+                        ->sortable(function (Builder $query) {
+                            $direction = request()->input('tableSortDirection', 'asc');
+                            return $query->orderBy(
+                                Employee::selectRaw("CONCAT(first_name,' ', middle_name, ' ', last_name)")
+                                    ->whereColumn('employees.employee_id', 'attendances.employee_id')
+                                    ->limit(1),
+                                $direction
+                            );
+                        }),
 
                     TextColumn::make('periode')
                         ->label('Payroll Periode')
