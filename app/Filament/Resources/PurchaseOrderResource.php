@@ -22,9 +22,13 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 use Illuminate\Validation\Rule;
+use App\Traits\HasOwnRecordPolicy;
+use Spatie\Permission\Traits\HasPermissions;
+use App\Traits\HasNavigationPolicy;
 
 class PurchaseOrderResource extends Resource
 {
+    use HasPermissions, HasOwnRecordPolicy, HasNavigationPolicy;
     protected static ?string $model = PurchaseOrder::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';

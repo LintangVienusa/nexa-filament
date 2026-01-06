@@ -72,8 +72,8 @@ class SalarySlip extends Model
             // $startDate = $periodeCarbon->copy()->startOfMonth()->format('Y-m-d');
             // $endDate = $periodeCarbon->copy()->endOfMonth()->format('Y-m-d');
 
-            $startDate = $periodeCarbon->copy()->subMonthNoOverflow()->day(28)->format('Y-m-d');
-            $endDate = $periodeCarbon->copy()->day(27)->format('Y-m-d');
+            $startDate = $periodeCarbon->copy()->subMonthNoOverflow()->day(5)->format('Y-m-d');
+            $endDate = $periodeCarbon->copy()->day(4)->format('Y-m-d');
             
             $payroll = Payroll::where('employee_id', $salarySlip->employee_id)
             ->where('periode', $periodeString)

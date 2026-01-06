@@ -326,12 +326,12 @@ class AttendanceController extends Controller
         $today = Carbon::today()->format('Y-m-d');
 
         $todayas = Carbon::today();
-        if ($todayas->day <= 27) {
-                $startDate = $todayas->copy()->subMonth()->setDay(28)->startOfDay();
-                $endDate   = $todayas->copy()->setDay(27)->endOfDay();
+        if ($todayas->day <= 4) {
+                $startDate = $todayas->copy()->subMonth()->setDay(5)->startOfDay();
+                $endDate   = $todayas->copy()->setDay(4)->endOfDay();
             } else {
-                $startDate = $todayas->copy()->setDay(28)->startOfDay();
-                $endDate   = $todayas->copy()->addMonth()->setDay(27)->endOfDay();
+                $startDate = $todayas->copy()->setDay(5)->startOfDay();
+                $endDate   = $todayas->copy()->addMonth()->setDay(4)->endOfDay();
             }
 
         $daysPresent = Attendance::where('employee_id', $employee_id)

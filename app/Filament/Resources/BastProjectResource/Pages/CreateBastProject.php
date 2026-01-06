@@ -183,7 +183,7 @@ class CreateBastProject extends CreateRecord
             $jodp = 640;
             $jodc = 160;
         } else {
-            $jpole = $totaltarget;
+            $jpole = $totaltarget+1;
             $jodp = $totaltarget;
             $jodc = $totaltarget;
         }

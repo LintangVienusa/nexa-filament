@@ -22,10 +22,15 @@ use App\Exports\HomeConnectReportExport;
 use Filament\Tables\Filters\Filter;
 use Filament\Forms\Components\DatePicker;
 use Illuminate\Support\Facades\DB;
+use Spatie\Permission\Traits\HasPermissions;
+use App\Traits\HasOwnRecordPolicy;
+use App\Traits\HasNavigationPolicy;
 
 
 class HomeConnectReportResource extends Resource
 {
+    
+    use HasPermissions, HasOwnRecordPolicy, HasNavigationPolicy;
     protected static ?string $model = HomeConnectReport::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
