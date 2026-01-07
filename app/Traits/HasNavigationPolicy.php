@@ -25,14 +25,19 @@ trait HasNavigationPolicy
             ->lower()
             ->append('.read')
             ->toString();
-
+// dd(
+//         static::class,
+//         $permission,
+//         $user->can($permission),
+//         $user->getAllPermissions()->pluck('name')->toArray()
+//     );
         return $user->can($permission);
     }
 
     public static function shouldRegisterNavigation(): bool
     {
         
-        $user = Auth::user()->setConnection('mysql');
+        $user = Auth::user();
         $hasRole = $user->setConnection('mysql')->hasRole('employee');
         $jobTitle = $user->employee?->job_title;
         $tipeEmployee = $user->employee?->employee_type;
@@ -48,12 +53,7 @@ trait HasNavigationPolicy
             return false;
         }
 
-        if (
-            ! static::hasReadPermission() &&
-            ! $user->hasAnyRole(['superadmin', 'admin'])
-        ) {
-            return false;
-        }
+       
 
         if ($user->hasAnyRole(['superadmin','admin'])) {
             if ($tipeEmployee === 'mitra') {
@@ -70,74 +70,74 @@ trait HasNavigationPolicy
 
         }
 
-        if (in_array($jobTitle, ['CEO','CTO'])) {
-           if ($tipeEmployee === 'mitra') {
-                $resourceClass = static::class;
-                $allowedResources = [
-                        \App\Filament\Resources\HomeConnectReportResource::class,
-                    ];
+        // if (in_array($jobTitle, ['CEO','CTO'])) {
+        //    if ($tipeEmployee === 'mitra') {
+        //         $resourceClass = static::class;
+        //         $allowedResources = [
+        //                 \App\Filament\Resources\HomeConnectReportResource::class,
+        //             ];
                     
-                    return in_array($resourceClass, $allowedResources);
-            }else{
-                return true;
-            }
-        }
+        //             return in_array($resourceClass, $allowedResources);
+        //     }else{
+        //         return true;
+        //     }
+        // }
 
-        if ($tipeEmployee === 'mitra') {
-            $resourceClass = static::class;
-            $allowedResources = [
-                    \App\Filament\Resources\HomeConnectReportResource::class,
-                ];
+        // if ($tipeEmployee === 'mitra') {
+        //     $resourceClass = static::class;
+        //     $allowedResources = [
+        //             \App\Filament\Resources\HomeConnectReportResource::class,
+        //         ];
                 
-                return in_array($resourceClass, $allowedResources);
-        }
+        //         return in_array($resourceClass, $allowedResources);
+        // }
 
-        if (in_array($jobTitle, ['VP','Manager','SPV'])) {
-            // return $unitName === 'IT' || $unitName === 'HR'; 
-             if ($unitName != 'WAREHOUSE') {
-                $resourceClass = static::class;
+        // if (in_array($jobTitle, ['VP','Manager','SPV'])) {
+        //     // return $unitName === 'IT' || $unitName === 'HR'; 
+        //      if ($unitName != 'WAREHOUSE') {
+        //         $resourceClass = static::class;
 
-                $allowedResources = [
-                    \App\Filament\Resources\EmployeeResource::class,
-                    \App\Filament\Resources\AttendanceResource::class,
-                    \App\Filament\Resources\OvertimeResource::class,
-                    \App\Filament\Resources\TimesheetResource::class,
-                    \App\Filament\Resources\PayrollResource::class,
-                    \App\Filament\Resources\LeaveResource::class,
-                    \App\Filament\Resources\ProfileResource::class,
-                    \App\Filament\Resources\UserResource::class,
-                    // \App\Filament\Resources\MappingRegionResource::class,
-                ];
+        //         $allowedResources = [
+        //             \App\Filament\Resources\EmployeeResource::class,
+        //             \App\Filament\Resources\AttendanceResource::class,
+        //             \App\Filament\Resources\OvertimeResource::class,
+        //             \App\Filament\Resources\TimesheetResource::class,
+        //             \App\Filament\Resources\PayrollResource::class,
+        //             \App\Filament\Resources\LeaveResource::class,
+        //             \App\Filament\Resources\ProfileResource::class,
+        //             \App\Filament\Resources\UserResource::class,
+        //             // \App\Filament\Resources\MappingRegionResource::class,
+        //         ];
 
-                return in_array($resourceClass, $allowedResources);
-            }
-        }
+        //         return in_array($resourceClass, $allowedResources);
+        //     }
+        // }
 
         
 
-        if ($unitName === 'WAREHOUSE') {
-            $resourceClass = static::class;
+        // if ($unitName === 'WAREHOUSE') {
+        //     $resourceClass = static::class;
 
-            $allowedResources = [
-                \App\Filament\Resources\EmployeeResource::class,
-                \App\Filament\Resources\AttendanceResource::class,
-                \App\Filament\Resources\OvertimeResource::class,
-                \App\Filament\Resources\TimesheetResource::class,
-                \App\Filament\Resources\PayrollResource::class,
-                \App\Filament\Resources\AssetMovementResource::class,
-                \App\Filament\Resources\AssetResource::class,
-                \App\Filament\Resources\AssetTransactionResource::class,
-                \App\Filament\Resources\InventoryAssetResource::class,
-                    \App\Filament\Resources\ProfileResource::class,
-                    \App\Filament\Resources\LeaveResource::class,
-                    \App\Filament\Resources\UserResource::class,
-                    // \App\Filament\Resources\MappingRegionResource::class,
-            ];
+        //     $allowedResources = [
+        //         \App\Filament\Resources\EmployeeResource::class,
+        //         \App\Filament\Resources\AttendanceResource::class,
+        //         \App\Filament\Resources\OvertimeResource::class,
+        //         \App\Filament\Resources\TimesheetResource::class,
+        //         \App\Filament\Resources\PayrollResource::class,
+        //         \App\Filament\Resources\AssetMovementResource::class,
+        //         \App\Filament\Resources\AssetResource::class,
+        //         \App\Filament\Resources\AssetTransactionResource::class,
+        //         \App\Filament\Resources\InventoryAssetResource::class,
+        //             \App\Filament\Resources\ProfileResource::class,
+        //             \App\Filament\Resources\LeaveResource::class,
+        //             \App\Filament\Resources\UserResource::class,
+        //             // \App\Filament\Resources\MappingRegionResource::class,
+        //     ];
 
-            return in_array($resourceClass, $allowedResources);
-        }
+        //     return in_array($resourceClass, $allowedResources);
+        // }
 
-        if ($jobTitle === 'Staff' || $user->hasRole('employee')) {
+        if ( $user->hasRole('employee')) {
             if ($tipeEmployee === 'mitra') {
                 $resourceClass = static::class;
                 $allowedResources = [
@@ -186,7 +186,14 @@ trait HasNavigationPolicy
             
         }
 
-        return false;
+         if (
+            ! static::hasReadPermission() &&
+            ! $user->hasAnyRole(['superadmin', 'admin'])
+        ) {
+            return false;
+        }
+
+        return static::hasReadPermission();
     }
 
     
