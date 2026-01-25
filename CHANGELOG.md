@@ -15,3 +15,4 @@
 - ### [v1.3.1](change_log/v1/1_3_1.md) - Release Date: 07 January 2026
 - ### [v1.3.2](change_log/v1/1_3_2.md) - Release Date: 07 January 2026
 - ### [v1.3.3](change_log/v1/1_3_3.md) - Release Date: 16 January 2026
+- ### [v1.3.4](change_log/v1/1_3_4.md) - Release Date: 25 January 2026
