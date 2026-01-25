@@ -47,8 +47,7 @@ class DownloadSlipService
                         html, body {
                             margin: 0;
                             padding: 0;
-                            font-family:  sans-serif;
-                            background-color: #e9d0a9ff;  
+                            font-family:  sans-serif;  
                         }
 
                         body {
@@ -56,13 +55,13 @@ class DownloadSlipService
                             position: relative;
                         }
                             .header { display: flex; align-items: center; }
-                            .logo { height: 80px; width: 300px; margin-right: 20px; }
+                            .logo { width: 180px; height: 80px;  margin: 10px auto;overflow: hidden;object-fit: contain; }
                             .title { font-family: DejaVu Sans, Helvetica, Arial, sans-serif; font-size: 20px; font-weight: bold;  color: #888; }
                             .info { font-size: 12px; margin-top: 15px; }
                             .info_pt { font-size: 16px; font-weight: bold; margin-top: 20px; }
                             table { font-size: 14px; width: 100%; border-collapse: collapse; margin-top: 15px; }
                             th, td { border: none; padding: 5px; text-align: left; }
-                            th { background-color: #dabe92ff; }
+                            th { background-color: #47474769; }
                             tfoot td { font-weight: bold; }
                             .footer { position: fixed; bottom: 20px; width: 100%; text-align: center; font-size: 12px; color: #888; }
                         .watermark {
@@ -267,7 +266,7 @@ class DownloadSlipService
                         
                             <div style="clear:both;"></div>
                                 </div>
-                                <div class="info" style="margin-top: 8px; background-color: #dabe92ff;">
+                                <div class="info" style="margin-top: 8px; background-color: #47474769;">
                                     <table style="width: 100%;  text-align: center;">
                                         <thead>
                                             <tr>
