@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\TextInput\Mask;
 use Filament\Tables\Columns\TextColumn;
@@ -427,69 +428,38 @@ class SalarySlipResource extends Resource
                             ->schema([
                                 Select::make('salary_component_id')
                                     ->label('Salary Component')
-                                    ->options(function ($record) {
-                                            $query = SalaryComponent::query();
-
-                                            // Kalau edit record (tidak kosong), exclude komponen tertentu
-                                            if ($record == '') {
-                                                $query->whereNotIn('component_name', [
-                                                    // 'BPJS Kesehatan',
-                                                    // 'JHT BPJS TK',
-                                                    // 'JP BPJS TK',
-                                                    // 'JKK BPJS TK',
-                                                    // 'JKM BPJS TK',
-                                                    // 'Marriage Allowance',
-                                                    // 'Child Allowance',
-                                                    // 'PPh 21',
-                                                ]);
-                                            }
-
-                                            return $query->get()
-                                                ->mapWithKeys(fn($c) => [
-                                                    $c->id => $c->component_name ?? 'No Name'
-                                                ]);
-                                    })
-                                    // ->rules([
-                                    //     function (callable $get, $record) {
-                                    //         return \Illuminate\Validation\Rule::unique('SalaryComponents', 'id')
-                                    //             ->where('employee_id', $get('employee_id'))
-                                    //             ->ignore($record?->id);
-                                    //     },
-                                    // ])
-                                    ->afterStateUpdated(function ($state, callable $get, callable $set) {
-                                        $employeeId = $get('employee_id');
-                                        if (!$employeeId || !$state) return;
-
-                                        $scomponent = SalaryComponent::find($state);
-                                            if ($scomponent) {
-                                                $set('component_type', $scomponent->component_type);
-                                            }
-
-                                        $exists = SalarySlip::where('employee_id', $employeeId)
-                                            ->where('periode', $state)
-                                            ->where('salary_component_id', $state)
-                                            ->exists();
-
-                                        if ($exists) {
-                                            Notification::make()
-                                                ->title('Duplicate Entry')
-                                                ->body('This salary component has already been assigned to the selected employee.')
-                                                ->danger()
-                                                ->send();
-
-                                            $set('salary_component_id', null);
+                                    ->options(
+                                        \App\Models\SalaryComponent::pluck('component_name', 'id')
+                                    )
+                                    ->live()
+                                    ->afterStateUpdated(function ($state, callable $set) {
+                                        if (!$state) {
+                                            $set('component_type', null);
+                                            $set('component_type_label', '-');
+                                            return;
                                         }
+
+                                        $component = \App\Models\SalaryComponent::find($state);
+                                        if (!$component) return;
+
+                                        $set('component_type', (int) $component->component_type);
+
                                     })
                                     ->required(),
 
+                                Hidden::make('component_type')
+                                    ->default(null)
+                                    ->dehydrated(true),
+
                                 Select::make('component_type')
-                                        ->label('Salary Component type')
-                                        ->options([
-                                                0 => 'Allowance',
-                                                1 => 'Deduction',
-                                            ])
-                                            ->disabled() 
-                                            ->required(),
+                                    ->label('Salary Component Type')
+                                    ->options([
+                                        0 => 'Allowance',
+                                        1 => 'Deduction',
+                                    ])
+                                    ->disabled()         
+                                    ->live()
+                                    ->dehydrated(false),
                                 
                                 // TextInput::make('jumlah_hari_kerja')
                                 //     ->label('Jumlah Hari Kerja')
