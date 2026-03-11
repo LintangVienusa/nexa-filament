@@ -14,6 +14,22 @@ class AuthController extends Controller
 {
     public function login(Request $request)
     {
+
+        $appName      = $request->header('app_name');
+        $packageName  = $request->header('package_name');
+        $version      = $request->header('version');
+        $buildNumber  = (int) $request->header('build_number');
+        $minBuild = 4;
+
+        if ($buildNumber < $minBuild) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Aplikasi Anda perlu diperbarui untuk melanjutkan.',
+                'description' => 'Silakan update aplikasi ke versi terbaru melalui Play Store agar semua fitur dapat digunakan dengan baik.',
+                'min_build' => $minBuild
+
+            ], 426);
+        }
         $request->validate([
             'email'    => 'required|email',
             'password' => 'required',
@@ -50,6 +66,12 @@ class AuthController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => 'Login successful',
+            //  'headers' => [
+            //     'app_name' => $request->header('app_name'),
+            //     'package_name' => $request->header('package_name'),
+            //     'version' => $request->header('version'),
+            //     'build_number' => $request->header('build_number')
+            // ],
             'data' => [
                 'user_id'      => $user->id,
                 'username'     => $user->name,
@@ -63,6 +85,7 @@ class AuthController extends Controller
                 'file_photo'    => $base64 ?? null,
                 'token'        => $token,
             ],
+           
         ]);
     }
 
