@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Organization;
+use App\Models\AppVersion;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
@@ -15,18 +16,19 @@ class AuthController extends Controller
     public function login(Request $request)
     {
 
-        $appName      = $request->header('app_name');
-        $packageName  = $request->header('package_name');
-        $version      = $request->header('version');
-        $buildNumber  = (int) $request->header('build_number');
-        $minBuild = 4;
+        $appName      = $request->header('X-App-Name');
+        $packageName  = $request->header('X-Package-Name');
+        $version      = $request->header('X-App-Version');
+        $buildNumber  = (int) $request->header('X-App-Build-Number');
+        $minBuild =   AppVersion::max('min_build');
 
         if ($buildNumber < $minBuild) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Aplikasi Anda perlu diperbarui untuk melanjutkan.',
                 'description' => 'Silakan update aplikasi ke versi terbaru melalui Play Store agar semua fitur dapat digunakan dengan baik.',
-                'min_build' => $minBuild
+                'min_build' => $minBuild,
+                'buildNumber' => $buildNumber
 
             ], 426);
         }
